@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   ShoppingCart,
   Heart,
@@ -18,11 +18,26 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { categories } from '@/lib/data';
+import { notificationsApi } from '@/lib/api';
 
 export default function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    async function fetchUnreadCount() {
+      try {
+        const res = await notificationsApi.list({ user_id: 'usr-001' });
+        const notifications = Array.isArray(res) ? res : (res as { data?: { read: boolean }[] }).data || [];
+        setUnreadCount(notifications.filter((n: { read: boolean }) => !n.read).length);
+      } catch (error) {
+        console.error('Failed to fetch notifications:', error);
+      }
+    }
+    fetchUnreadCount();
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
@@ -94,6 +109,18 @@ export default function Header() {
               <span className="text-xs">EN</span>
               <ChevronDown className="w-3 h-3" />
             </button>
+
+            {/* Notifications */}
+            <Link href="/dashboard/notifications">
+              <button className="p-2 rounded-md hover:bg-gray-50 transition-colors text-gray-600 hover:text-blue-600 relative">
+                <Bell className="w-5 h-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </button>
+            </Link>
 
             {/* User */}
             <Link href="/login">

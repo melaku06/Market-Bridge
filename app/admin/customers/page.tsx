@@ -21,7 +21,8 @@ export default function AdminCustomers() {
           usersApi.list({ role: 'customer' }),
           analyticsApi.get({}),
         ]);
-        setCustomers(usersRes.data);
+        const usersData = Array.isArray(usersRes) ? usersRes : (usersRes as { data?: UserWithoutPassword[] }).data || [];
+        setCustomers(usersData);
         setAnalytics(analyticsRes);
       } catch (error) {
         console.error('Failed to fetch customers:', error);

@@ -1,39 +1,79 @@
 'use client';
 
-import { useState, useMemo, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ChevronRight, Grid2x2, List, SlidersHorizontal, X, Search, MessageSquarePlus } from 'lucide-react';
+import { ChevronRight, Grid2x2, List, SlidersHorizontal, X, Search } from 'lucide-react';
 import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
 import ProductCard from '@/components/product/product-card';
-import { products, categories } from '@/lib/data';
+import { productsApi, categoriesApi } from '@/lib/api';
+import type { Product, Category } from '@/lib/mock-db';
 
 function SearchResults() {
   const searchParams = useSearchParams();
   const query = searchParams.get('q') || '';
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
   const [sortBy, setSortBy] = useState('Relevance');
   const [priceRange, setPriceRange] = useState([0, 500]);
   const [gridView, setGridView] = useState(true);
   const [filterOpen, setFilterOpen] = useState(false);
 
-  const filtered = useMemo(() => {
-    let list = [...products];
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [productsRes, categoriesRes] = await Promise.all([
+          productsApi.list({ status: 'published' }),
+          categoriesApi.list(),
+        ]);
+        // Handle both { data: [...] } and direct array responses
+        const productsData = Array.isArray(productsRes) ? productsRes : (productsRes as { data?: Product[] }).data || [];
+        const categoriesData = Array.isArray(categoriesRes) ? categoriesRes : [];
+        setProducts(productsData);
+        setCategories(categoriesData);
+      } catch (error) {
+        console.error('Failed to fetch data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  const filtered = products.filter((p) => {
     if (query) {
       const q = query.toLowerCase();
-      list = list.filter((p) => p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q) || p.description.toLowerCase().includes(q));
+      const matchesQuery = p.name.toLowerCase().includes(q) ||
+        (p.category_name?.toLowerCase().includes(q)) ||
+        (p.description?.toLowerCase().includes(q));
+      if (!matchesQuery) return false;
     }
-    if (selectedCategory !== 'All Categories') list = list.filter((p) => p.category === selectedCategory);
-    list = list.filter((p) => p.price >= priceRange[0] && p.price <= priceRange[1]);
-    if (sortBy === 'Price: Low to High') list.sort((a, b) => a.price - b.price);
-    else if (sortBy === 'Price: High to Low') list.sort((a, b) => b.price - a.price);
-    else if (sortBy === 'Top Rated') list.sort((a, b) => b.rating - a.rating);
-    return list;
-  }, [query, selectedCategory, sortBy, priceRange]);
+    if (selectedCategory !== 'All Categories') {
+      if (p.category_name !== selectedCategory) return false;
+    }
+    const price = p.final_price ?? 0;
+    if (price < priceRange[0] || price > priceRange[1]) return false;
+    return true;
+  }).sort((a, b) => {
+    const priceA = a.final_price ?? 0;
+    const priceB = b.final_price ?? 0;
+    if (sortBy === 'Price: Low to High') return priceA - priceB;
+    if (sortBy === 'Price: High to Low') return priceB - priceA;
+    if (sortBy === 'Top Rated') return b.rating - a.rating;
+    if (sortBy === 'Newest') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    return 0;
+  });
 
   const brands = ['Sony', 'JBL', 'Bose', 'Sennheiser', 'Apple'];
   const allCategories = ['All Categories', ...categories.map((c) => c.name)];
+
+  const getCategoryCount = (cat: string) => {
+    if (cat === 'All Categories') return products.length;
+    return products.filter((p) => p.category_name === cat).length;
+  };
 
   const FilterPanel = () => (
     <div className="space-y-6">
@@ -50,7 +90,7 @@ function SearchResults() {
             >
               {cat}
               <span className="text-xs text-gray-400">
-                ({products.filter((p) => cat === 'All Categories' || p.category === cat).length})
+                ({getCategoryCount(cat)})
               </span>
             </button>
           ))}
@@ -68,7 +108,6 @@ function SearchResults() {
             <label key={brand} className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" className="w-4 h-4 accent-blue-600 rounded" />
               <span className="text-sm text-gray-600">{brand}</span>
-              <span className="ml-auto text-xs text-gray-400">({Math.floor(Math.random() * 30 + 10)})</span>
             </label>
           ))}
           <button className="text-sm text-blue-600 hover:underline">+ Show More</button>

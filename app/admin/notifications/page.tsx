@@ -26,12 +26,14 @@ export default function AdminNotifications() {
     async function fetchData() {
       try {
         const usersRes = await usersApi.list({ role: 'admin' });
-        const adminUser = usersRes.data[0];
+        const usersData = Array.isArray(usersRes) ? usersRes : (usersRes as { data?: UserWithoutPassword[] }).data || [];
+        const adminUser = usersData[0];
         setAdmin(adminUser);
 
         if (adminUser) {
           const notifRes = await notificationsApi.list({ user_id: adminUser.id });
-          setNotifications(notifRes.data);
+          const notifData = Array.isArray(notifRes) ? notifRes : (notifRes as { data?: Notification[] }).data || [];
+          setNotifications(notifData);
         }
       } catch (error) {
         console.error('Failed to fetch notifications:', error);
@@ -55,7 +57,7 @@ export default function AdminNotifications() {
     if (newNotif.title && newNotif.message) {
       try {
         const usersRes = await usersApi.list({ role: 'customer' });
-        const customers = usersRes.data;
+        const customers = Array.isArray(usersRes) ? usersRes : (usersRes as { data?: UserWithoutPassword[] }).data || [];
 
         for (const user of customers) {
           await notificationsApi.create({

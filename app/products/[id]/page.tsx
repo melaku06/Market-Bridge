@@ -46,9 +46,11 @@ export default function ProductDetailPage() {
           productsApi.list({ category: productRes.category_id, status: 'published', limit: 5 }),
         ]);
 
-        setReviews(reviewsRes.data);
+        const reviewsData = Array.isArray(reviewsRes) ? reviewsRes : (reviewsRes as { data?: Review[] }).data || [];
+        const relatedData = Array.isArray(relatedRes) ? relatedRes : (relatedRes as { data?: Product[] }).data || [];
+        setReviews(reviewsData);
         setWarehouse(warehouseRes);
-        setRelatedProducts(relatedRes.data.filter(p => p.id !== productId).slice(0, 4));
+        setRelatedProducts(relatedData.filter(p => p.id !== productId).slice(0, 4));
       } catch (error) {
         console.error('Failed to fetch product:', error);
       } finally {

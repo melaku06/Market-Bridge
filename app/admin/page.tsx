@@ -28,8 +28,10 @@ export default function AdminDashboard() {
           warehousesApi.list({}),
           analyticsApi.get({}),
         ]);
-        setProducts(productsRes.data);
-        setWarehouses(warehousesRes.data);
+        const productsData = Array.isArray(productsRes) ? productsRes : (productsRes as { data?: Product[] }).data || [];
+        const warehousesData = Array.isArray(warehousesRes) ? warehousesRes : (warehousesRes as { data?: Warehouse[] }).data || [];
+        setProducts(productsData);
+        setWarehouses(warehousesData);
         setAnalytics(analyticsRes);
       } catch (error) {
         console.error('Failed to fetch admin data:', error);

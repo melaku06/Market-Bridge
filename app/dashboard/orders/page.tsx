@@ -36,7 +36,8 @@ export default function OrdersPage() {
     async function fetchData() {
       try {
         const res = await ordersApi.list({ customer_id: 'usr-001' });
-        setOrders(res.data);
+        const ordersData = Array.isArray(res) ? res : (res as { data?: Order[] }).data || [];
+        setOrders(ordersData);
       } catch (error) {
         console.error('Failed to fetch orders:', error);
       } finally {

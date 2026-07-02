@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Package, ShoppingCart, DollarSign, TrendingUp, AlertTriangle, Clock, Warehouse as WarehouseIcon } from 'lucide-react';
+import { Package, ShoppingCart, DollarSign, TrendingUp, AlertTriangle, Clock, Warehouse as WarehouseIcon, Star } from 'lucide-react';
 import Link from 'next/link';
 import { warehousesApi, ordersApi, inventoryApi, analyticsApi } from '@/lib/api';
 import type { Warehouse, Order, Inventory } from '@/lib/mock-db';
@@ -27,8 +27,10 @@ export default function WarehouseDashboard() {
         ]);
 
         setWarehouse(warehouseRes);
-        setOrders(ordersRes.data);
-        setInventory(inventoryRes.data);
+        const ordersData = Array.isArray(ordersRes) ? ordersRes : (ordersRes as { data?: Order[] }).data || [];
+        const inventoryData = Array.isArray(inventoryRes) ? inventoryRes : (inventoryRes as { data?: Inventory[] }).data || [];
+        setOrders(ordersData);
+        setInventory(inventoryData);
         setAnalytics(analyticsRes);
       } catch (error) {
         console.error('Failed to fetch warehouse data:', error);
@@ -211,7 +213,7 @@ export default function WarehouseDashboard() {
             <p className="text-sm text-gray-500">Rating</p>
             <div className="flex items-center gap-1">
               <span className="font-medium text-gray-900">{warehouse.rating}</span>
-              <span className="text-yellow-400">★</span>
+              <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
             </div>
           </div>
           <div>

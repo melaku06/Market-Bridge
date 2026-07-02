@@ -37,9 +37,12 @@ export default function DashboardPage() {
           productsApi.list({ status: 'published', limit: 10 }),
           wishlistApi.list(customerId),
         ]);
-        setOrders(ordersRes.data);
-        setRecommended(productsRes.data.slice(2, 6));
-        setWishlistCount(wishlistRes.length);
+        // Handle both { data: [...] } and direct array responses
+        const ordersData = Array.isArray(ordersRes) ? ordersRes : (ordersRes as { data?: Order[] }).data || [];
+        const productsData = Array.isArray(productsRes) ? productsRes : (productsRes as { data?: Product[] }).data || [];
+        setOrders(ordersData);
+        setRecommended(productsData.slice(2, 6));
+        setWishlistCount(Array.isArray(wishlistRes) ? wishlistRes.length : 0);
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error);
       } finally {
@@ -66,7 +69,7 @@ export default function DashboardPage() {
     <div className="space-y-6">
       {/* Welcome */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Hello, Sarah! 👋</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Hello, Sarah!</h1>
         <p className="text-gray-500 text-sm">Welcome back to MarketBridge. Explore and shop the best products.</p>
       </div>
 

@@ -20,8 +20,10 @@ export default function WarehouseInventory() {
           inventoryApi.list({ warehouse_id: warehouseId }),
           productsApi.list({ warehouse_id: warehouseId }),
         ]);
-        setInventory(inventoryRes.data);
-        setProducts(productsRes.data);
+        const inventoryData = Array.isArray(inventoryRes) ? inventoryRes : (inventoryRes as { data?: Inventory[] }).data || [];
+        const productsData = Array.isArray(productsRes) ? productsRes : (productsRes as { data?: Product[] }).data || [];
+        setInventory(inventoryData);
+        setProducts(productsData);
       } catch (error) {
         console.error('Failed to fetch inventory:', error);
       } finally {

@@ -24,7 +24,8 @@ export default function WarehouseAnalytics() {
           analyticsApi.get({ warehouse_id: warehouseId }),
         ]);
         setWarehouse(warehouseRes);
-        setInventory(inventoryRes.data);
+        const inventoryData = Array.isArray(inventoryRes) ? inventoryRes : (inventoryRes as { data?: Inventory[] }).data || [];
+        setInventory(inventoryData);
         setAnalytics({
           weekly_revenue: analyticsRes.weekly_revenue || [],
           top_products: analyticsRes.top_products || [],

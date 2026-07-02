@@ -20,8 +20,10 @@ export default function AdminProducts() {
           productsApi.list({}),
           warehousesApi.list({}),
         ]);
-        setProducts(productsRes.data);
-        setWarehouses(warehousesRes.data);
+        const productsData = Array.isArray(productsRes) ? productsRes : (productsRes as { data?: Product[] }).data || [];
+        const warehousesData = Array.isArray(warehousesRes) ? warehousesRes : (warehousesRes as { data?: Warehouse[] }).data || [];
+        setProducts(productsData);
+        setWarehouses(warehousesData);
       } catch (error) {
         console.error('Failed to fetch products:', error);
       } finally {

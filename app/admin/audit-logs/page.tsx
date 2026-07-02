@@ -29,7 +29,8 @@ export default function AdminAuditLogs() {
     async function fetchData() {
       try {
         const res = await adminApi.auditLogs.list();
-        setLogs(res.data || res as unknown as AuditLog[]);
+        const logsData = Array.isArray(res) ? res : (res as { data?: AuditLog[] }).data || [];
+        setLogs(logsData);
       } catch (error) {
         console.error('Failed to fetch audit logs:', error);
       } finally {

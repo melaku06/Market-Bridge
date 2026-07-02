@@ -76,7 +76,7 @@ export default function ProfilePage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone Number</label>
                 <div className="flex">
                   <div className="flex items-center gap-1 px-3 border border-r-0 border-gray-200 rounded-l-xl bg-gray-50 text-sm text-gray-500">
-                    🇺🇸 +1
+                    +1
                   </div>
                   <input type="tel" value="(555) 123-4567" readOnly className="flex-1 px-3 py-2.5 border border-gray-200 rounded-r-xl text-sm focus:border-blue-500 focus:outline-none" />
                 </div>

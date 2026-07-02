@@ -39,7 +39,8 @@ export default function NotificationsPage() {
     async function fetchData() {
       try {
         const res = await notificationsApi.list({ user_id: 'usr-001' });
-        setNotifs(res.data);
+        const notifData = Array.isArray(res) ? res : (res as { data?: Notification[] }).data || [];
+        setNotifs(notifData);
       } catch (error) {
         console.error('Failed to fetch notifications:', error);
       } finally {

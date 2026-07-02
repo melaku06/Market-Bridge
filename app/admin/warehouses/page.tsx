@@ -31,7 +31,8 @@ export default function AdminWarehouses() {
     async function fetchData() {
       try {
         const res = await warehousesApi.list({});
-        setWarehouses(res.data);
+        const warehousesData = Array.isArray(res) ? res : (res as { data?: Warehouse[] }).data || [];
+        setWarehouses(warehousesData);
       } catch (error) {
         console.error('Failed to fetch warehouses:', error);
       } finally {

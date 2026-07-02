@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ChevronRight, Plus, Edit2, Trash2, Home, Briefcase, MapPin } from 'lucide-react';
+import { ChevronRight, Plus, Edit2, Trash2, Home, Briefcase, MapPin, Info } from 'lucide-react';
 import { addresses as initialAddresses } from '@/lib/data';
 
 export default function AddressesPage() {
@@ -134,7 +134,7 @@ export default function AddressesPage() {
       </div>
 
       <p className="text-xs text-gray-400 flex items-center gap-1">
-        <span>ℹ️</span>
+        <Info className="w-3.5 h-3.5" />
         Set a default address to make checkout faster.
       </p>
     </div>

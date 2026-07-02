@@ -26,7 +26,8 @@ export default function WarehouseNotifications() {
         setWarehouse(warehouseRes);
 
         const notificationsRes = await notificationsApi.list({ user_id: warehouseRes.user_id });
-        setNotifications(notificationsRes.data);
+        const notifData = Array.isArray(notificationsRes) ? notificationsRes : (notificationsRes as { data?: Notification[] }).data || [];
+        setNotifications(notifData);
       } catch (error) {
         console.error('Failed to fetch notifications:', error);
       } finally {

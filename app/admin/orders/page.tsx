@@ -39,8 +39,10 @@ export default function AdminOrders() {
           ordersApi.list({}),
           warehousesApi.list({}),
         ]);
-        setOrders(ordersRes.data);
-        setWarehouses(warehousesRes.data);
+        const ordersData = Array.isArray(ordersRes) ? ordersRes : (ordersRes as { data?: Order[] }).data || [];
+        const warehousesData = Array.isArray(warehousesRes) ? warehousesRes : (warehousesRes as { data?: Warehouse[] }).data || [];
+        setOrders(ordersData);
+        setWarehouses(warehousesData);
       } catch (error) {
         console.error('Failed to fetch orders:', error);
       } finally {

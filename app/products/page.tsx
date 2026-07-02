@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Filter, Grid2x2, List, ChevronRight, SlidersHorizontal, X, Package } from 'lucide-react';
+import { Filter, Grid2x2, List, ChevronRight, SlidersHorizontal, X, Package, Star } from 'lucide-react';
 import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
 import ProductCard from '@/components/product/product-card';
@@ -45,7 +45,8 @@ export default function ProductsPage() {
         }
 
         let res = await productsApi.list(params);
-        let list = res.data;
+        // Handle both { data: [...] } and direct array responses
+        let list = Array.isArray(res) ? res : (res as { data?: Product[] }).data || [];
 
         // Apply client-side filters
         list = list.filter((p) => p.final_price >= priceRange[0] && p.final_price <= priceRange[1]);
@@ -122,7 +123,11 @@ export default function ProductsPage() {
                 selectedRating === r ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'
               }`}
             >
-              <span className="text-yellow-400">{'★'.repeat(r)}{'☆'.repeat(5 - r)}</span>
+              <span className="flex text-yellow-400">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className={`w-4 h-4 ${i < r ? 'fill-yellow-400' : ''}`} />
+                  ))}
+                </span>
               <span className="text-xs text-gray-500">& up</span>
             </button>
           ))}

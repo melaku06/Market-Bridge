@@ -68,7 +68,7 @@ export default function SecurityPage() {
               </div>
             </div>
             <button type="submit" disabled={saving} className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-sm transition-colors">
-              {saved ? '✓ Password Updated' : saving ? 'Updating...' : 'Update Password'}
+              {saved ? 'Password Updated' : saving ? 'Updating...' : 'Update Password'}
             </button>
           </form>
 

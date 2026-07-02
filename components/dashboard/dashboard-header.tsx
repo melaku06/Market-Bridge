@@ -2,10 +2,24 @@
 
 import Link from 'next/link';
 import { Search, Bell, ShoppingCart, ShoppingBag, ChevronDown } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { notificationsApi } from '@/lib/api';
 
 export default function DashboardHeader() {
-  const [notifOpen, setNotifOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    async function fetchUnreadCount() {
+      try {
+        const res = await notificationsApi.list({ user_id: 'usr-001' });
+        const notifications = Array.isArray(res) ? res : (res as { data?: { read: boolean }[] }).data || [];
+        setUnreadCount(notifications.filter((n: { read: boolean }) => !n.read).length);
+      } catch (error) {
+        console.error('Failed to fetch notifications:', error);
+      }
+    }
+    fetchUnreadCount();
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
@@ -38,13 +52,16 @@ export default function DashboardHeader() {
             </button>
 
             {/* Bell */}
-            <button
-              onClick={() => setNotifOpen(!notifOpen)}
-              className="relative p-2 rounded-lg hover:bg-gray-50 text-gray-500 transition-colors"
-            >
-              <Bell className="w-5 h-5" />
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">3</span>
-            </button>
+            <Link href="/dashboard/notifications">
+              <button className="relative p-2 rounded-lg hover:bg-gray-50 text-gray-500 transition-colors">
+                <Bell className="w-5 h-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </button>
+            </Link>
 
             {/* User */}
             <button className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-xl hover:bg-gray-50 transition-colors">
