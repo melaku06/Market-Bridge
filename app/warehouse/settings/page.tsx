@@ -10,7 +10,7 @@ export default function WarehouseSettings() {
     stockAlerts: true,
     marketingEmails: false,
     language: 'en',
-    timezone: 'America/New_York',
+    timezone: 'Africa/Addis_Ababa',
     twoFactorAuth: false,
   });
 
@@ -118,10 +118,11 @@ export default function WarehouseSettings() {
               onChange={(e) => setSettings({ ...settings, timezone: e.target.value })}
               className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
+              <option value="Africa/Addis_Ababa">East Africa Time (EAT)</option>
+              <option value="Europe/London">GMT / London</option>
+              <option value="Europe/Paris">Central European Time (CET)</option>
+              <option value="Asia/Dubai">Gulf Standard Time (GST)</option>
               <option value="America/New_York">Eastern Time (ET)</option>
-              <option value="America/Chicago">Central Time (CT)</option>
-              <option value="America/Denver">Mountain Time (MT)</option>
-              <option value="America/Los_Angeles">Pacific Time (PT)</option>
             </select>
           </div>
         </div>
