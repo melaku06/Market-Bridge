@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff, ShoppingBag, Shield, Truck, RotateCcw, Clock } from 'lucide-react';
@@ -16,8 +16,13 @@ export default function LoginPage() {
   const { login, isLoading, error, clearError, isAuthenticated, user } = useAuthStore();
 
   // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      router.push(getDashboardPath(user.role));
+    }
+  }, [isAuthenticated, user, router]);
+
   if (isAuthenticated && user) {
-    router.push(getDashboardPath(user.role));
     return null;
   }
 

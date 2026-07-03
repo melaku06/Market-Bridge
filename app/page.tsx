@@ -2,16 +2,18 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ChevronRight, Send, Star, Truck, RotateCcw, Shield, Headphones } from 'lucide-react';
+import { ChevronRight, Send, Star, Truck, RotateCcw, Shield, Headphones, ArrowRight } from 'lucide-react';
 import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
-import ProductCard from '@/components/product/product-card';
 import { supabase } from '@/lib/supabase/client';
+import { useAuth } from '@/components/auth/auth-provider';
 
 export default function HomePage() {
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const { isAuthenticated, user } = useAuth();
 
   useEffect(() => {
     async function fetchData() {
@@ -84,15 +86,17 @@ export default function HomePage() {
                 </p>
                 <div className="flex gap-3 flex-wrap">
                   <Link href="/products">
-                    <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-medium text-sm transition-colors">
-                      Shop Now
+                    <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-medium text-sm transition-colors flex items-center gap-2">
+                      Shop Now <ArrowRight className="w-4 h-4" />
                     </button>
                   </Link>
-                  <Link href="/register">
-                    <button className="border border-white/30 text-white hover:bg-white/10 px-6 py-2.5 rounded-lg font-medium text-sm transition-colors">
-                      Become a Seller
-                    </button>
-                  </Link>
+                  {!isAuthenticated && (
+                    <Link href="/register">
+                      <button className="border border-white/30 text-white hover:bg-white/10 px-6 py-2.5 rounded-lg font-medium text-sm transition-colors">
+                        Become a Seller
+                      </button>
+                    </Link>
+                  )}
                 </div>
               </div>
               <div className="hidden lg:block absolute right-16 top-1/2 -translate-y-1/2">
@@ -170,6 +174,13 @@ export default function HomePage() {
             {products.length === 0 ? (
               <div className="text-center py-12 bg-white rounded-xl border border-gray-100">
                 <p className="text-gray-500">No products available yet.</p>
+                {!isAuthenticated && (
+                  <Link href="/register">
+                    <button className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
+                      Register as a Seller
+                    </button>
+                  </Link>
+                )}
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -182,19 +193,31 @@ export default function HomePage() {
                           alt={product.name}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
+                        {product.discount_percent > 0 && (
+                          <span className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                            -{product.discount_percent}%
+                          </span>
+                        )}
                       </div>
                       <div className="p-3">
                         <p className="text-xs text-blue-600 font-medium mb-1">
-                          {product.categories?.name || 'General'}
+                          {product.warehouses?.name || 'Verified Seller'}
                         </p>
                         <h3 className="text-sm font-medium text-gray-900 line-clamp-2 mb-1">{product.name}</h3>
                         <div className="flex items-center gap-1 mb-2">
                           <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-                          <span className="text-xs text-gray-500">{product.rating || 0}</span>
+                          <span className="text-xs text-gray-500">{product.rating || 0} ({product.review_count || 0})</span>
                         </div>
-                        <p className="text-sm font-bold text-gray-900">
-                          {formatPrice(product.base_price * (1 + (product.margin_percent || 15) / 100) * (1 - (product.discount_percent || 0) / 100))}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-bold text-gray-900">
+                            {formatPrice(product.base_price * (1 + (product.margin_percent || 15) / 100) * (1 - (product.discount_percent || 0) / 100))}
+                          </p>
+                          {product.discount_percent > 0 && (
+                            <p className="text-xs text-gray-400 line-through">
+                              {formatPrice(product.base_price * (1 + (product.margin_percent || 15) / 100))}
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </Link>
@@ -204,28 +227,55 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Telegram Banner */}
-        <section className="py-10 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="rounded-2xl bg-gradient-to-br from-blue-700 to-blue-900 p-8 md:p-12 flex flex-col md:flex-row items-center gap-6">
-              <div className="flex-1">
-                <h2 className="text-2xl font-bold text-white mb-2">Join Our Community</h2>
-                <p className="text-blue-200 text-sm mb-5">
-                  Follow us on Telegram for exclusive deals<br className="hidden md:block" /> and new product updates.
-                </p>
-                <a href="#" className="inline-flex items-center gap-2 bg-white text-blue-700 hover:bg-blue-50 px-6 py-2.5 rounded-lg font-medium text-sm transition-colors">
-                  <Send className="w-4 h-4" />
-                  Join Telegram Channel
-                </a>
-              </div>
-              <div className="hidden md:flex items-center justify-center">
-                <div className="w-32 h-32 bg-white/10 rounded-2xl flex items-center justify-center">
-                  <Send className="w-16 h-16 text-white/60" />
+        {/* CTA Section - Show differently based on auth status */}
+        {!isAuthenticated ? (
+          <section className="py-10 bg-white">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="rounded-2xl bg-gradient-to-br from-blue-700 to-blue-900 p-8 md:p-12 flex flex-col md:flex-row items-center gap-6">
+                <div className="flex-1">
+                  <h2 className="text-2xl font-bold text-white mb-2">Start Selling on MarketBridge</h2>
+                  <p className="text-blue-200 text-sm mb-5">
+                    Join thousands of sellers and reach customers across Ethiopia.<br className="hidden md:block" /> Create your free account today.
+                  </p>
+                  <div className="flex gap-3 flex-wrap">
+                    <Link href="/register">
+                      <button className="bg-white text-blue-700 hover:bg-blue-50 px-6 py-2.5 rounded-lg font-medium text-sm transition-colors">
+                        Create Seller Account
+                      </button>
+                    </Link>
+                    <Link href="/register">
+                      <button className="border border-white/30 text-white hover:bg-white/10 px-6 py-2.5 rounded-lg font-medium text-sm transition-colors">
+                        Shop as Customer
+                      </button>
+                    </Link>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        ) : (
+          <section className="py-10 bg-white">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="rounded-2xl bg-gradient-to-br from-blue-700 to-blue-900 p-8 md:p-12 flex flex-col md:flex-row items-center gap-6">
+                <div className="flex-1">
+                  <h2 className="text-2xl font-bold text-white mb-2">Join Our Community</h2>
+                  <p className="text-blue-200 text-sm mb-5">
+                    Follow us on Telegram for exclusive deals<br className="hidden md:block" /> and new product updates.
+                  </p>
+                  <a href="#" className="inline-flex items-center gap-2 bg-white text-blue-700 hover:bg-blue-50 px-6 py-2.5 rounded-lg font-medium text-sm transition-colors">
+                    <Send className="w-4 h-4" />
+                    Join Telegram Channel
+                  </a>
+                </div>
+                <div className="hidden md:flex items-center justify-center">
+                  <div className="w-32 h-32 bg-white/10 rounded-2xl flex items-center justify-center">
+                    <Send className="w-16 h-16 text-white/60" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Trending Products */}
         <section className="py-10 bg-gray-50">
@@ -246,19 +296,31 @@ export default function HomePage() {
                         alt={product.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
+                      {product.discount_percent > 0 && (
+                        <span className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                          -{product.discount_percent}%
+                        </span>
+                      )}
                     </div>
                     <div className="p-3">
                       <p className="text-xs text-blue-600 font-medium mb-1">
-                        {product.categories?.name || 'General'}
+                        {product.warehouses?.name || 'Verified Seller'}
                       </p>
                       <h3 className="text-sm font-medium text-gray-900 line-clamp-2 mb-1">{product.name}</h3>
                       <div className="flex items-center gap-1 mb-2">
                         <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-                        <span className="text-xs text-gray-500">{product.rating || 0}</span>
+                        <span className="text-xs text-gray-500">{product.rating || 0} ({product.review_count || 0})</span>
                       </div>
-                      <p className="text-sm font-bold text-gray-900">
-                        {formatPrice(product.base_price * (1 + (product.margin_percent || 15) / 100) * (1 - (product.discount_percent || 0) / 100))}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-bold text-gray-900">
+                          {formatPrice(product.base_price * (1 + (product.margin_percent || 15) / 100) * (1 - (product.discount_percent || 0) / 100))}
+                        </p>
+                        {product.discount_percent > 0 && (
+                          <p className="text-xs text-gray-400 line-through">
+                            {formatPrice(product.base_price * (1 + (product.margin_percent || 15) / 100))}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </Link>

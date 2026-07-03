@@ -2,7 +2,8 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { supabase } from '@/lib/supabase/client';
 import type { AuthUser, UserRole } from '@/lib/auth/types';
-import { getCurrentUser, getDashboardPath, hasRole } from '@/lib/auth/types';
+import { getDashboardPath, hasRole } from '@/lib/auth/types';
+import { toast } from '@/hooks/use-toast';
 
 interface AuthState {
   user: AuthUser | null;
@@ -47,30 +48,72 @@ export const useAuthStore = create<AuthState>()(
           });
 
           if (error) {
-            set({
-              error: error.message === 'Invalid login credentials'
-                ? 'Invalid email or password'
-                : error.message,
-              isLoading: false,
+            const message = error.message === 'Invalid login credentials'
+              ? 'Invalid email or password'
+              : error.message;
+            set({ error: message, isLoading: false });
+            toast({
+              title: 'Login Failed',
+              description: message,
+              variant: 'destructive',
             });
             return false;
           }
 
           if (data.user) {
-            const user = await getCurrentUser();
-            if (user) {
-              if (!user.is_active) {
+            // Get profile
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', data.user.id)
+              .maybeSingle();
+
+            if (profile) {
+              if (!profile.is_active) {
+                await supabase.auth.signOut();
                 set({
-                  error: 'Your account has been deactivated. Please contact support.',
+                  error: 'Your account has been deactivated',
                   isLoading: false,
                 });
-                await supabase.auth.signOut();
+                toast({
+                  title: 'Account Deactivated',
+                  description: 'Please contact support.',
+                  variant: 'destructive',
+                });
                 return false;
               }
+
+              let warehouse = null;
+              if (profile.warehouse_id) {
+                const { data: wh } = await supabase
+                  .from('warehouses')
+                  .select('*')
+                  .eq('id', profile.warehouse_id)
+                  .maybeSingle();
+                warehouse = wh;
+              }
+
+              const user: AuthUser = {
+                id: profile.id,
+                email: profile.email,
+                name: profile.name,
+                phone: profile.phone || undefined,
+                avatar_url: profile.avatar_url || undefined,
+                role: profile.role,
+                warehouse_id: profile.warehouse_id || undefined,
+                warehouse: warehouse || undefined,
+                is_active: profile.is_active,
+              };
+
               set({
                 user,
                 isAuthenticated: true,
                 isLoading: false,
+              });
+
+              toast({
+                title: 'Welcome back!',
+                description: `Logged in as ${user.name}`,
               });
               return true;
             }
@@ -79,9 +122,12 @@ export const useAuthStore = create<AuthState>()(
           set({ isLoading: false });
           return false;
         } catch (err) {
-          set({
-            error: err instanceof Error ? err.message : 'Login failed',
-            isLoading: false,
+          const message = err instanceof Error ? err.message : 'Login failed';
+          set({ error: message, isLoading: false });
+          toast({
+            title: 'Login Failed',
+            description: message,
+            variant: 'destructive',
           });
           return false;
         }
@@ -102,32 +148,55 @@ export const useAuthStore = create<AuthState>()(
           });
 
           if (error) {
-            if (error.message.includes('already registered')) {
-              set({
-                error: 'An account with this email already exists',
-                isLoading: false,
-              });
-              return false;
+            let message = error.message;
+            if (message.includes('already registered')) {
+              message = 'An account with this email already exists';
             }
-            set({ error: error.message, isLoading: false });
+            set({ error: message, isLoading: false });
+            toast({
+              title: 'Registration Failed',
+              description: message,
+              variant: 'destructive',
+            });
             return false;
           }
 
           if (data.user) {
-            // Wait for profile to be created by trigger
+            // Wait for profile creation
             let attempts = 0;
-            let user: AuthUser | null = null;
-            while (attempts < 10 && !user) {
-              await new Promise(resolve => setTimeout(resolve, 100));
-              user = await getCurrentUser();
+            let profile = null;
+            while (attempts < 10 && !profile) {
+              await new Promise(resolve => setTimeout(resolve, 200));
+              const { data: p } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', data.user.id)
+                .maybeSingle();
+              profile = p;
               attempts++;
             }
 
-            if (user) {
+            if (profile) {
+              const user: AuthUser = {
+                id: profile.id,
+                email: profile.email,
+                name: profile.name,
+                phone: profile.phone || undefined,
+                avatar_url: profile.avatar_url || undefined,
+                role: profile.role,
+                warehouse_id: profile.warehouse_id || undefined,
+                is_active: profile.is_active,
+              };
+
               set({
                 user,
                 isAuthenticated: true,
                 isLoading: false,
+              });
+
+              toast({
+                title: 'Account Created!',
+                description: `Welcome to MarketBridge, ${user.name}!`,
               });
               return true;
             }
@@ -136,31 +205,92 @@ export const useAuthStore = create<AuthState>()(
           set({ isLoading: false });
           return false;
         } catch (err) {
-          set({
-            error: err instanceof Error ? err.message : 'Registration failed',
-            isLoading: false,
+          const message = err instanceof Error ? err.message : 'Registration failed';
+          set({ error: message, isLoading: false });
+          toast({
+            title: 'Registration Failed',
+            description: message,
+            variant: 'destructive',
           });
           return false;
         }
       },
 
       logout: async () => {
-        await supabase.auth.signOut();
-        set({
-          user: null,
-          isAuthenticated: false,
-          error: null,
-        });
+        try {
+          await supabase.auth.signOut();
+          set({
+            user: null,
+            isAuthenticated: false,
+            error: null,
+          });
+          toast({
+            title: 'Logged out',
+            description: 'See you again soon!',
+          });
+        } catch {
+          toast({
+            title: 'Error',
+            description: 'Failed to logout',
+            variant: 'destructive',
+          });
+        }
       },
 
       fetchUser: async () => {
         try {
-          const user = await getCurrentUser();
-          set({
-            user,
-            isAuthenticated: !!user,
-            isInitialized: true,
-          });
+          const { data: { user: authUser } } = await supabase.auth.getUser();
+
+          if (!authUser) {
+            set({
+              user: null,
+              isAuthenticated: false,
+              isInitialized: true,
+            });
+            return;
+          }
+
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', authUser.id)
+            .maybeSingle();
+
+          if (profile) {
+            let warehouse = null;
+            if (profile.warehouse_id) {
+              const { data: wh } = await supabase
+                .from('warehouses')
+                .select('*')
+                .eq('id', profile.warehouse_id)
+                .maybeSingle();
+              warehouse = wh;
+            }
+
+            const user: AuthUser = {
+              id: profile.id,
+              email: profile.email,
+              name: profile.name,
+              phone: profile.phone || undefined,
+              avatar_url: profile.avatar_url || undefined,
+              role: profile.role,
+              warehouse_id: profile.warehouse_id || undefined,
+              warehouse: warehouse || undefined,
+              is_active: profile.is_active,
+            };
+
+            set({
+              user,
+              isAuthenticated: true,
+              isInitialized: true,
+            });
+          } else {
+            set({
+              user: null,
+              isAuthenticated: false,
+              isInitialized: true,
+            });
+          }
         } catch {
           set({
             user: null,
@@ -183,16 +313,29 @@ export const useAuthStore = create<AuthState>()(
 
           if (error) {
             set({ error: error.message, isLoading: false });
+            toast({
+              title: 'Update Failed',
+              description: error.message,
+              variant: 'destructive',
+            });
             return false;
           }
 
-          const updatedUser = await getCurrentUser();
-          set({ user: updatedUser, isLoading: false });
+          // Refresh user
+          await get().fetchUser();
+          set({ isLoading: false });
+          toast({
+            title: 'Profile Updated',
+            description: 'Your profile has been updated successfully.',
+          });
           return true;
         } catch (err) {
-          set({
-            error: err instanceof Error ? err.message : 'Update failed',
-            isLoading: false,
+          const message = err instanceof Error ? err.message : 'Update failed';
+          set({ error: message, isLoading: false });
+          toast({
+            title: 'Update Failed',
+            description: message,
+            variant: 'destructive',
           });
           return false;
         }

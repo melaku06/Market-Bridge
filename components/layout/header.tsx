@@ -13,31 +13,56 @@ import {
   Bell,
   Globe,
   ShoppingBag,
+  LogOut,
+  Settings,
+  Package,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { categories } from '@/lib/data';
-import { notificationsApi } from '@/lib/api';
+import { useAuth } from '@/components/auth/auth-provider';
+import { useCartStore } from '@/stores/cart-store';
+import { useWishlistStore } from '@/stores/wishlist-store';
+import { useNotificationsStore } from '@/stores/notifications-store';
+import { supabase } from '@/lib/supabase/client';
 
 export default function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [categories, setCategories] = useState<any[]>([]);
+
+  const { user, isAuthenticated, isLoading } = useAuth();
+  const { totalItems } = useCartStore();
+  const { totalItems: wishlistCount } = useWishlistStore();
+  const { unreadCount } = useNotificationsStore();
 
   useEffect(() => {
-    async function fetchUnreadCount() {
-      try {
-        const res = await notificationsApi.list({ user_id: 'usr-001' });
-        const notifications = Array.isArray(res) ? res : (res as { data?: { read: boolean }[] }).data || [];
-        setUnreadCount(notifications.filter((n: { read: boolean }) => !n.read).length);
-      } catch (error) {
-        console.error('Failed to fetch notifications:', error);
-      }
+    async function fetchCategories() {
+      const { data } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('is_active', true)
+        .limit(10);
+      setCategories(data || []);
     }
-    fetchUnreadCount();
+    fetchCategories();
   }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    window.location.href = '/';
+  };
+
+  const getDashboardLink = () => {
+    if (!user) return '/login';
+    switch (user.role) {
+      case 'admin':
+        return '/admin';
+      case 'warehouse':
+        return '/warehouse';
+      default:
+        return '/dashboard';
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
@@ -65,9 +90,8 @@ export default function Header() {
                     href={`/categories/${cat.slug}`}
                     className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-blue-50 hover:text-blue-600 text-sm text-gray-700 transition-colors"
                   >
-                    <span>{cat.icon}</span>
+                    <span>📦</span>
                     <span>{cat.name}</span>
-                    <span className="ml-auto text-xs text-gray-400">{cat.count}</span>
                   </Link>
                 ))}
               </div>
@@ -110,37 +134,110 @@ export default function Header() {
               <ChevronDown className="w-3 h-3" />
             </button>
 
-            {/* Notifications */}
-            <Link href="/dashboard/notifications">
-              <button className="p-2 rounded-md hover:bg-gray-50 transition-colors text-gray-600 hover:text-blue-600 relative">
-                <Bell className="w-5 h-5" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
-                    {unreadCount > 9 ? '9+' : unreadCount}
+            {/* Notifications - Only for authenticated users */}
+            {isAuthenticated && (
+              <Link href={`${getDashboardLink()}/notifications`}>
+                <button className="p-2 rounded-md hover:bg-gray-50 transition-colors text-gray-600 hover:text-blue-600 relative">
+                  <Bell className="w-5 h-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+              </Link>
+            )}
+
+            {/* User / Auth */}
+            {isLoading ? (
+              <div className="w-8 h-8 rounded-full bg-gray-100 animate-pulse" />
+            ) : isAuthenticated && user ? (
+              <div className="relative group">
+                <button className="flex items-center gap-2 p-2 rounded-md hover:bg-gray-50 transition-colors">
+                  <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center">
+                    <span className="text-sm font-medium text-blue-600">
+                      {user.name?.charAt(0).toUpperCase() || 'U'}
+                    </span>
+                  </div>
+                  <span className="hidden md:block text-sm font-medium text-gray-700">
+                    {user.name?.split(' ')[0]}
                   </span>
-                )}
-              </button>
-            </Link>
+                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                </button>
 
-            {/* User */}
-            <Link href="/login">
-              <button className="p-2 rounded-md hover:bg-gray-50 transition-colors text-gray-600 hover:text-blue-600">
-                <User className="w-5 h-5" />
-              </button>
-            </Link>
+                {/* Dropdown */}
+                <div className="absolute top-full right-0 mt-1 w-56 bg-white rounded-xl shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <div className="p-2">
+                    <div className="px-3 py-2 border-b border-gray-100 mb-1">
+                      <p className="text-sm font-medium text-gray-900">{user.name}</p>
+                      <p className="text-xs text-gray-500">{user.email}</p>
+                      <span className="inline-block mt-1 text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full capitalize">
+                        {user.role}
+                      </span>
+                    </div>
 
-            {/* Wishlist */}
-            <Link href="/wishlist">
-              <button className="p-2 rounded-md hover:bg-gray-50 transition-colors text-gray-600 hover:text-blue-600 relative">
-                <Heart className="w-5 h-5" />
-              </button>
-            </Link>
+                    <Link
+                      href={getDashboardLink()}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-blue-50 hover:text-blue-600 text-sm text-gray-700 transition-colors"
+                    >
+                      <Package className="w-4 h-4" />
+                      Dashboard
+                    </Link>
 
-            {/* Cart */}
-            <button className="p-2 rounded-md hover:bg-gray-50 transition-colors text-gray-600 hover:text-blue-600 relative">
-              <ShoppingCart className="w-5 h-5" />
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-blue-600 text-white text-xs rounded-full flex items-center justify-center font-medium">3</span>
-            </button>
+                    <Link
+                      href={`${getDashboardLink()}/profile`}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-blue-50 hover:text-blue-600 text-sm text-gray-700 transition-colors"
+                    >
+                      <Settings className="w-4 h-4" />
+                      Settings
+                    </Link>
+
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-red-50 hover:text-red-600 text-sm text-gray-700 transition-colors"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Logout
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <Link href="/login">
+                <button className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-50 transition-colors text-gray-600 hover:text-blue-600">
+                  <User className="w-5 h-5" />
+                  <span className="hidden sm:block text-sm font-medium">Login</span>
+                </button>
+              </Link>
+            )}
+
+            {/* Wishlist - Only for customers */}
+            {isAuthenticated && user?.role === 'customer' && (
+              <Link href="/wishlist">
+                <button className="p-2 rounded-md hover:bg-gray-50 transition-colors text-gray-600 hover:text-blue-600 relative">
+                  <Heart className="w-5 h-5" />
+                  {wishlistCount() > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
+                      {wishlistCount() > 9 ? '9+' : wishlistCount()}
+                    </span>
+                  )}
+                </button>
+              </Link>
+            )}
+
+            {/* Cart - Only for customers */}
+            {isAuthenticated && user?.role === 'customer' && (
+              <Link href="/cart">
+                <button className="p-2 rounded-md hover:bg-gray-50 transition-colors text-gray-600 hover:text-blue-600 relative">
+                  <ShoppingCart className="w-5 h-5" />
+                  {totalItems() > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-blue-600 text-white text-xs rounded-full flex items-center justify-center font-medium">
+                      {totalItems() > 9 ? '9+' : totalItems()}
+                    </span>
+                  )}
+                </button>
+              </Link>
+            )}
 
             {/* Mobile Menu */}
             <button
@@ -164,10 +261,44 @@ export default function Header() {
                 className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-blue-50 text-sm text-gray-700"
                 onClick={() => setMobileOpen(false)}
               >
-                <span>{cat.icon}</span>
+                <span>📦</span>
                 <span>{cat.name}</span>
               </Link>
             ))}
+
+            {isAuthenticated ? (
+              <>
+                <div className="border-t border-gray-100 my-2 pt-2">
+                  <p className="px-3 text-xs text-gray-500 mb-2">Account</p>
+                  <Link
+                    href={getDashboardLink()}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-blue-50 text-sm text-gray-700"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    <Package className="w-4 h-4" />
+                    Dashboard
+                  </Link>
+                  <button
+                    onClick={() => { handleLogout(); setMobileOpen(false); }}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-red-50 text-sm text-red-600"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Logout
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="border-t border-gray-100 my-2 pt-2">
+                <Link
+                  href="/login"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-blue-50 text-sm text-blue-600 font-medium"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  <User className="w-4 h-4" />
+                  Login / Register
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       )}
