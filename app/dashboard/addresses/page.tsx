@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Plus, Edit2, Trash2, Home, Briefcase, MapPin, Info, CheckCircle, X, Save } from 'lucide-react';
 import { useAddressesStore } from '@/stores';
-import type { Address } from '@/lib/mock-db';
+import type { Address } from '@/lib/types';
 
 const LABEL_ICONS: Record<string, React.ReactNode> = {
   Home: <Home className="w-4 h-4" />,

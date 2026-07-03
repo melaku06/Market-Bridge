@@ -1,5 +1,6 @@
-// Prisma Schema for MarketBridge
-// Works with existing Supabase database structure
+// MarketBridge Database Schema
+// Enterprise-grade multi-vendor marketplace platform
+// PostgreSQL with Prisma ORM
 
 generator client {
   provider = "prisma-client-js"
@@ -11,126 +12,570 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// User profiles - id references auth.users.id in Supabase
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+/// User roles for RBAC
+enum UserRole {
+  customer
+  warehouse
+  admin
+}
+
+/// Account status
+enum UserStatus {
+  active
+  suspended
+  blocked
+}
+
+/// Warehouse account status
+enum WarehouseStatus {
+  pending_approval
+  active
+  suspended
+  deactivated
+}
+
+/// Product visibility lifecycle
+enum ProductStatus {
+  draft
+  pending
+  published
+  archived
+  rejected
+}
+
+/// Order processing state
+enum OrderStatus {
+  pending
+  confirmed
+  processing
+  shipped
+  delivered
+  cancelled
+}
+
+/// Payment tracking
+enum PaymentStatus {
+  pending
+  paid
+  failed
+  refunded
+  cod
+}
+
+/// Inventory stock levels
+enum StockStatus {
+  in_stock
+  low_stock
+  out_of_stock
+}
+
+/// Product request fulfillment
+enum RequestStatus {
+  pending
+  in_review
+  found
+  not_available
+}
+
+/// Notification categories
+enum NotificationType {
+  order
+  product
+  system
+  promotion
+  account
+  inventory
+}
+
+/// Notification urgency
+enum NotificationPriority {
+  high
+  medium
+  low
+}
+
+/// Marketing content types
+enum PromotionType {
+  banner
+  promotion
+  flash_deal
+  coupon
+}
+
+/// Campaign active state
+enum PromotionStatus {
+  active
+  inactive
+  paused
+}
+
+/// Telegram post states
+enum PostStatus {
+  queued
+  sent
+  failed
+  retrying
+}
+
+// ============================================================================
+// USER MANAGEMENT
+// ============================================================================
+
+/// User profiles - extends Supabase auth or standalone auth
 model Profile {
-  id          String   @id
-  email       String   @unique
-  name        String
-  phone       String?
-  avatar_url  String?
-  role        String   @default("customer")
-  warehouse_id String?
-  is_active   Boolean  @default(true)
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  id            String       @id
+  email         String       @unique
+  name          String
+  phone         String?
+  avatar_url    String?
+  role          UserRole     @default(customer)
+  status        UserStatus   @default(active)
+  warehouse_id  String?
 
-  credentials UserCredential?
-  warehouse   Warehouse?   @relation(fields: [warehouse_id], references: [id])
+  credentials   UserCredential?
+  warehouse     Warehouse?        @relation(fields: [warehouse_id], references: [id], onDelete: SetNull)
+  addresses     Address[]
+  orders        Order[]
+  reviews       Review[]
+  wishlist      WishlistItem[]
+  requests      ProductRequest[]
+  notifications Notification[]
 
+  created_at    DateTime     @default(now())
+  updated_at    DateTime     @updatedAt
+
+  @@index([email])
+  @@index([role])
+  @@index([warehouse_id])
   @@map("profiles")
 }
 
-// User credentials for password authentication
+/// Password credentials (separate for security)
 model UserCredential {
-  user_id      String   @id
+  user_id       String   @id
   password_hash String
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
+  user          Profile  @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
-  user Profile @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
 
   @@map("user_credentials")
 }
 
-// Warehouse/Seller information
+// ============================================================================
+// WAREHOUSE / SELLER
+// ============================================================================
+
+/// Warehouse/Seller accounts
 model Warehouse {
-  id             String   @id @default(uuid())
-  name           String
-  owner_name     String
-  email          String   @unique
-  phone          String
-  address        String
-  city           String
-  country        String   @default("Ethiopia")
-  business_type  String?
-  bank_name      String?
-  bank_account   String?
-  tax_id         String?
-  status         String   @default("pending_approval")
-  member_since   DateTime @default(now())
-  created_at     DateTime @default(now())
-  updated_at     DateTime @updatedAt
+  id                String           @id @default(uuid())
+  name              String
+  owner_name        String
+  email             String           @unique
+  phone             String
+  address           String
+  city              String
+  country           String           @default("Ethiopia")
+  business_type     String?
+  bank_name         String?
+  bank_account      String?
+  tax_id            String?
+  status            WarehouseStatus  @default(pending_approval)
+  member_since      DateTime         @default(now())
 
-  profiles Profile[]
+  profiles          Profile[]
+  products          Product[]
+  inventory         Inventory[]
+  orders            Order[]
 
+  created_at        DateTime         @default(now())
+  updated_at        DateTime         @updatedAt
+
+  @@index([email])
+  @@index([status])
   @@map("warehouses")
 }
 
-// Product categories
-model Category {
-  id          String   @id @default(uuid())
-  name        String   @unique
-  slug        String   @unique
-  description String?
-  image_url   String?
-  parent_id   String?
-  is_active   Boolean  @default(true)
-  created_at  DateTime @default(now())
+// ============================================================================
+// CATALOG
+// ============================================================================
 
+/// Product categories with hierarchy
+model Category {
+  id              String    @id @default(uuid())
+  name            String    @unique
+  slug            String    @unique
+  description    String?
+  image_url      String?
+  parent_id      String?
+  is_active      Boolean   @default(true)
+
+  parent         Category?  @relation("CategoryHierarchy", fields: [parent_id], references: [id], onDelete: SetNull)
+  children       Category[] @relation("CategoryHierarchy")
+  products       Product[]
+  margin_rules   MarginRule[]
+
+  created_at     DateTime   @default(now())
+
+  @@index([slug])
+  @@index([parent_id])
+  @@index([is_active])
   @@map("categories")
 }
 
-// Products
+/// Product catalog
 model Product {
-  id                String   @id @default(uuid())
+  id                String        @id @default(uuid())
   name              String
-  slug              String   @unique
+  slug              String        @unique
   description       String?
   short_description String?
   warehouse_id      String
   category_id       String?
-  base_price        Decimal  @db.Decimal(15, 2)
-  margin_percent    Decimal  @default(15) @db.Decimal(5, 2)
-  discount_percent  Decimal  @default(0) @db.Decimal(5, 2)
-  images            String[] @default([])
-  rating            Decimal  @default(0) @db.Decimal(2, 1)
-  review_count      Int      @default(0)
-  sold_count        Int      @default(0)
-  status            String   @default("pending")
-  tags              String[] @default([])
+  base_price        Decimal       @db.Decimal(15, 2)
+  margin_percent    Decimal       @default(15) @db.Decimal(5, 2)
+  discount_percent  Decimal       @default(0) @db.Decimal(5, 2)
+  images            String[]      @default([])
+  rating            Decimal       @default(0) @db.Decimal(2, 1)
+  review_count      Int           @default(0)
+  sold_count        Int           @default(0)
+  status            ProductStatus @default(pending)
+  tags              String[]      @default([])
   brand             String?
-  sku               String?  @unique
+  sku               String?       @unique
   weight            String?
-  colors            String[] @default([])
-  created_at        DateTime @default(now())
-  updated_at        DateTime @updatedAt
+  colors            String[]      @default([])
 
+  warehouse         Warehouse     @relation(fields: [warehouse_id], references: [id], onDelete: Cascade)
+  category          Category?     @relation(fields: [category_id], references: [id], onDelete: SetNull)
+  inventory         Inventory[]
+  reviews           Review[]
+  wishlist          WishlistItem[]
+  telegram_posts    TelegramPost[]
+
+  created_at        DateTime      @default(now())
+  updated_at        DateTime      @updatedAt
+
+  @@index([slug])
+  @@index([warehouse_id])
+  @@index([category_id])
+  @@index([status])
+  @@index([sku])
   @@map("products")
 }
 
-// Inventory tracking
+/// Stock tracking per warehouse
 model Inventory {
-  id           String   @id @default(uuid())
-  warehouse_id String
-  product_id   String
-  quantity     Int      @default(0)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
+  id                  String     @id @default(uuid())
+  warehouse_id        String
+  product_id          String
+  quantity            Int        @default(0)
+  reserved_quantity   Int        @default(0)
+  low_stock_threshold Int       @default(10)
+  status              StockStatus @default(in_stock)
+
+  warehouse          Warehouse  @relation(fields: [warehouse_id], references: [id], onDelete: Cascade)
+  product            Product    @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  created_at          DateTime   @default(now())
+  updated_at          DateTime   @updatedAt
 
   @@unique([warehouse_id, product_id])
+  @@index([warehouse_id])
+  @@index([product_id])
+  @@index([status])
   @@map("inventory")
 }
 
-// User notifications
-model Notification {
-  id          String   @id @default(uuid())
-  user_id     String
-  type        String
-  title       String
-  message     String
-  data        String?
-  is_read     Boolean  @default(false)
-  created_at  DateTime @default(now())
+// ============================================================================
+// ORDERS
+// ============================================================================
 
+/// Customer orders
+model Order {
+  id               String           @id @default(cuid())
+  order_number     String           @unique
+  customer_id      String
+  warehouse_id     String
+
+  customer_name    String
+  customer_email   String
+  customer_phone   String?
+
+  subtotal         Decimal          @db.Decimal(15, 2)
+  shipping_fee     Decimal          @default(0) @db.Decimal(15, 2)
+  discount         Decimal          @default(0) @db.Decimal(15, 2)
+  tax              Decimal          @default(0) @db.Decimal(15, 2)
+  total            Decimal          @db.Decimal(15, 2)
+
+  shipping_address String
+  shipping_city    String
+  shipping_method  String
+
+  payment_method   String
+  payment_status   PaymentStatus    @default(pending)
+  status           OrderStatus      @default(pending)
+
+  tracking_number  String?
+  notes            String?
+
+  customer         Profile          @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+  warehouse        Warehouse        @relation(fields: [warehouse_id], references: [id], onDelete: Cascade)
+  items            OrderItem[]
+
+  created_at       DateTime         @default(now())
+  updated_at       DateTime         @updatedAt
+
+  @@index([order_number])
+  @@index([customer_id])
+  @@index([warehouse_id])
+  @@index([status])
+  @@index([payment_status])
+  @@index([created_at])
+  @@map("orders")
+}
+
+/// Order line items
+model OrderItem {
+  id           String   @id @default(uuid())
+  order_id     String
+  product_id   String
+  product_name String
+  product_image String?
+  quantity     Int
+  unit_price   Decimal  @db.Decimal(15, 2)
+  total_price  Decimal  @db.Decimal(15, 2)
+  color        String?
+  size         String?
+
+  order        Order    @relation(fields: [order_id], references: [id], onDelete: Cascade)
+
+  @@index([order_id])
+  @@index([product_id])
+  @@map("order_items")
+}
+
+/// Customer shipping addresses
+model Address {
+  id           String   @id @default(uuid())
+  customer_id  String
+  label        String   @default("Home")
+  recipient_name String
+  phone        String?
+  address      String
+  city         String
+  country      String   @default("Ethiopia")
+  is_default   Boolean  @default(false)
+
+  customer     Profile  @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+
+  created_at   DateTime @default(now())
+
+  @@index([customer_id])
+  @@map("addresses")
+}
+
+// ============================================================================
+// CUSTOMER ENGAGEMENT
+// ============================================================================
+
+/// Product reviews and ratings
+model Review {
+  id            String   @id @default(uuid())
+  customer_id   String
+  product_id    String
+  customer_name String
+  product_name  String
+  rating        Int
+  comment       String?
+  product_image String?
+
+  customer      Profile  @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+  product       Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  created_at    DateTime @default(now())
+
+  @@index([customer_id])
+  @@index([product_id])
+  @@index([rating])
+  @@map("reviews")
+}
+
+/// Customer wishlist
+model WishlistItem {
+  id           String   @id @default(uuid())
+  customer_id  String
+  product_id   String
+
+  customer     Profile  @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+  product      Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  created_at   DateTime @default(now())
+
+  @@unique([customer_id, product_id])
+  @@index([customer_id])
+  @@map("wishlist_items")
+}
+
+/// Product requests from customers
+model ProductRequest {
+  id             String         @id @default(uuid())
+  customer_id    String
+  customer_email String
+  product_name   String
+  description   String
+  category      String?
+  brand          String?
+  image_url      String?
+  status         RequestStatus  @default(pending)
+  admin_notes    String?
+
+  customer       Profile        @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+
+  created_at     DateTime       @default(now())
+
+  @@index([customer_id])
+  @@index([status])
+  @@map("product_requests")
+}
+
+// ============================================================================
+// NOTIFICATIONS
+// ============================================================================
+
+/// System notifications
+model Notification {
+  id           String             @id @default(uuid())
+  user_id      String
+  type         NotificationType
+  priority     NotificationPriority @default(medium)
+  title        String
+  message      String
+  data         String?
+  action_url   String?
+  is_read      Boolean            @default(false)
+
+  user         Profile            @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  created_at   DateTime           @default(now())
+
+  @@index([user_id])
+  @@index([is_read])
+  @@index([type])
   @@map("notifications")
+}
+
+// ============================================================================
+// ADMIN / MARKETING
+// ============================================================================
+
+/// Marketing promotions and banners
+model Promotion {
+  id              String          @id @default(uuid())
+  title           String
+  type            PromotionType   @default(banner)
+  image_url       String?
+  target_url      String?
+  location        String?
+  target_audience String         @default("All Users")
+  status          PromotionStatus @default(inactive)
+  start_date      DateTime?
+  end_date        DateTime?
+  impressions     Int            @default(0)
+  clicks          Int            @default(0)
+
+  created_at      DateTime       @default(now())
+  updated_at      DateTime       @updatedAt
+
+  @@index([type])
+  @@index([status])
+  @@map("promotions")
+}
+
+/// Category/Product margin rules
+model MarginRule {
+  id              String    @id @default(uuid())
+  category_id     String?
+  product_id      String?   @unique
+  category_name   String?
+  warehouse_margin Decimal  @db.Decimal(5, 2)
+  platform_margin Decimal  @db.Decimal(5, 2)
+  total_margin    Decimal  @db.Decimal(5, 2)
+  is_active       Boolean  @default(true)
+
+  category        Category? @relation(fields: [category_id], references: [id], onDelete: SetNull)
+
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  @@index([category_id])
+  @@index([is_active])
+  @@map("margin_rules")
+}
+
+/// Audit logging
+model AuditLog {
+  id           String   @id @default(uuid())
+  actor_id      String
+  actor_name    String
+  actor_role    String
+  action        String
+  entity_type   String
+  entity_id     String
+  before_state  String?
+  after_state   String?
+  ip_address    String?
+
+  created_at    DateTime @default(now())
+
+  @@index([actor_id])
+  @@index([entity_type])
+  @@index([entity_id])
+  @@index([action])
+  @@index([created_at])
+  @@map("audit_logs")
+}
+
+/// Telegram marketing posts
+model TelegramPost {
+  id           String     @id @default(uuid())
+  product_id   String
+  product_name String
+  channel      String
+  message      String
+  status       PostStatus @default(queued)
+  error        String?
+  sent_at      DateTime?
+
+  product      Product    @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  created_at   DateTime   @default(now())
+
+  @@index([product_id])
+  @@index([status])
+  @@map("telegram_posts")
+}
+
+/// Platform configuration (singleton)
+model SystemSettings {
+  id               String   @id @default(cuid())
+  site_name        String   @default("MarketBridge")
+  site_tagline     String   @default("Multi-Vendor Marketplace")
+  site_email       String   @default("support@marketbridge.com")
+  site_phone       String?
+  currency         String   @default("ETB")
+  timezone         String   @default("Africa/Addis_Ababa")
+  date_format      String   @default("DD/MM/YYYY")
+  time_format      String   @default("24 Hour")
+  items_per_page   Int      @default(10)
+  maintenance_mode Boolean  @default(false)
+  site_language    String   @default("English")
+
+  updated_at       DateTime @updatedAt
+
+  @@map("system_settings")
 }

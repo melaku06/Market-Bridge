@@ -73,6 +73,7 @@ npm start                # Start production server
 # Prisma
 npm run prisma:generate  # Generate Prisma Client
 npm run prisma:push      # Push schema changes to database
+npm run prisma:db:seed   # Seed demo data
 npm run prisma:studio    # Open Prisma Studio (database GUI)
 
 # Type Checking

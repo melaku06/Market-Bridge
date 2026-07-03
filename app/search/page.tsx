@@ -8,7 +8,7 @@ import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
 import ProductCard from '@/components/product/product-card';
 import { productsApi, categoriesApi } from '@/lib/api';
-import type { Product, Category } from '@/lib/mock-db';
+import type { Product, Category } from '@/lib/types';
 
 function SearchResults() {
   const searchParams = useSearchParams();

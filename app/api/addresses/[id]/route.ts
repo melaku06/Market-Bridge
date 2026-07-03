@@ -1,35 +1,69 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/mock-db';
+import { getAddressById, updateAddress, deleteAddress } from '@/lib/db-service';
+import { addressUpdateSchema } from '@/lib/validations/common';
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
-  const address = db.addresses.find((a) => a.id === params.id);
-  if (!address) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  return NextResponse.json({ data: address });
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const address = await getAddressById(id);
+
+    if (!address) {
+      return NextResponse.json({ error: 'Address not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ data: address });
+  } catch (error) {
+    console.error('Error fetching address:', error);
+    return NextResponse.json({ error: 'Failed to fetch address' }, { status: 500 });
+  }
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
-  const idx = db.addresses.findIndex((a) => a.id === params.id);
-  if (idx === -1) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const body = await request.json();
 
-  const body = await req.json();
-  const updated = { ...db.addresses[idx], ...body };
+    // Validate input
+    const result = addressUpdateSchema.safeParse(body);
+    if (!result.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: result.error.flatten() },
+        { status: 400 }
+      );
+    }
 
-  if (updated.is_default) {
-    db.addresses.forEach((a) => {
-      if (a.customer_id === updated.customer_id) a.is_default = false;
-    });
+    const address = await updateAddress(id, result.data);
+
+    return NextResponse.json({ data: address });
+  } catch (error) {
+    console.error('Error updating address:', error);
+    if ((error as any).code === 'P2025') {
+      return NextResponse.json({ error: 'Address not found' }, { status: 404 });
+    }
+    return NextResponse.json({ error: 'Failed to update address' }, { status: 500 });
   }
-
-  db.addresses[idx] = updated;
-  return NextResponse.json({ data: updated });
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
-  const idx = db.addresses.findIndex((a) => a.id === params.id);
-  if (idx === -1) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  if (db.addresses[idx].is_default) {
-    return NextResponse.json({ error: 'Cannot delete default address' }, { status: 400 });
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    await deleteAddress(id);
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting address:', error);
+    if ((error as any).code === 'P2025') {
+      return NextResponse.json({ error: 'Address not found' }, { status: 404 });
+    }
+    return NextResponse.json({ error: 'Failed to delete address' }, { status: 500 });
   }
-  db.addresses.splice(idx, 1);
-  return NextResponse.json({ data: { success: true } });
 }

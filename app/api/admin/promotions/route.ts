@@ -1,43 +1,50 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db, Promotion, generateId } from '@/lib/mock-db';
+import { getPromotions, createPromotion } from '@/lib/db-service';
+import { promotionCreateSchema } from '@/lib/validations/common';
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = request.nextUrl;
-  const status = searchParams.get('status');
+  try {
+    const { searchParams } = request.nextUrl;
+    const status = searchParams.get('status') || undefined;
+    const type = searchParams.get('type') || undefined;
 
-  let promotions = [...db.promotions];
+    const promotions = await getPromotions({ status, type });
 
-  if (status) {
-    promotions = promotions.filter(p => p.status === status);
+    return NextResponse.json({ data: promotions });
+  } catch (error) {
+    console.error('Error fetching promotions:', error);
+    return NextResponse.json({ error: 'Failed to fetch promotions' }, { status: 500 });
   }
-
-  return NextResponse.json({ data: promotions });
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const newPromotion: Promotion = {
-      id: generateId('promo'),
-      title: body.title,
-      type: body.type || 'banner',
-      image: body.image,
-      target_url: body.target_url,
-      location: body.location,
-      target_audience: body.target_audience || 'All Users',
-      status: 'inactive',
-      start_date: body.start_date,
-      end_date: body.end_date,
-      impressions: 0,
-      clicks: 0,
-      created_at: new Date().toISOString(),
-    };
+    // Validate input
+    const result = promotionCreateSchema.safeParse(body);
+    if (!result.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: result.error.flatten() },
+        { status: 400 }
+      );
+    }
 
-    db.promotions.push(newPromotion);
+    const promotion = await createPromotion({
+      title: result.data.title,
+      type: result.data.type,
+      image_url: result.data.image_url,
+      target_url: result.data.target_url,
+      location: result.data.location,
+      target_audience: result.data.target_audience,
+      status: result.data.status,
+      start_date: result.data.start_date,
+      end_date: result.data.end_date,
+    });
 
-    return NextResponse.json({ data: newPromotion }, { status: 201 });
+    return NextResponse.json({ data: promotion }, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+    console.error('Error creating promotion:', error);
+    return NextResponse.json({ error: 'Failed to create promotion' }, { status: 500 });
   }
 }

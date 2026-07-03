@@ -1,56 +1,26 @@
-'use client';
-
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ChevronRight, Send, Star, Truck, RotateCcw, Shield, Headphones, ArrowRight } from 'lucide-react';
+import { ChevronRight, Star, Truck, RotateCcw, Shield, Headphones, ArrowRight } from 'lucide-react';
 import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
-import { useAuth } from '@/components/auth/auth-provider';
+import HomeCTA from '@/components/home/home-cta';
+import ProductCardInteractive from '@/components/product/product-card-interactive';
+import { getCachedFeaturedProducts, getCachedTrendingProducts, getCachedCategories } from '@/lib/cached-data';
+import { formatPrice } from '@/lib/price';
 
-export default function HomePage() {
-  const [products, setProducts] = useState<any[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+// Revalidate every 5 minutes - homepage content doesn't need to be real-time
+export const revalidate = 300;
 
-  const { isAuthenticated, user } = useAuth();
+export default async function HomePage() {
+  // Fetch all data in parallel on the server, cached via cache-aside
+  const [featuredResult, trendingResult, categories] = await Promise.all([
+    getCachedFeaturedProducts(10),
+    getCachedTrendingProducts(10),
+    getCachedCategories({ is_active: true }),
+  ]);
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const [productsRes, categoriesRes] = await Promise.all([
-          fetch('/api/products?status=published&limit=10'),
-          fetch('/api/categories?active=true&limit=10'),
-        ]);
-
-        const productsData = await productsRes.json();
-        const categoriesData = await categoriesRes.json();
-
-        // API returns { data: [...], pagination: {...} } format
-        setProducts(Array.isArray(productsData.data) ? productsData.data : (Array.isArray(productsData) ? productsData : []));
-        setCategories(Array.isArray(categoriesData.data) ? categoriesData.data : (Array.isArray(categoriesData) ? categoriesData : []));
-      } catch (error) {
-        console.error('Failed to fetch data:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchData();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
-  const featuredProducts = products.slice(0, 5);
-  const trendingProducts = [...products].reverse().slice(0, 5);
-
-  const formatPrice = (price: number) => {
-    return price.toLocaleString() + ' Br';
-  };
+  const featuredProducts = featuredResult.products.slice(0, 5);
+  const trendingProducts = trendingResult.products.slice(0, 5);
+  const topCategories = categories.slice(0, 6);
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -84,13 +54,11 @@ export default function HomePage() {
                       Shop Now <ArrowRight className="w-4 h-4" />
                     </button>
                   </Link>
-                  {!isAuthenticated && (
-                    <Link href="/register">
-                      <button className="border border-white/30 text-white hover:bg-white/10 px-6 py-2.5 rounded-lg font-medium text-sm transition-colors">
-                        Become a Seller
-                      </button>
-                    </Link>
-                  )}
+                  <Link href="/register">
+                    <button className="border border-white/30 text-white hover:bg-white/10 px-6 py-2.5 rounded-lg font-medium text-sm transition-colors">
+                      Become a Seller
+                    </button>
+                  </Link>
                 </div>
               </div>
               <div className="hidden lg:block absolute right-16 top-1/2 -translate-y-1/2">
@@ -138,7 +106,7 @@ export default function HomePage() {
               </Link>
             </div>
             <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-3">
-              {categories.map((cat) => (
+              {topCategories.map((cat) => (
                 <Link
                   key={cat.id}
                   href={`/categories/${cat.slug}`}
@@ -165,111 +133,27 @@ export default function HomePage() {
                 View All <ChevronRight className="w-4 h-4" />
               </Link>
             </div>
-            {products.length === 0 ? (
+            {featuredProducts.length === 0 ? (
               <div className="text-center py-12 bg-white rounded-xl border border-gray-100">
                 <p className="text-gray-500">No products available yet.</p>
-                {!isAuthenticated && (
-                  <Link href="/register">
-                    <button className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
-                      Register as a Seller
-                    </button>
-                  </Link>
-                )}
+                <Link href="/register">
+                  <button className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
+                    Register as a Seller
+                  </button>
+                </Link>
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {featuredProducts.map((product) => (
-                  <Link key={product.id} href={`/products/${product.id}`}>
-                    <div className="bg-white rounded-xl border border-gray-100 hover:border-blue-200 hover:shadow-md transition-all overflow-hidden group">
-                      <div className="relative aspect-square overflow-hidden bg-gray-50">
-                        <img
-                          src={product.images?.[0] || '/placeholder.jpg'}
-                          alt={product.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                        {product.discount_percent > 0 && (
-                          <span className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium">
-                            -{product.discount_percent}%
-                          </span>
-                        )}
-                      </div>
-                      <div className="p-3">
-                        <p className="text-xs text-blue-600 font-medium mb-1">
-                          {product.warehouses?.name || 'Verified Seller'}
-                        </p>
-                        <h3 className="text-sm font-medium text-gray-900 line-clamp-2 mb-1">{product.name}</h3>
-                        <div className="flex items-center gap-1 mb-2">
-                          <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-                          <span className="text-xs text-gray-500">{product.rating || 0} ({product.review_count || 0})</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm font-bold text-gray-900">
-                            {formatPrice(product.base_price * (1 + (product.margin_percent || 15) / 100) * (1 - (product.discount_percent || 0) / 100))}
-                          </p>
-                          {product.discount_percent > 0 && (
-                            <p className="text-xs text-gray-400 line-through">
-                              {formatPrice(product.base_price * (1 + (product.margin_percent || 15) / 100))}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
+                  <ProductCardInteractive key={product.id} product={product} />
                 ))}
               </div>
             )}
           </div>
         </section>
 
-        {/* CTA Section - Show differently based on auth status */}
-        {!isAuthenticated ? (
-          <section className="py-10 bg-white">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="rounded-2xl bg-gradient-to-br from-blue-700 to-blue-900 p-8 md:p-12 flex flex-col md:flex-row items-center gap-6">
-                <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-white mb-2">Start Selling on MarketBridge</h2>
-                  <p className="text-blue-200 text-sm mb-5">
-                    Join thousands of sellers and reach customers across Ethiopia.<br className="hidden md:block" /> Create your free account today.
-                  </p>
-                  <div className="flex gap-3 flex-wrap">
-                    <Link href="/register">
-                      <button className="bg-white text-blue-700 hover:bg-blue-50 px-6 py-2.5 rounded-lg font-medium text-sm transition-colors">
-                        Create Seller Account
-                      </button>
-                    </Link>
-                    <Link href="/register">
-                      <button className="border border-white/30 text-white hover:bg-white/10 px-6 py-2.5 rounded-lg font-medium text-sm transition-colors">
-                        Shop as Customer
-                      </button>
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-        ) : (
-          <section className="py-10 bg-white">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="rounded-2xl bg-gradient-to-br from-blue-700 to-blue-900 p-8 md:p-12 flex flex-col md:flex-row items-center gap-6">
-                <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-white mb-2">Join Our Community</h2>
-                  <p className="text-blue-200 text-sm mb-5">
-                    Follow us on Telegram for exclusive deals<br className="hidden md:block" /> and new product updates.
-                  </p>
-                  <a href="#" className="inline-flex items-center gap-2 bg-white text-blue-700 hover:bg-blue-50 px-6 py-2.5 rounded-lg font-medium text-sm transition-colors">
-                    <Send className="w-4 h-4" />
-                    Join Telegram Channel
-                  </a>
-                </div>
-                <div className="hidden md:flex items-center justify-center">
-                  <div className="w-32 h-32 bg-white/10 rounded-2xl flex items-center justify-center">
-                    <Send className="w-16 h-16 text-white/60" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-        )}
+        {/* Auth-dependent CTA */}
+        <HomeCTA />
 
         {/* Trending Products */}
         <section className="py-10 bg-gray-50">
@@ -282,42 +166,7 @@ export default function HomePage() {
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {trendingProducts.map((product) => (
-                <Link key={product.id} href={`/products/${product.id}`}>
-                  <div className="bg-white rounded-xl border border-gray-100 hover:border-blue-200 hover:shadow-md transition-all overflow-hidden group">
-                    <div className="relative aspect-square overflow-hidden bg-gray-50">
-                      <img
-                        src={product.images?.[0] || '/placeholder.jpg'}
-                        alt={product.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                      {product.discount_percent > 0 && (
-                        <span className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium">
-                          -{product.discount_percent}%
-                        </span>
-                      )}
-                    </div>
-                    <div className="p-3">
-                      <p className="text-xs text-blue-600 font-medium mb-1">
-                        {product.warehouses?.name || 'Verified Seller'}
-                      </p>
-                      <h3 className="text-sm font-medium text-gray-900 line-clamp-2 mb-1">{product.name}</h3>
-                      <div className="flex items-center gap-1 mb-2">
-                        <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-                        <span className="text-xs text-gray-500">{product.rating || 0} ({product.review_count || 0})</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-bold text-gray-900">
-                          {formatPrice(product.base_price * (1 + (product.margin_percent || 15) / 100) * (1 - (product.discount_percent || 0) / 100))}
-                        </p>
-                        {product.discount_percent > 0 && (
-                          <p className="text-xs text-gray-400 line-through">
-                            {formatPrice(product.base_price * (1 + (product.margin_percent || 15) / 100))}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </Link>
+                <ProductCardInteractive key={product.id} product={product} />
               ))}
             </div>
           </div>

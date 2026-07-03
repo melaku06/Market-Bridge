@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Search, Eye, Ban, Users, UserCheck, UserX, Mail, Phone } from 'lucide-react';
 import { usersApi, analyticsApi } from '@/lib/api';
-import type { User } from '@/lib/mock-db';
+import type { User } from '@/lib/types';
 
 type UserWithoutPassword = Omit<User, 'password_hash'>;
 
@@ -23,7 +23,7 @@ export default function AdminCustomers() {
         ]);
         const usersData = Array.isArray(usersRes) ? usersRes : (usersRes as { data?: UserWithoutPassword[] }).data || [];
         setCustomers(usersData);
-        setAnalytics(analyticsRes);
+        setAnalytics(analyticsRes as any);
       } catch (error) {
         console.error('Failed to fetch customers:', error);
       } finally {

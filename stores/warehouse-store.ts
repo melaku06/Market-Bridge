@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { warehousesApi, inventoryApi, adminApi } from '@/lib/api';
-import type { Warehouse, Inventory, Product, MarginRule, Promotion, AuditLog } from '@/lib/mock-db';
+import type { Warehouse, Inventory, Product, MarginRule, Promotion, AuditLog } from '@/lib/types';
 
 interface WarehouseState {
   warehouse: Warehouse | null;

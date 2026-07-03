@@ -1,43 +1,54 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db, generateId } from '@/lib/mock-db';
+import { getAddresses, createAddress } from '@/lib/db-service';
+import { addressCreateSchema } from '@/lib/validations/common';
 
-export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const customer_id = searchParams.get('customer_id');
-
-  let addresses = [...db.addresses];
-  if (customer_id) {
-    addresses = addresses.filter((a) => a.customer_id === customer_id);
-  }
-
-  return NextResponse.json({ data: addresses });
-}
-
-export async function POST(req: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    const body = await req.json();
-    const newAddress = {
-      id: generateId('addr'),
-      customer_id: body.customer_id || 'usr-001',
-      label: body.label || 'Home',
-      name: body.name,
-      phone: body.phone || '',
-      address: body.address,
-      city: body.city || '',
-      country: body.country || 'Ethiopia',
-      is_default: body.is_default ?? false,
-      created_at: new Date().toISOString(),
-    };
+    const { searchParams } = request.nextUrl;
+    const customer_id = searchParams.get('customer_id');
 
-    if (newAddress.is_default) {
-      db.addresses.forEach((a) => {
-        if (a.customer_id === newAddress.customer_id) a.is_default = false;
-      });
+    if (!customer_id) {
+      return NextResponse.json({ error: 'customer_id is required' }, { status: 400 });
     }
 
-    db.addresses.push(newAddress);
-    return NextResponse.json({ data: newAddress }, { status: 201 });
-  } catch {
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    const addresses = await getAddresses(customer_id);
+
+    return NextResponse.json({ data: addresses });
+  } catch (error) {
+    console.error('Error fetching addresses:', error);
+    return NextResponse.json({ error: 'Failed to fetch addresses' }, { status: 500 });
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+
+    // Validate input
+    const result = addressCreateSchema.safeParse(body);
+    if (!result.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: result.error.flatten() },
+        { status: 400 }
+      );
+    }
+
+    const data = result.data;
+
+    const address = await createAddress({
+      customer: { connect: { id: body.customer_id } },
+      label: data.label,
+      recipient_name: data.recipient_name,
+      phone: data.phone,
+      address: data.address,
+      city: data.city,
+      country: data.country,
+      is_default: data.is_default,
+    });
+
+    return NextResponse.json({ data: address }, { status: 201 });
+  } catch (error) {
+    console.error('Error creating address:', error);
+    return NextResponse.json({ error: 'Failed to create address' }, { status: 500 });
   }
 }

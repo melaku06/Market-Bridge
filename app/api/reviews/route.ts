@@ -1,66 +1,82 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db, Review, generateId } from '@/lib/mock-db';
+import { getReviews, createReview } from '@/lib/db-service';
+import { reviewCreateSchema } from '@/lib/validations/common';
+import prisma from '@/lib/prisma';
+import { invalidateReviews, invalidateProduct } from '@/lib/cached-data';
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = request.nextUrl;
-  const product_id = searchParams.get('product_id');
-  const customer_id = searchParams.get('customer_id');
-  const limit = parseInt(searchParams.get('limit') || '20');
-  const offset = parseInt(searchParams.get('offset') || '0');
+  try {
+    const { searchParams } = request.nextUrl;
+    const product_id = searchParams.get('product_id') || undefined;
+    const customer_id = searchParams.get('customer_id') || undefined;
+    const limit = parseInt(searchParams.get('limit') || '20');
+    const offset = parseInt(searchParams.get('offset') || '0');
 
-  let reviews = [...db.reviews];
+    const reviews = await getReviews({ product_id, customer_id });
 
-  // Filter by product
-  if (product_id) {
-    reviews = reviews.filter(r => r.product_id === product_id);
+    // Apply pagination
+    const paginatedReviews = reviews.slice(offset, offset + limit);
+
+    return NextResponse.json({
+      data: paginatedReviews,
+      pagination: {
+        total: reviews.length,
+        limit,
+        offset,
+        has_more: offset + limit < reviews.length
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching reviews:', error);
+    return NextResponse.json({ error: 'Failed to fetch reviews' }, { status: 500 });
   }
-
-  // Filter by customer
-  if (customer_id) {
-    reviews = reviews.filter(r => r.customer_id === customer_id);
-  }
-
-  // Sort by created_at desc
-  reviews.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-  const total = reviews.length;
-  const paginatedReviews = reviews.slice(offset, offset + limit);
-
-  return NextResponse.json({
-    data: paginatedReviews,
-    pagination: { total, limit, offset, has_more: offset + limit < total }
-  });
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const newReview: Review = {
-      id: generateId('rev'),
-      customer_id: body.customer_id,
-      customer_name: body.customer_name,
-      product_id: body.product_id,
-      product_name: body.product_name,
-      product_image: body.product_image,
-      rating: parseInt(body.rating) || 5,
-      comment: body.comment || '',
-      created_at: new Date().toISOString(),
-    };
-
-    db.reviews.push(newReview);
-
-    // Update product rating (simplified)
-    const product = db.products.find(p => p.id === body.product_id);
-    if (product) {
-      const productReviews = db.reviews.filter(r => r.product_id === body.product_id);
-      const avgRating = productReviews.reduce((sum, r) => sum + r.rating, 0) / productReviews.length;
-      product.rating = Math.round(avgRating * 10) / 10;
-      product.review_count = productReviews.length;
+    // Validate input
+    const result = reviewCreateSchema.safeParse(body);
+    if (!result.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: result.error.flatten() },
+        { status: 400 }
+      );
     }
 
-    return NextResponse.json({ data: newReview }, { status: 201 });
+    const data = result.data;
+
+    // Get product and customer info
+    const product = await prisma.product.findUnique({
+      where: { id: data.product_id },
+    });
+
+    const customer = await prisma.profile.findUnique({
+      where: { id: body.customer_id },
+    });
+
+    if (!product || !customer) {
+      return NextResponse.json({ error: 'Product or customer not found' }, { status: 404 });
+    }
+
+    const review = await createReview({
+      customer: { connect: { id: customer.id } },
+      product: { connect: { id: product.id } },
+      customer_name: customer.name,
+      product_name: product.name,
+      product_image: product.images[0] || null,
+      rating: data.rating,
+      comment: data.comment,
+    });
+
+    // Invalidate caches after review creation
+    invalidateReviews();
+    invalidateProduct(data.product_id);
+
+    return NextResponse.json({ data: review }, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+    console.error('Error creating review:', error);
+    return NextResponse.json({ error: 'Failed to create review' }, { status: 500 });
   }
 }

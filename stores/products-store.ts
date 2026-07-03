@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { productsApi, categoriesApi, reviewsApi } from '@/lib/api';
-import type { Product, Category, Review } from '@/lib/mock-db';
+import type { Product, Category, Review } from '@/lib/types';
 
 interface ProductsState {
   products: Product[];

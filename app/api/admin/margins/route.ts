@@ -1,30 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db, MarginRule, generateId } from '@/lib/mock-db';
+import { getMarginRules, createMarginRule } from '@/lib/db-service';
+import { marginRuleCreateSchema } from '@/lib/validations/common';
 
 export async function GET() {
-  return NextResponse.json({ data: db.margins });
+  try {
+    const margins = await getMarginRules();
+
+    return NextResponse.json({ data: margins });
+  } catch (error) {
+    console.error('Error fetching margin rules:', error);
+    return NextResponse.json({ error: 'Failed to fetch margin rules' }, { status: 500 });
+  }
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const newMargin: MarginRule = {
-      id: generateId('margin'),
-      category_id: body.category_id,
-      category_name: body.category_name || '',
-      product_id: body.product_id,
-      warehouse_margin: parseFloat(body.warehouse_margin) || 10,
-      platform_margin: parseFloat(body.platform_margin) || 8,
-      total_margin: parseFloat(body.warehouse_margin || 10) + parseFloat(body.platform_margin || 8),
-      status: 'active',
-      updated_at: new Date().toISOString(),
-    };
+    // Validate input
+    const result = marginRuleCreateSchema.safeParse(body);
+    if (!result.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: result.error.flatten() },
+        { status: 400 }
+      );
+    }
 
-    db.margins.push(newMargin);
+    const margin = await createMarginRule({
+      category: result.data.category_id ? { connect: { id: result.data.category_id } } : undefined,
+      product_id: result.data.product_id,
+      category_name: result.data.category_name,
+      warehouse_margin: result.data.warehouse_margin,
+      platform_margin: result.data.platform_margin,
+      total_margin: result.data.warehouse_margin + result.data.platform_margin,
+      is_active: result.data.is_active,
+    });
 
-    return NextResponse.json({ data: newMargin }, { status: 201 });
+    return NextResponse.json({ data: margin }, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+    console.error('Error creating margin rule:', error);
+    return NextResponse.json({ error: 'Failed to create margin rule' }, { status: 500 });
   }
 }

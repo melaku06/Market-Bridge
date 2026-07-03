@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Plus, Edit, Trash2, Save, X } from 'lucide-react';
 import { categoriesApi } from '@/lib/api';
-import type { Category } from '@/lib/mock-db';
+import type { Category } from '@/lib/types';
 
 export default function AdminCategories() {
   const [categories, setCategories] = useState<Category[]>([]);

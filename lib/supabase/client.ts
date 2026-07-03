@@ -114,6 +114,42 @@ export type Database = {
           status?: 'pending_approval' | 'active' | 'suspended' | 'deactivated';
         };
       };
+      notifications: {
+        Row: {
+          id: string;
+          user_id: string;
+          type: 'order' | 'product' | 'system' | 'promotion' | 'account' | 'inventory';
+          priority: 'high' | 'medium' | 'low';
+          title: string;
+          message: string;
+          data: string | null;
+          action_url: string | null;
+          is_read: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          type?: 'order' | 'product' | 'system' | 'promotion' | 'account' | 'inventory';
+          priority?: 'high' | 'medium' | 'low';
+          title: string;
+          message: string;
+          data?: string | null;
+          action_url?: string | null;
+          is_read?: boolean;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          type?: 'order' | 'product' | 'system' | 'promotion' | 'account' | 'inventory';
+          priority?: 'high' | 'medium' | 'low';
+          title?: string;
+          message?: string;
+          data?: string | null;
+          action_url?: string | null;
+          is_read?: boolean;
+        };
+      };
     };
   };
 };

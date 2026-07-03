@@ -1,39 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db, generateId } from '@/lib/mock-db';
+import { getProductRequests, createProductRequest } from '@/lib/db-service';
+import { productRequestCreateSchema } from '@/lib/validations/common';
 
-export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const customer_id = searchParams.get('customer_id');
-  const status = searchParams.get('status');
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = request.nextUrl;
+    const customer_id = searchParams.get('customer_id') || undefined;
+    const status = searchParams.get('status') || undefined;
 
-  let requests = [...db.product_requests];
-  if (customer_id) requests = requests.filter((r) => r.customer_id === customer_id);
-  if (status) requests = requests.filter((r) => r.status === status);
+    const requests = await getProductRequests({ customer_id, status });
 
-  requests.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-  return NextResponse.json({ data: requests });
+    return NextResponse.json({ data: requests });
+  } catch (error) {
+    console.error('Error fetching product requests:', error);
+    return NextResponse.json({ error: 'Failed to fetch product requests' }, { status: 500 });
+  }
 }
 
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    const body = await req.json();
-    const newRequest = {
-      id: generateId('req'),
-      customer_id: body.customer_id || 'usr-001',
-      customer_email: body.customer_email || 'sarah.johnson@email.com',
-      product_name: body.product_name,
-      category: body.category || '',
-      description: body.description,
-      brand: body.brand || '',
-      image_url: body.image_url || '',
-      status: 'pending' as const,
-      created_at: new Date().toISOString(),
-    };
+    const body = await request.json();
 
-    db.product_requests.push(newRequest);
-    return NextResponse.json({ data: newRequest }, { status: 201 });
-  } catch {
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    // Validate input
+    const result = productRequestCreateSchema.safeParse(body);
+    if (!result.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: result.error.flatten() },
+        { status: 400 }
+      );
+    }
+
+    const data = result.data;
+
+    const productRequest = await createProductRequest({
+      customer: { connect: { id: body.customer_id } },
+      customer_email: body.customer_email,
+      product_name: data.product_name,
+      description: data.description,
+      category: data.category,
+      brand: data.brand,
+      image_url: data.image_url,
+      status: 'pending',
+    });
+
+    return NextResponse.json({ data: productRequest }, { status: 201 });
+  } catch (error) {
+    console.error('Error creating product request:', error);
+    return NextResponse.json({ error: 'Failed to create product request' }, { status: 500 });
   }
 }

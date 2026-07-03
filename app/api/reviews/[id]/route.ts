@@ -1,58 +1,81 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/mock-db';
+import { getReviewById, deleteReview } from '@/lib/db-service';
+import prisma from '@/lib/prisma';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const review = db.reviews.find(r => r.id === params.id);
+  try {
+    const { id } = await params;
+    const review = await getReviewById(id);
 
-  if (!review) {
-    return NextResponse.json({ error: 'Review not found' }, { status: 404 });
+    if (!review) {
+      return NextResponse.json({ error: 'Review not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ data: review });
+  } catch (error) {
+    console.error('Error fetching review:', error);
+    return NextResponse.json({ error: 'Failed to fetch review' }, { status: 500 });
   }
-
-  return NextResponse.json({ data: review });
 }
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const reviewIndex = db.reviews.findIndex(r => r.id === params.id);
-
-  if (reviewIndex === -1) {
-    return NextResponse.json({ error: 'Review not found' }, { status: 404 });
-  }
-
   try {
+    const { id } = await params;
     const body = await request.json();
-    const existingReview = db.reviews[reviewIndex];
 
-    const updatedReview = {
-      ...existingReview,
-      rating: body.rating ?? existingReview.rating,
-      comment: body.comment ?? existingReview.comment,
-    };
+    const review = await prisma.review.update({
+      where: { id },
+      data: {
+        rating: body.rating,
+        comment: body.comment,
+      },
+    });
 
-    db.reviews[reviewIndex] = updatedReview;
+    // Update product rating
+    const stats = await prisma.review.aggregate({
+      where: { product_id: review.product_id },
+      _avg: { rating: true },
+      _count: true,
+    });
 
-    return NextResponse.json({ data: updatedReview });
+    await prisma.product.update({
+      where: { id: review.product_id },
+      data: {
+        rating: stats._avg.rating || 0,
+        review_count: stats._count,
+      },
+    });
+
+    return NextResponse.json({ data: review });
   } catch (error) {
-    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+    console.error('Error updating review:', error);
+    if ((error as any).code === 'P2025') {
+      return NextResponse.json({ error: 'Review not found' }, { status: 404 });
+    }
+    return NextResponse.json({ error: 'Failed to update review' }, { status: 500 });
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const reviewIndex = db.reviews.findIndex(r => r.id === params.id);
+  try {
+    const { id } = await params;
+    await deleteReview(id);
 
-  if (reviewIndex === -1) {
-    return NextResponse.json({ error: 'Review not found' }, { status: 404 });
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting review:', error);
+    if ((error as any).code === 'P2025') {
+      return NextResponse.json({ error: 'Review not found' }, { status: 404 });
+    }
+    return NextResponse.json({ error: 'Failed to delete review' }, { status: 500 });
   }
-
-  db.reviews.splice(reviewIndex, 1);
-
-  return NextResponse.json({ success: true });
 }

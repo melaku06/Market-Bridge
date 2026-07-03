@@ -1,23 +1,60 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/mock-db';
+import { getProductRequestById, updateProductRequest } from '@/lib/db-service';
+import prisma from '@/lib/prisma';
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
-  const request = db.product_requests.find((r) => r.id === params.id);
-  if (!request) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  return NextResponse.json({ data: request });
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const productRequest = await getProductRequestById(id);
+
+    if (!productRequest) {
+      return NextResponse.json({ error: 'Product request not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ data: productRequest });
+  } catch (error) {
+    console.error('Error fetching product request:', error);
+    return NextResponse.json({ error: 'Failed to fetch product request' }, { status: 500 });
+  }
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
-  const idx = db.product_requests.findIndex((r) => r.id === params.id);
-  if (idx === -1) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  const body = await req.json();
-  db.product_requests[idx] = { ...db.product_requests[idx], ...body };
-  return NextResponse.json({ data: db.product_requests[idx] });
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const body = await request.json();
+
+    const productRequest = await updateProductRequest(id, body);
+
+    return NextResponse.json({ data: productRequest });
+  } catch (error) {
+    console.error('Error updating product request:', error);
+    if ((error as any).code === 'P2025') {
+      return NextResponse.json({ error: 'Product request not found' }, { status: 404 });
+    }
+    return NextResponse.json({ error: 'Failed to update product request' }, { status: 500 });
+  }
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
-  const idx = db.product_requests.findIndex((r) => r.id === params.id);
-  if (idx === -1) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  db.product_requests.splice(idx, 1);
-  return NextResponse.json({ data: { success: true } });
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    await prisma.productRequest.delete({ where: { id } });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting product request:', error);
+    if ((error as any).code === 'P2025') {
+      return NextResponse.json({ error: 'Product request not found' }, { status: 404 });
+    }
+    return NextResponse.json({ error: 'Failed to delete product request' }, { status: 500 });
+  }
 }

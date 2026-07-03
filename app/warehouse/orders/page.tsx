@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Search, Eye, Truck, XCircle, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { ordersApi } from '@/lib/api';
-import type { Order, OrderStatus } from '@/lib/mock-db';
+import type { Order, OrderStatus } from '@/lib/types';
 
 const statusLabels: Record<string, string> = {
   all: 'All',

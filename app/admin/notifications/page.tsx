@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Bell, Package, AlertTriangle, Tag, CheckCircle, Trash2, Plus } from 'lucide-react';
 import { notificationsApi, usersApi } from '@/lib/api';
-import type { Notification, User } from '@/lib/mock-db';
+import type { Notification, User } from '@/lib/types';
 
 type UserWithoutPassword = Omit<User, 'password_hash'>;
 

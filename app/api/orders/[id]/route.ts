@@ -1,61 +1,75 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/mock-db';
+import { getOrderById, updateOrder } from '@/lib/db-service';
+import { orderStatusUpdateSchema } from '@/lib/validations/order';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const order = db.orders.find(o => o.id === params.id);
+  try {
+    const { id } = await params;
+    const order = await getOrderById(id);
 
-  if (!order) {
-    return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    if (!order) {
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ data: order });
+  } catch (error) {
+    console.error('Error fetching order:', error);
+    return NextResponse.json({ error: 'Failed to fetch order' }, { status: 500 });
   }
-
-  return NextResponse.json({ data: order });
 }
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const orderIndex = db.orders.findIndex(o => o.id === params.id);
-
-  if (orderIndex === -1) {
-    return NextResponse.json({ error: 'Order not found' }, { status: 404 });
-  }
-
   try {
+    const { id } = await params;
     const body = await request.json();
-    const existingOrder = db.orders[orderIndex];
 
-    const updatedOrder = {
-      ...existingOrder,
-      status: body.status ?? existingOrder.status,
-      payment_status: body.payment_status ?? existingOrder.payment_status,
-      tracking_number: body.tracking_number ?? existingOrder.tracking_number,
-      notes: body.notes ?? existingOrder.notes,
-      updated_at: new Date().toISOString(),
-    };
+    // Validate status update
+    if (body.status) {
+      const result = orderStatusUpdateSchema.safeParse(body);
+      if (!result.success) {
+        return NextResponse.json(
+          { error: 'Validation failed', details: result.error.flatten() },
+          { status: 400 }
+        );
+      }
+    }
 
-    db.orders[orderIndex] = updatedOrder;
+    const order = await updateOrder(id, {
+      ...body,
+      updated_at: new Date(),
+    });
 
-    return NextResponse.json({ data: updatedOrder });
+    return NextResponse.json({ data: order });
   } catch (error) {
-    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+    console.error('Error updating order:', error);
+    if ((error as any).code === 'P2025') {
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    }
+    return NextResponse.json({ error: 'Failed to update order' }, { status: 500 });
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const orderIndex = db.orders.findIndex(o => o.id === params.id);
+  try {
+    const { id } = await params;
+    const prisma = (await import('@/lib/prisma')).default;
+    await prisma.order.delete({ where: { id } });
 
-  if (orderIndex === -1) {
-    return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting order:', error);
+    if ((error as any).code === 'P2025') {
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    }
+    return NextResponse.json({ error: 'Failed to delete order' }, { status: 500 });
   }
-
-  db.orders.splice(orderIndex, 1);
-
-  return NextResponse.json({ success: true });
 }

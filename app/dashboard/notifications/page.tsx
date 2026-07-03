@@ -2,18 +2,19 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Bell, Truck, Tag, CheckCircle, TrendingDown, User, ChevronRight } from 'lucide-react';
-import { notificationsApi } from '@/lib/api';
-import type { Notification } from '@/lib/mock-db';
+import { Bell, Truck, Tag, CheckCircle, TrendingDown, User, ChevronRight, Package, AlertCircle, Trash2, Loader2 } from 'lucide-react';
+import { useNotificationsStore } from '@/stores/notifications-store';
+import { useAuth } from '@/components/auth/auth-provider';
 
-const tabs = ['All', 'Orders', 'Promotions', 'Account', 'System'];
+const tabs = ['All', 'Orders', 'Promotions', 'Account', 'System', 'Inventory'] as const;
 
-const iconMap: Record<string, React.ReactNode> = {
-  truck: <Truck className="w-4 h-4" />,
-  tag: <Tag className="w-4 h-4" />,
-  'check-circle': <CheckCircle className="w-4 h-4" />,
-  'trending-down': <TrendingDown className="w-4 h-4" />,
-  user: <User className="w-4 h-4" />,
+const typeIconMap: Record<string, React.ReactNode> = {
+  order: <Truck className="w-4 h-4" />,
+  product: <Package className="w-4 h-4" />,
+  system: <AlertCircle className="w-4 h-4" />,
+  promotion: <Tag className="w-4 h-4" />,
+  account: <User className="w-4 h-4" />,
+  inventory: <Package className="w-4 h-4" />,
 };
 
 const typeColorMap: Record<string, string> = {
@@ -21,6 +22,8 @@ const typeColorMap: Record<string, string> = {
   promotion: 'bg-orange-100 text-orange-600',
   system: 'bg-gray-100 text-gray-600',
   account: 'bg-green-100 text-green-600',
+  product: 'bg-purple-100 text-purple-600',
+  inventory: 'bg-yellow-100 text-yellow-600',
 };
 
 const typeTabMap: Record<string, string> = {
@@ -28,46 +31,56 @@ const typeTabMap: Record<string, string> = {
   promotion: 'Promotions',
   system: 'System',
   account: 'Account',
+  inventory: 'Inventory',
 };
 
+function timeAgo(dateString: string): string {
+  const date = new Date(dateString);
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return 'just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return date.toLocaleDateString();
+}
+
 export default function NotificationsPage() {
-  const [notifs, setNotifs] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('All');
+  const { user } = useAuth();
+  const { notifications, unreadCount, isLoading, fetchNotifications, markAsRead, markAllAsRead, deleteNotification } = useNotificationsStore();
+  const [activeTab, setActiveTab] = useState<typeof tabs[number]>('All');
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        const res = await notificationsApi.list({ user_id: 'usr-001' });
-        const notifData = Array.isArray(res) ? res : (res as { data?: Notification[] }).data || [];
-        setNotifs(notifData);
-      } catch (error) {
-        console.error('Failed to fetch notifications:', error);
-      } finally {
-        setLoading(false);
-      }
+    if (user?.id) {
+      fetchNotifications({ user_id: user.id, limit: 50 });
     }
-    fetchData();
-  }, []);
+  }, [user?.id, fetchNotifications]);
 
-  const markAllRead = async () => {
-    setNotifs(notifs.map((n) => ({ ...n, read: true })));
+  const handleMarkAllRead = async () => {
+    if (user?.id) {
+      await markAllAsRead(user.id);
+    }
   };
 
-  const markRead = async (id: string) => {
-    setNotifs(notifs.map((n) => n.id === id ? { ...n, read: true } : n));
+  const handleMarkRead = async (id: string) => {
+    await markAsRead(id);
   };
 
-  if (loading) {
+  const handleDelete = async (id: string) => {
+    await deleteNotification(id);
+  };
+
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
       </div>
     );
   }
 
-  const filtered = activeTab === 'All' ? notifs : notifs.filter((n) => typeTabMap[n.type] === activeTab);
-  const unreadCount = notifs.filter((n) => !n.read).length;
+  const filtered = activeTab === 'All' ? notifications : notifications.filter((n) => typeTabMap[n.type] === activeTab);
 
   return (
     <div className="space-y-5">
@@ -80,7 +93,7 @@ export default function NotificationsPage() {
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold text-gray-900">Notifications</h1>
           {unreadCount > 0 && (
-            <button onClick={markAllRead} className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+            <button onClick={handleMarkAllRead} className="text-sm text-blue-600 hover:text-blue-700 font-medium">
               Mark all as read
             </button>
           )}
@@ -89,16 +102,21 @@ export default function NotificationsPage() {
 
       <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
         {/* Tabs */}
-        <div className="flex border-b border-gray-100">
+        <div className="flex border-b border-gray-100 overflow-x-auto">
           {tabs.map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+              className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === tab ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
               {tab}
+              {tab !== 'All' && notifications.filter((n) => typeTabMap[n.type] === tab && !n.is_read).length > 0 && (
+                <span className="ml-1.5 text-xs bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full">
+                  {notifications.filter((n) => typeTabMap[n.type] === tab && !n.is_read).length}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -114,45 +132,43 @@ export default function NotificationsPage() {
             filtered.map((notif) => (
               <div
                 key={notif.id}
-                className={`flex items-start gap-4 p-5 hover:bg-gray-50/50 transition-colors cursor-pointer ${!notif.read ? 'bg-blue-50/30' : ''}`}
-                onClick={() => markRead(notif.id)}
+                className={`flex items-start gap-4 p-5 hover:bg-gray-50/50 transition-colors group ${!notif.is_read ? 'bg-blue-50/30' : ''}`}
               >
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${typeColorMap[notif.type] || 'bg-gray-100 text-gray-500'}`}>
-                  {iconMap[notif.icon] || <Bell className="w-4 h-4" />}
+                  {typeIconMap[notif.type] || <Bell className="w-4 h-4" />}
                 </div>
-                <div className="flex-1 min-w-0">
+                <div
+                  className="flex-1 min-w-0 cursor-pointer"
+                  onClick={() => {
+                    if (!notif.is_read) handleMarkRead(notif.id);
+                    if (notif.action_url) window.location.assign(notif.action_url);
+                  }}
+                >
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <p className={`text-sm ${!notif.read ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'}`}>
+                      <p className={`text-sm ${!notif.is_read ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'}`}>
                         {notif.title}
                       </p>
                       <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{notif.message}</p>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <span className="text-xs text-gray-400 whitespace-nowrap">{new Date(notif.created_at).toLocaleDateString()}</span>
-                      {!notif.read && (
+                      <span className="text-xs text-gray-400 whitespace-nowrap">{timeAgo(notif.created_at)}</span>
+                      {!notif.is_read && (
                         <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0" />
                       )}
                     </div>
                   </div>
                 </div>
+                <button
+                  onClick={() => handleDelete(notif.id)}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
             ))
           )}
         </div>
-
-        {/* Pagination */}
-        {filtered.length > 0 && (
-          <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100">
-            <p className="text-xs text-gray-500">Showing 1 to {filtered.length} of {notifs.length} notifications</p>
-            <div className="flex items-center gap-1">
-              {[1, 2, 3, 4].map((p) => (
-                <button key={p} className={`w-7 h-7 rounded-lg text-xs font-medium ${p === 1 ? 'bg-blue-600 text-white' : 'border border-gray-200 hover:bg-gray-50 text-gray-700'}`}>{p}</button>
-              ))}
-              <button className="w-7 h-7 rounded-lg border border-gray-200 flex items-center justify-center text-xs hover:bg-gray-50">›</button>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

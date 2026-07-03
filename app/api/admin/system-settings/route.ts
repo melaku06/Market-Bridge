@@ -1,16 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/mock-db';
+import { getSystemSettings, updateSystemSettings } from '@/lib/db-service';
 
 export async function GET() {
-  return NextResponse.json({ data: db.system_settings });
+  try {
+    const settings = await getSystemSettings();
+
+    return NextResponse.json({ data: settings });
+  } catch (error) {
+    console.error('Error fetching system settings:', error);
+    return NextResponse.json({ error: 'Failed to fetch system settings' }, { status: 500 });
+  }
 }
 
-export async function PUT(req: NextRequest) {
+export async function PUT(request: NextRequest) {
   try {
-    const body = await req.json();
-    db.system_settings = { ...db.system_settings, ...body };
-    return NextResponse.json({ data: db.system_settings });
-  } catch {
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    const body = await request.json();
+
+    const settings = await updateSystemSettings(body);
+
+    return NextResponse.json({ data: settings });
+  } catch (error) {
+    console.error('Error updating system settings:', error);
+    return NextResponse.json({ error: 'Failed to update system settings' }, { status: 500 });
   }
 }

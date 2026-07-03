@@ -70,7 +70,7 @@ export async function loginUser(credentials: LoginCredentials): Promise<AuthResp
       return { success: false, error: 'Invalid email or password' };
     }
 
-    if (!result.is_active) {
+    if (result.status !== 'active') {
       return { success: false, error: 'Your account has been deactivated' };
     }
 
@@ -119,7 +119,7 @@ export async function getUserById(userId: string): Promise<AuthUser | null> {
       avatar_url: result.avatar_url || undefined,
       role: result.role as UserRole,
       warehouse_id: result.warehouse_id || undefined,
-      is_active: result.is_active,
+      is_active: result.status === 'active',
       created_at: result.created_at.toISOString(),
       updated_at: result.updated_at.toISOString(),
       warehouse: result.warehouse,

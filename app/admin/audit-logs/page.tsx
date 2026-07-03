@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Search, FileText } from 'lucide-react';
 import { adminApi } from '@/lib/api';
-import type { AuditLog, Role } from '@/lib/mock-db';
+import type { AuditLog, Role } from '@/lib/types';
 
 const roleColors: Record<Role, string> = {
   customer: 'bg-blue-100 text-blue-700',

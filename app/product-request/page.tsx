@@ -6,7 +6,7 @@ import { ChevronRight, Upload, CheckCircle, ClipboardList, Eye, Trash2 } from 'l
 import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
 import { productRequestsApi } from '@/lib/api';
-import type { ProductRequest } from '@/lib/mock-db';
+import type { ProductRequest } from '@/lib/types';
 
 const CATEGORIES = ['Electronics', 'Fashion', 'Home & Living', 'Beauty', 'Sports', 'Toys & Baby', 'Automotive', 'Books', 'Other'];
 

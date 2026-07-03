@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { ChevronRight, Star, Edit2, Loader2 } from 'lucide-react';
 import { reviewsApi } from '@/lib/api';
 import StarRating from '@/components/ui/star-rating';
-import type { Review } from '@/lib/mock-db';
+import type { Review } from '@/lib/types';
 
 export default function ReviewHistoryPage() {
   const [reviews, setReviews] = useState<Review[]>([]);

@@ -1,7 +1,26 @@
 /**
  * API Client
- * Centralized API client for all data fetching
+ * Centralized API client for all data fetching.
+ * All data is persisted in Supabase PostgreSQL via API routes.
  */
+
+import type {
+  Product,
+  Category,
+  Order,
+  Warehouse,
+  Inventory,
+  User,
+  Notification,
+  Review,
+  WishlistItem,
+  Address,
+  ProductRequest,
+  MarginRule,
+  Promotion,
+  AuditLog,
+  SystemSettings,
+} from '@/lib/types';
 
 const API_BASE = '/api';
 
@@ -42,19 +61,21 @@ async function request<T>(endpoint: string, options: FetchOptions = {}): Promise
   return data.data ?? data;
 }
 
+type SafeUser = Omit<User, 'password_hash'>;
+
 // Products API
 export const productsApi = {
   list: (params?: { category?: string; status?: string; warehouse_id?: string; search?: string; limit?: number; offset?: number }) =>
-    request<{ data: import('@/lib/mock-db').Product[]; pagination: { total: number; limit: number; offset: number; has_more: boolean } }>('/products', { searchParams: params as Record<string, string> }),
+    request<{ data: Product[]; pagination: { total: number; limit: number; offset: number; has_more: boolean } }>('/products', { searchParams: params as Record<string, string> }),
 
   get: (id: string) =>
-    request<import('@/lib/mock-db').Product>(`/products/${id}`),
+    request<Product>(`/products/${id}`),
 
-  create: (data: Partial<import('@/lib/mock-db').Product>) =>
-    request<import('@/lib/mock-db').Product>('/products', { method: 'POST', body: data }),
+  create: (data: Partial<Product>) =>
+    request<Product>('/products', { method: 'POST', body: data as Record<string, unknown> }),
 
-  update: (id: string, data: Partial<import('@/lib/mock-db').Product>) =>
-    request<import('@/lib/mock-db').Product>(`/products/${id}`, { method: 'PUT', body: data }),
+  update: (id: string, data: Partial<Product>) =>
+    request<Product>(`/products/${id}`, { method: 'PUT', body: data as Record<string, unknown> }),
 
   delete: (id: string) =>
     request<{ success: boolean }>(`/products/${id}`, { method: 'DELETE' }),
@@ -63,16 +84,16 @@ export const productsApi = {
 // Categories API
 export const categoriesApi = {
   list: () =>
-    request<import('@/lib/mock-db').Category[]>('/categories'),
+    request<Category[]>('/categories'),
 
   get: (id: string) =>
-    request<import('@/lib/mock-db').Category>(`/categories/${id}`),
+    request<Category>(`/categories/${id}`),
 
-  create: (data: Partial<import('@/lib/mock-db').Category>) =>
-    request<import('@/lib/mock-db').Category>('/categories', { method: 'POST', body: data }),
+  create: (data: Partial<Category>) =>
+    request<Category>('/categories', { method: 'POST', body: data as Record<string, unknown> }),
 
-  update: (id: string, data: Partial<import('@/lib/mock-db').Category>) =>
-    request<import('@/lib/mock-db').Category>(`/categories/${id}`, { method: 'PUT', body: data }),
+  update: (id: string, data: Partial<Category>) =>
+    request<Category>(`/categories/${id}`, { method: 'PUT', body: data as Record<string, unknown> }),
 
   delete: (id: string) =>
     request<{ success: boolean }>(`/categories/${id}`, { method: 'DELETE' }),
@@ -81,82 +102,82 @@ export const categoriesApi = {
 // Orders API
 export const ordersApi = {
   list: (params?: { customer_id?: string; warehouse_id?: string; status?: string; limit?: number; offset?: number }) =>
-    request<{ data: import('@/lib/mock-db').Order[]; pagination: { total: number; limit: number; offset: number; has_more: boolean } }>('/orders', { searchParams: params as Record<string, string> }),
+    request<{ data: Order[]; pagination: { total: number; limit: number; offset: number; has_more: boolean } }>('/orders', { searchParams: params as Record<string, string> }),
 
   get: (id: string) =>
-    request<import('@/lib/mock-db').Order>(`/orders/${id}`),
+    request<Order>(`/orders/${id}`),
 
-  create: (data: Partial<import('@/lib/mock-db').Order>) =>
-    request<import('@/lib/mock-db').Order>('/orders', { method: 'POST', body: data }),
+  create: (data: Partial<Order>) =>
+    request<Order>('/orders', { method: 'POST', body: data as Record<string, unknown> }),
 
-  update: (id: string, data: Partial<import('@/lib/mock-db').Order>) =>
-    request<import('@/lib/mock-db').Order>(`/orders/${id}`, { method: 'PUT', body: data }),
+  update: (id: string, data: Partial<Order>) =>
+    request<Order>(`/orders/${id}`, { method: 'PUT', body: data as Record<string, unknown> }),
 };
 
 // Warehouses API
 export const warehousesApi = {
   list: (params?: { status?: string; limit?: number; offset?: number }) =>
-    request<{ data: import('@/lib/mock-db').Warehouse[]; pagination: { total: number; limit: number; offset: number; has_more: boolean } }>('/warehouses', { searchParams: params as Record<string, string> }),
+    request<{ data: Warehouse[]; pagination: { total: number; limit: number; offset: number; has_more: boolean } }>('/warehouses', { searchParams: params as Record<string, string> }),
 
   get: (id: string) =>
-    request<import('@/lib/mock-db').Warehouse>(`/warehouses/${id}`),
+    request<Warehouse>(`/warehouses/${id}`),
 
-  create: (data: Partial<import('@/lib/mock-db').Warehouse>) =>
-    request<import('@/lib/mock-db').Warehouse>('/warehouses', { method: 'POST', body: data }),
+  create: (data: Partial<Warehouse>) =>
+    request<Warehouse>('/warehouses', { method: 'POST', body: data as Record<string, unknown> }),
 
-  update: (id: string, data: Partial<import('@/lib/mock-db').Warehouse>) =>
-    request<import('@/lib/mock-db').Warehouse>(`/warehouses/${id}`, { method: 'PUT', body: data }),
+  update: (id: string, data: Partial<Warehouse>) =>
+    request<Warehouse>(`/warehouses/${id}`, { method: 'PUT', body: data as Record<string, unknown> }),
 };
 
 // Inventory API
 export const inventoryApi = {
   list: (params?: { warehouse_id?: string; product_id?: string; status?: string; limit?: number; offset?: number }) =>
-    request<{ data: import('@/lib/mock-db').Inventory[]; pagination: { total: number; limit: number; offset: number; has_more: boolean } }>('/inventory', { searchParams: params as Record<string, string> }),
+    request<{ data: Inventory[]; pagination: { total: number; limit: number; offset: number; has_more: boolean } }>('/inventory', { searchParams: params as Record<string, string> }),
 
   get: (id: string) =>
-    request<import('@/lib/mock-db').Inventory>(`/inventory/${id}`),
+    request<Inventory>(`/inventory/${id}`),
 
-  create: (data: Partial<import('@/lib/mock-db').Inventory>) =>
-    request<import('@/lib/mock-db').Inventory>('/inventory', { method: 'POST', body: data }),
+  create: (data: Partial<Inventory>) =>
+    request<Inventory>('/inventory', { method: 'POST', body: data as Record<string, unknown> }),
 
-  update: (id: string, data: Partial<import('@/lib/mock-db').Inventory>) =>
-    request<import('@/lib/mock-db').Inventory>(`/inventory/${id}`, { method: 'PUT', body: data }),
+  update: (id: string, data: Partial<Inventory>) =>
+    request<Inventory>(`/inventory/${id}`, { method: 'PUT', body: data as Record<string, unknown> }),
 };
 
 // Users API
 export const usersApi = {
   list: (params?: { role?: string; status?: string; search?: string; limit?: number; offset?: number }) =>
-    request<{ data: Omit<import('@/lib/mock-db').User, 'password_hash'>[]; pagination: { total: number; limit: number; offset: number; has_more: boolean } }>('/users', { searchParams: params as Record<string, string> }),
+    request<{ data: SafeUser[]; pagination: { total: number; limit: number; offset: number; has_more: boolean } }>('/users', { searchParams: params as Record<string, string> }),
 
   get: (id: string) =>
-    request<Omit<import('@/lib/mock-db').User, 'password_hash'>>(`/users/${id}`),
+    request<SafeUser>(`/users/${id}`),
 
-  update: (id: string, data: Partial<import('@/lib/mock-db').User>) =>
-    request<Omit<import('@/lib/mock-db').User, 'password_hash'>>(`/users/${id}`, { method: 'PUT', body: data }),
+  update: (id: string, data: Partial<User>) =>
+    request<SafeUser>(`/users/${id}`, { method: 'PUT', body: data as Record<string, unknown> }),
 };
 
 // Auth API
 export const authApi = {
   login: (email: string, password: string) =>
-    request<{ user: Omit<import('@/lib/mock-db').User, 'password_hash'>; token: string }>('/auth', { method: 'POST', body: { email, password } }),
+    request<{ user: SafeUser; token: string }>('/auth', { method: 'POST', body: { email, password } }),
 
   getSession: () =>
-    request<Omit<import('@/lib/mock-db').User, 'password_hash'>>('/auth'),
+    request<SafeUser>('/auth'),
 };
 
 // Notifications API
 export const notificationsApi = {
   list: (params?: { user_id?: string; type?: string; read?: string; limit?: number; offset?: number }) =>
-    request<{ data: import('@/lib/mock-db').Notification[]; pagination: { total: number; limit: number; offset: number; has_more: boolean } }>('/notifications', { searchParams: params as Record<string, string> }),
+    request<{ data: Notification[]; pagination: { total: number; limit: number; offset: number; has_more: boolean } }>('/notifications', { searchParams: params as Record<string, string> }),
 
   get: (id: string) =>
-    request<import('@/lib/mock-db').Notification>(`/notifications/${id}`),
+    request<Notification>(`/notifications/${id}`),
 
-  create: (data: Partial<import('@/lib/mock-db').Notification>) =>
-    request<import('@/lib/mock-db').Notification>('/notifications', { method: 'POST', body: data }),
+  create: (data: Partial<Notification>) =>
+    request<Notification>('/notifications', { method: 'POST', body: data as Record<string, unknown> }),
 
-  update: (id: string, data: Partial<import('@/lib/mock-db').Notification>) =>
-    request<import('@/lib/mock-db').Notification>(`/notifications/${id}`, { method: 'PUT', body: data }),
+  update: (id: string, data: Partial<Notification>) =>
+    request<Notification>(`/notifications/${id}`, { method: 'PUT', body: data as Record<string, unknown> }),
 
   delete: (id: string) =>
     request<{ success: boolean }>(`/notifications/${id}`, { method: 'DELETE' }),
@@ -165,19 +186,19 @@ export const notificationsApi = {
 // Reviews API
 export const reviewsApi = {
   list: (params?: { product_id?: string; customer_id?: string; limit?: number; offset?: number }) =>
-    request<{ data: import('@/lib/mock-db').Review[]; pagination: { total: number; limit: number; offset: number; has_more: boolean } }>('/reviews', { searchParams: params as Record<string, string> }),
+    request<{ data: Review[]; pagination: { total: number; limit: number; offset: number; has_more: boolean } }>('/reviews', { searchParams: params as Record<string, string> }),
 
-  create: (data: Partial<import('@/lib/mock-db').Review>) =>
-    request<import('@/lib/mock-db').Review>('/reviews', { method: 'POST', body: data }),
+  create: (data: Partial<Review>) =>
+    request<Review>('/reviews', { method: 'POST', body: data as Record<string, unknown> }),
 };
 
 // Wishlist API
 export const wishlistApi = {
   list: (customer_id: string) =>
-    request<(import('@/lib/mock-db').WishlistItem & { product: import('@/lib/mock-db').Product | null })[]>(`/wishlist?customer_id=${customer_id}`),
+    request<(WishlistItem & { product: Product | null })[]>(`/wishlist?customer_id=${customer_id}`),
 
   add: (customer_id: string, product_id: string) =>
-    request<import('@/lib/mock-db').WishlistItem>('/wishlist', { method: 'POST', body: { customer_id, product_id } }),
+    request<WishlistItem>('/wishlist', { method: 'POST', body: { customer_id, product_id } }),
 
   remove: (customer_id: string, product_id: string) =>
     request<{ success: boolean }>(`/wishlist?customer_id=${customer_id}&product_id=${product_id}`, { method: 'DELETE' }),
@@ -186,37 +207,37 @@ export const wishlistApi = {
 // Analytics API
 export const analyticsApi = {
   get: (params?: { type?: string; warehouse_id?: string }) =>
-    request<typeof import('@/lib/mock-db').db.analytics>('/analytics', { searchParams: params as Record<string, string> }),
+    request<Record<string, unknown>>('/analytics', { searchParams: params as Record<string, string> }),
 };
 
 // Addresses API
 export const addressesApi = {
   list: (customer_id: string) =>
-    request<{ data: import('@/lib/mock-db').Address[] }>(`/addresses?customer_id=${customer_id}`),
+    request<{ data: Address[] }>(`/addresses?customer_id=${customer_id}`),
 
-  create: (data: Partial<import('@/lib/mock-db').Address>) =>
-    request<import('@/lib/mock-db').Address>('/addresses', { method: 'POST', body: data }),
+  create: (data: Partial<Address>) =>
+    request<Address>('/addresses', { method: 'POST', body: data as Record<string, unknown> }),
 
-  update: (id: string, data: Partial<import('@/lib/mock-db').Address>) =>
-    request<import('@/lib/mock-db').Address>(`/addresses/${id}`, { method: 'PUT', body: data }),
+  update: (id: string, data: Partial<Address>) =>
+    request<Address>(`/addresses/${id}`, { method: 'PUT', body: data as Record<string, unknown> }),
 
   delete: (id: string) =>
     request<{ success: boolean }>(`/addresses/${id}`, { method: 'DELETE' }),
 
   setDefault: (id: string, customer_id: string) =>
-    request<import('@/lib/mock-db').Address>(`/addresses/${id}`, { method: 'PUT', body: { is_default: true, customer_id } }),
+    request<Address>(`/addresses/${id}`, { method: 'PUT', body: { is_default: true, customer_id } }),
 };
 
 // Product Requests API
 export const productRequestsApi = {
   list: (params?: { customer_id?: string; status?: string }) =>
-    request<{ data: import('@/lib/mock-db').ProductRequest[] }>('/product-requests', { searchParams: params as Record<string, string> }),
+    request<{ data: ProductRequest[] }>('/product-requests', { searchParams: params as Record<string, string> }),
 
-  create: (data: Partial<import('@/lib/mock-db').ProductRequest>) =>
-    request<import('@/lib/mock-db').ProductRequest>('/product-requests', { method: 'POST', body: data }),
+  create: (data: Partial<ProductRequest>) =>
+    request<ProductRequest>('/product-requests', { method: 'POST', body: data as Record<string, unknown> }),
 
-  update: (id: string, data: Partial<import('@/lib/mock-db').ProductRequest>) =>
-    request<import('@/lib/mock-db').ProductRequest>(`/product-requests/${id}`, { method: 'PUT', body: data }),
+  update: (id: string, data: Partial<ProductRequest>) =>
+    request<ProductRequest>(`/product-requests/${id}`, { method: 'PUT', body: data as Record<string, unknown> }),
 
   delete: (id: string) =>
     request<{ success: boolean }>(`/product-requests/${id}`, { method: 'DELETE' }),
@@ -225,37 +246,37 @@ export const productRequestsApi = {
 // Admin API
 export const adminApi = {
   pendingProducts: () =>
-    request<(import('@/lib/mock-db').Product & { warehouse_name: string; warehouse_owner: string })[]>('/admin/products/pending'),
+    request<(Product & { warehouse_name: string; warehouse_owner: string })[]>('/admin/products/pending'),
 
   approveProduct: (id: string) =>
-    request<import('@/lib/mock-db').Product>(`/admin/products/${id}/approve`, { method: 'POST' }),
+    request<Product>(`/admin/products/${id}/approve`, { method: 'POST' }),
 
   rejectProduct: (id: string) =>
-    request<import('@/lib/mock-db').Product>(`/admin/products/${id}/reject`, { method: 'POST' }),
+    request<Product>(`/admin/products/${id}/reject`, { method: 'POST' }),
 
   margins: {
     list: () =>
-      request<import('@/lib/mock-db').MarginRule[]>('/admin/margins'),
+      request<MarginRule[]>('/admin/margins'),
 
-    create: (data: Partial<import('@/lib/mock-db').MarginRule>) =>
-      request<import('@/lib/mock-db').MarginRule>('/admin/margins', { method: 'POST', body: data }),
+    create: (data: Partial<MarginRule>) =>
+      request<MarginRule>('/admin/margins', { method: 'POST', body: data as Record<string, unknown> }),
 
-    update: (id: string, data: Partial<import('@/lib/mock-db').MarginRule>) =>
-      request<import('@/lib/mock-db').MarginRule>(`/admin/margins/${id}`, { method: 'PUT', body: data }),
+    update: (id: string, data: Partial<MarginRule>) =>
+      request<MarginRule>(`/admin/margins/${id}`, { method: 'PUT', body: data as Record<string, unknown> }),
   },
 
   promotions: {
     list: (params?: { status?: string }) =>
-      request<import('@/lib/mock-db').Promotion[]>('/admin/promotions', { searchParams: params as Record<string, string> }),
+      request<Promotion[]>('/admin/promotions', { searchParams: params as Record<string, string> }),
 
     get: (id: string) =>
-      request<import('@/lib/mock-db').Promotion>(`/admin/promotions/${id}`),
+      request<Promotion>(`/admin/promotions/${id}`),
 
-    create: (data: Partial<import('@/lib/mock-db').Promotion>) =>
-      request<import('@/lib/mock-db').Promotion>('/admin/promotions', { method: 'POST', body: data }),
+    create: (data: Partial<Promotion>) =>
+      request<Promotion>('/admin/promotions', { method: 'POST', body: data as Record<string, unknown> }),
 
-    update: (id: string, data: Partial<import('@/lib/mock-db').Promotion>) =>
-      request<import('@/lib/mock-db').Promotion>(`/admin/promotions/${id}`, { method: 'PUT', body: data }),
+    update: (id: string, data: Partial<Promotion>) =>
+      request<Promotion>(`/admin/promotions/${id}`, { method: 'PUT', body: data as Record<string, unknown> }),
 
     delete: (id: string) =>
       request<{ success: boolean }>(`/admin/promotions/${id}`, { method: 'DELETE' }),
@@ -263,14 +284,14 @@ export const adminApi = {
 
   auditLogs: {
     list: (params?: { actor_role?: string; action?: string; entity_type?: string; limit?: number; offset?: number }) =>
-      request<{ data: import('@/lib/mock-db').AuditLog[]; pagination: { total: number; limit: number; offset: number; has_more: boolean } }>('/admin/audit-logs', { searchParams: params as Record<string, string> }),
+      request<{ data: AuditLog[]; pagination: { total: number; limit: number; offset: number; has_more: boolean } }>('/admin/audit-logs', { searchParams: params as Record<string, string> }),
   },
 
   systemSettings: {
     get: () =>
-      request<import('@/lib/mock-db').SystemSettings>('/admin/system-settings'),
+      request<SystemSettings>('/admin/system-settings'),
 
-    update: (data: Partial<import('@/lib/mock-db').SystemSettings>) =>
-      request<import('@/lib/mock-db').SystemSettings>('/admin/system-settings', { method: 'PUT', body: data as Record<string, unknown> }),
+    update: (data: Partial<SystemSettings>) =>
+      request<SystemSettings>('/admin/system-settings', { method: 'PUT', body: data as Record<string, unknown> }),
   },
 };

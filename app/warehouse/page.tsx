@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Package, ShoppingCart, DollarSign, TrendingUp, AlertTriangle, Clock, Warehouse as WarehouseIcon, Star } from 'lucide-react';
 import Link from 'next/link';
 import { warehousesApi, ordersApi, inventoryApi, analyticsApi } from '@/lib/api';
-import type { Warehouse, Order, Inventory } from '@/lib/mock-db';
+import type { Warehouse, Order, Inventory } from '@/lib/types';
 
 export default function WarehouseDashboard() {
   const [warehouse, setWarehouse] = useState<Warehouse | null>(null);
@@ -31,7 +31,7 @@ export default function WarehouseDashboard() {
         const inventoryData = Array.isArray(inventoryRes) ? inventoryRes : (inventoryRes as { data?: Inventory[] }).data || [];
         setOrders(ordersData);
         setInventory(inventoryData);
-        setAnalytics(analyticsRes);
+        setAnalytics(analyticsRes as any);
       } catch (error) {
         console.error('Failed to fetch warehouse data:', error);
       } finally {

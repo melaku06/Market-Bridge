@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, Upload, X, Save } from 'lucide-react';
 import Link from 'next/link';
 import { productsApi, categoriesApi, inventoryApi } from '@/lib/api';
-import type { Category } from '@/lib/mock-db';
+import type { Category } from '@/lib/types';
 
 export default function AddProduct() {
   const router = useRouter();

@@ -1,69 +1,80 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db, User, Role, generateId } from '@/lib/mock-db';
+import prisma from '@/lib/prisma';
+import { userQuerySchema } from '@/lib/validations/user';
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = request.nextUrl;
-  const role = searchParams.get('role') as Role | null;
-  const status = searchParams.get('status');
-  const search = searchParams.get('search');
-  const limit = parseInt(searchParams.get('limit') || '20');
-  const offset = parseInt(searchParams.get('offset') || '0');
+  try {
+    const { searchParams } = request.nextUrl;
 
-  let users = [...db.users];
+    const result = userQuerySchema.safeParse({
+      page: searchParams.get('page'),
+      limit: searchParams.get('limit'),
+      role: searchParams.get('role'),
+      status: searchParams.get('status'),
+      search: searchParams.get('search'),
+    });
 
-  // Filter by role
-  if (role) {
-    users = users.filter(u => u.role === role);
+    const params = result.success ? result.data : { page: 1, limit: 20 };
+
+    const where: any = {};
+    if (params.role) where.role = params.role;
+    if (params.status) where.status = params.status;
+    if (params.search) {
+      where.OR = [
+        { name: { contains: params.search, mode: 'insensitive' } },
+        { email: { contains: params.search, mode: 'insensitive' } },
+      ];
+    }
+
+    const [users, total] = await Promise.all([
+      prisma.profile.findMany({
+        where,
+        orderBy: { created_at: 'desc' },
+        take: params.limit,
+        skip: (params.page - 1) * params.limit,
+        include: {
+          warehouse: { select: { id: true, name: true } },
+          credentials: false,
+        },
+      }),
+      prisma.profile.count({ where }),
+    ]);
+
+    return NextResponse.json({
+      data: users,
+      pagination: {
+        total,
+        limit: params.limit,
+        offset: (params.page - 1) * params.limit,
+        has_more: params.page * params.limit < total,
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 });
   }
-
-  // Filter by status
-  if (status) {
-    users = users.filter(u => u.status === status);
-  }
-
-  // Search filter
-  if (search) {
-    const searchLower = search.toLowerCase();
-    users = users.filter(u =>
-      u.name.toLowerCase().includes(searchLower) ||
-      u.email.toLowerCase().includes(searchLower)
-    );
-  }
-
-  // Remove password hashes from response
-  const safeUsers = users.map(({ password_hash: _, ...user }) => user);
-
-  const total = safeUsers.length;
-  const paginatedUsers = safeUsers.slice(offset, offset + limit);
-
-  return NextResponse.json({
-    data: paginatedUsers,
-    pagination: { total, limit, offset, has_more: offset + limit < total }
-  });
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    const { registerUser } = await import('@/lib/auth/db-service');
 
-    const newUser: User = {
-      id: generateId('usr'),
-      name: body.name,
+    const result = await registerUser({
       email: body.email,
-      phone: body.phone || '',
-      password_hash: '$2b$10$hash', // In real app, hash the password properly
-      role: body.role || 'customer',
-      status: 'active',
-      avatar: body.avatar,
-      created_at: new Date().toISOString(),
-      last_login: new Date().toISOString(),
-    };
+      password: body.password,
+      name: body.name,
+      phone: body.phone,
+      role: body.role,
+    });
 
-    db.users.push(newUser);
+    if (!result.success) {
+      return NextResponse.json({ error: result.error }, { status: 400 });
+    }
 
-    const { password_hash: _, ...safeUser } = newUser;
-    return NextResponse.json({ data: safeUser }, { status: 201 });
+    return NextResponse.json({ data: result.user }, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+    console.error('Error creating user:', error);
+    return NextResponse.json({ error: 'Failed to create user' }, { status: 500 });
   }
 }

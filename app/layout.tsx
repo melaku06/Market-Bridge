@@ -2,6 +2,7 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { AuthProvider } from '@/components/auth/auth-provider';
+import { NotificationsProvider } from '@/components/notifications/notifications-provider';
 import { Toaster } from '@/components/ui/sonner';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
@@ -16,7 +17,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={inter.variable}>
       <body className={inter.className}>
         <AuthProvider>
-          {children}
+          <NotificationsProvider>
+            {children}
+          </NotificationsProvider>
           <Toaster position="top-right" richColors />
         </AuthProvider>
       </body>

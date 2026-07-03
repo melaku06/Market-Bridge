@@ -1,40 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/mock-db';
+import { updateProduct } from '@/lib/db-service';
+import { createAuditLog } from '@/lib/db-service';
+import prisma from '@/lib/prisma';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const productIndex = db.products.findIndex(p => p.id === params.id);
+  try {
+    const { id } = await params;
 
-  if (productIndex === -1) {
-    return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+    // Check product exists and is pending
+    const product = await prisma.product.findUnique({ where: { id } });
+
+    if (!product) {
+      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+    }
+
+    if (product.status !== 'pending') {
+      return NextResponse.json({ error: 'Product is not pending approval' }, { status: 400 });
+    }
+
+    // Update product status to published
+    const updatedProduct = await updateProduct(id, { status: 'published' });
+
+    // Create audit log
+    await createAuditLog({
+      actor_id: 'admin',
+      actor_name: 'Admin User',
+      actor_role: 'admin',
+      action: 'PRODUCT_APPROVED',
+      entity_type: 'product',
+      entity_id: id,
+      before_state: JSON.stringify({ status: 'pending' }),
+      after_state: JSON.stringify({ status: 'published' }),
+    });
+
+    return NextResponse.json({ data: updatedProduct });
+  } catch (error) {
+    console.error('Error approving product:', error);
+    return NextResponse.json({ error: 'Failed to approve product' }, { status: 500 });
   }
-
-  const product = db.products[productIndex];
-
-  if (product.status !== 'pending') {
-    return NextResponse.json({ error: 'Product is not pending approval' }, { status: 400 });
-  }
-
-  // Update product status to published
-  db.products[productIndex] = {
-    ...product,
-    status: 'published',
-    updated_at: new Date().toISOString(),
-  };
-
-  // Create audit log
-  db.audit_logs.push({
-    id: `log-${Date.now()}`,
-    actor_id: 'usr-003', // Admin
-    actor_name: 'Admin User',
-    actor_role: 'admin',
-    action: 'PRODUCT_APPROVED',
-    entity_type: 'product',
-    entity_id: params.id,
-    created_at: new Date().toISOString(),
-  });
-
-  return NextResponse.json({ data: db.products[productIndex] });
 }

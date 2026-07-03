@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Save, Camera } from 'lucide-react';
 import { warehousesApi } from '@/lib/api';
-import type { Warehouse } from '@/lib/mock-db';
+import type { Warehouse } from '@/lib/types';
 
 export default function WarehouseProfile() {
   const [warehouse, setWarehouse] = useState<Warehouse | null>(null);

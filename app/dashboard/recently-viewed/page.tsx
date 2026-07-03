@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { ChevronRight, Heart, Loader2 } from 'lucide-react';
 import { productsApi } from '@/lib/api';
 import StarRating from '@/components/ui/star-rating';
-import type { Product } from '@/lib/mock-db';
+import type { Product } from '@/lib/types';
 
 export default function RecentlyViewedPage() {
   const [products, setProducts] = useState<Product[]>([]);

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Search, CheckCircle, Package, Truck, MapPin, XCircle, Clock } from 'lucide-react';
 import { ordersApi } from '@/lib/api';
-import type { Order, OrderStatus } from '@/lib/mock-db';
+import type { Order, OrderStatus } from '@/lib/types';
 
 const STATUS_STEPS: { key: OrderStatus | 'confirmed'; label: string; icon: typeof Package }[] = [
   { key: 'pending', label: 'Order Placed', icon: Package },

@@ -1,65 +1,66 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db, Notification, generateId } from '@/lib/mock-db';
+import { getNotifications, createNotification, getUnreadCount } from '@/lib/db-service';
+import { notificationCreateSchema } from '@/lib/validations/common';
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = request.nextUrl;
-  const user_id = searchParams.get('user_id');
-  const type = searchParams.get('type');
-  const read = searchParams.get('read');
-  const limit = parseInt(searchParams.get('limit') || '20');
-  const offset = parseInt(searchParams.get('offset') || '0');
+  try {
+    const { searchParams } = request.nextUrl;
+    const user_id = searchParams.get('user_id');
+    const type = searchParams.get('type') || undefined;
+    const is_read = searchParams.get('is_read') ? searchParams.get('is_read') === 'true' : undefined;
+    const limit = parseInt(searchParams.get('limit') || '20');
 
-  let notifications = [...db.notifications];
+    if (!user_id) {
+      return NextResponse.json({ error: 'user_id is required' }, { status: 400 });
+    }
 
-  // Filter by user
-  if (user_id) {
-    notifications = notifications.filter(n => n.user_id === user_id);
+    const [notifications, unreadCount] = await Promise.all([
+      getNotifications({
+        user_id,
+        type,
+        is_read,
+        limit,
+      }),
+      getUnreadCount(user_id),
+    ]);
+
+    return NextResponse.json({
+      data: notifications,
+      unreadCount,
+    });
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+    return NextResponse.json({ error: 'Failed to fetch notifications' }, { status: 500 });
   }
-
-  // Filter by type
-  if (type) {
-    notifications = notifications.filter(n => n.type === type);
-  }
-
-  // Filter by read status
-  if (read !== null) {
-    const isRead = read === 'true';
-    notifications = notifications.filter(n => n.read === isRead);
-  }
-
-  // Sort by created_at desc
-  notifications.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-  const total = notifications.length;
-  const paginatedNotifications = notifications.slice(offset, offset + limit);
-
-  return NextResponse.json({
-    data: paginatedNotifications,
-    pagination: { total, limit, offset, has_more: offset + limit < total }
-  });
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const newNotification: Notification = {
-      id: generateId('notif'),
-      user_id: body.user_id,
-      title: body.title,
-      message: body.message,
-      type: body.type || 'system',
-      icon: body.icon || 'bell',
-      priority: body.priority || 'medium',
-      read: false,
-      action_url: body.action_url,
-      created_at: new Date().toISOString(),
-    };
+    // Validate input
+    const result = notificationCreateSchema.safeParse(body);
+    if (!result.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: result.error.flatten() },
+        { status: 400 }
+      );
+    }
 
-    db.notifications.push(newNotification);
+    const notification = await createNotification({
+      user: { connect: { id: result.data.user_id } },
+      type: result.data.type,
+      priority: result.data.priority,
+      title: result.data.title,
+      message: result.data.message,
+      data: result.data.data,
+      action_url: result.data.action_url,
+      is_read: false,
+    });
 
-    return NextResponse.json({ data: newNotification }, { status: 201 });
+    return NextResponse.json({ data: notification }, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+    console.error('Error creating notification:', error);
+    return NextResponse.json({ error: 'Failed to create notification' }, { status: 500 });
   }
 }

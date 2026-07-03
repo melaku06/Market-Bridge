@@ -1,17 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/mock-db';
+import { removeFromWishlist } from '@/lib/db-service';
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const itemIndex = db.wishlist.findIndex(w => w.id === params.id);
+  try {
+    const { id } = await params;
+    await removeFromWishlist(id);
 
-  if (itemIndex === -1) {
-    return NextResponse.json({ error: 'Wishlist item not found' }, { status: 404 });
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error removing from wishlist:', error);
+    if ((error as any).code === 'P2025') {
+      return NextResponse.json({ error: 'Wishlist item not found' }, { status: 404 });
+    }
+    return NextResponse.json({ error: 'Failed to remove from wishlist' }, { status: 500 });
   }
-
-  db.wishlist.splice(itemIndex, 1);
-
-  return NextResponse.json({ success: true });
 }

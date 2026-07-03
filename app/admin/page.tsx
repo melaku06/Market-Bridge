@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Package, DollarSign, Users, Warehouse as WarehouseIcon, ShoppingBag, ArrowUp, ArrowDown } from 'lucide-react';
 import Link from 'next/link';
 import { productsApi, warehousesApi, analyticsApi } from '@/lib/api';
-import type { Product, Warehouse } from '@/lib/mock-db';
+import type { Product, Warehouse } from '@/lib/types';
 
 export default function AdminDashboard() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -32,7 +32,7 @@ export default function AdminDashboard() {
         const warehousesData = Array.isArray(warehousesRes) ? warehousesRes : (warehousesRes as { data?: Warehouse[] }).data || [];
         setProducts(productsData);
         setWarehouses(warehousesData);
-        setAnalytics(analyticsRes);
+        setAnalytics(analyticsRes as any);
       } catch (error) {
         console.error('Failed to fetch admin data:', error);
       } finally {

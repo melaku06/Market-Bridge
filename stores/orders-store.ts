@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { ordersApi } from '@/lib/api';
-import type { Order } from '@/lib/mock-db';
+import type { Order } from '@/lib/types';
 
 interface OrdersState {
   orders: Order[];

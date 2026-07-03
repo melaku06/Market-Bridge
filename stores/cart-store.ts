@@ -1,30 +1,37 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { Product } from '@/lib/mock-db';
 
 export interface CartItem {
-  product: Product;
+  id: string;
+  name: string;
+  image: string;
+  basePrice: number;
+  marginPercent: number;
+  discountPercent: number;
   quantity: number;
   color?: string;
   size?: string;
+  warehouseName?: string;
 }
 
 interface CartState {
   items: CartItem[];
   isOpen: boolean;
 
-  // Computed
   totalItems: () => number;
   totalPrice: () => number;
 
-  // Actions
-  addItem: (product: Product, quantity?: number, color?: string, size?: string) => void;
-  removeItem: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  addItem: (item: Omit<CartItem, 'quantity'>, quantity?: number) => void;
+  removeItem: (itemId: string) => void;
+  updateQuantity: (itemId: string, quantity: number) => void;
   clearCart: () => void;
   toggleCart: () => void;
   openCart: () => void;
   closeCart: () => void;
+}
+
+function computeFinalPrice(item: CartItem): number {
+  return item.basePrice * (1 + item.marginPercent / 100) * (1 - item.discountPercent / 100);
 }
 
 export const useCartStore = create<CartState>()(
@@ -35,12 +42,13 @@ export const useCartStore = create<CartState>()(
 
       totalItems: () => get().items.reduce((sum, item) => sum + item.quantity, 0),
 
-      totalPrice: () => get().items.reduce((sum, item) => sum + item.product.final_price * item.quantity, 0),
+      totalPrice: () =>
+        get().items.reduce((sum, item) => sum + computeFinalPrice(item) * item.quantity, 0),
 
-      addItem: (product, quantity = 1, color, size) => {
+      addItem: (item, quantity = 1) => {
         set((state) => {
           const existingIndex = state.items.findIndex(
-            (item) => item.product.id === product.id && item.color === color && item.size === size
+            (i) => i.id === item.id && i.color === item.color && i.size === item.size
           );
 
           if (existingIndex > -1) {
@@ -49,36 +57,30 @@ export const useCartStore = create<CartState>()(
             return { items: newItems };
           }
 
-          return {
-            items: [...state.items, { product, quantity, color, size }],
-          };
+          return { items: [...state.items, { ...item, quantity }] };
         });
       },
 
-      removeItem: (productId: string) => {
+      removeItem: (itemId: string) => {
         set((state) => ({
-          items: state.items.filter((item) => item.product.id !== productId),
+          items: state.items.filter((item) => item.id !== itemId),
         }));
       },
 
-      updateQuantity: (productId: string, quantity: number) => {
+      updateQuantity: (itemId: string, quantity: number) => {
         set((state) => {
           if (quantity <= 0) {
-            return {
-              items: state.items.filter((item) => item.product.id !== productId),
-            };
+            return { items: state.items.filter((item) => item.id !== itemId) };
           }
-
           return {
             items: state.items.map((item) =>
-              item.product.id === productId ? { ...item, quantity } : item
+              item.id === itemId ? { ...item, quantity } : item
             ),
           };
         });
       },
 
       clearCart: () => set({ items: [] }),
-
       toggleCart: () => set((state) => ({ isOpen: !state.isOpen })),
       openCart: () => set({ isOpen: true }),
       closeCart: () => set({ isOpen: false }),

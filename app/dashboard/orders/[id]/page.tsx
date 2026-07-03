@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ChevronRight, Download, MapPin, CreditCard, Truck, CheckCircle, Loader2 } from 'lucide-react';
 import { ordersApi } from '@/lib/api';
-import type { Order } from '@/lib/mock-db';
+import type { Order } from '@/lib/types';
 
 const statusColor: Record<string, string> = {
   delivered: 'bg-green-100 text-green-700',

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Search, Eye, Check, X, Warehouse as WarehouseIcon, Star } from 'lucide-react';
 import { warehousesApi } from '@/lib/api';
-import type { WarehouseStatus, Warehouse } from '@/lib/mock-db';
+import type { WarehouseStatus, Warehouse } from '@/lib/types';
 
 const statusLabels: Record<string, string> = {
   all: 'All',

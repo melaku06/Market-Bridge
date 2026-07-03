@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Search, AlertTriangle, Package, Plus, Minus } from 'lucide-react';
 import { inventoryApi, productsApi } from '@/lib/api';
-import type { Inventory, Product } from '@/lib/mock-db';
+import type { Inventory, Product } from '@/lib/types';
 
 export default function WarehouseInventory() {
   const [inventory, setInventory] = useState<Inventory[]>([]);

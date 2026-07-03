@@ -1,64 +1,59 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/mock-db';
+import { getPromotionById, updatePromotion, deletePromotion } from '@/lib/db-service';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const promotion = db.promotions.find(p => p.id === params.id);
+  try {
+    const { id } = await params;
+    const promotion = await getPromotionById(id);
 
-  if (!promotion) {
-    return NextResponse.json({ error: 'Promotion not found' }, { status: 404 });
+    if (!promotion) {
+      return NextResponse.json({ error: 'Promotion not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ data: promotion });
+  } catch (error) {
+    console.error('Error fetching promotion:', error);
+    return NextResponse.json({ error: 'Failed to fetch promotion' }, { status: 500 });
   }
-
-  return NextResponse.json({ data: promotion });
 }
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const promotionIndex = db.promotions.findIndex(p => p.id === params.id);
-
-  if (promotionIndex === -1) {
-    return NextResponse.json({ error: 'Promotion not found' }, { status: 404 });
-  }
-
   try {
+    const { id } = await params;
     const body = await request.json();
-    const existing = db.promotions[promotionIndex];
 
-    const updatedPromotion = {
-      ...existing,
-      title: body.title ?? existing.title,
-      image: body.image ?? existing.image,
-      target_url: body.target_url ?? existing.target_url,
-      location: body.location ?? existing.location,
-      target_audience: body.target_audience ?? existing.target_audience,
-      status: body.status ?? existing.status,
-      start_date: body.start_date ?? existing.start_date,
-      end_date: body.end_date ?? existing.end_date,
-    };
+    const promotion = await updatePromotion(id, body);
 
-    db.promotions[promotionIndex] = updatedPromotion;
-
-    return NextResponse.json({ data: updatedPromotion });
+    return NextResponse.json({ data: promotion });
   } catch (error) {
-    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+    console.error('Error updating promotion:', error);
+    if ((error as any).code === 'P2025') {
+      return NextResponse.json({ error: 'Promotion not found' }, { status: 404 });
+    }
+    return NextResponse.json({ error: 'Failed to update promotion' }, { status: 500 });
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const promotionIndex = db.promotions.findIndex(p => p.id === params.id);
+  try {
+    const { id } = await params;
+    await deletePromotion(id);
 
-  if (promotionIndex === -1) {
-    return NextResponse.json({ error: 'Promotion not found' }, { status: 404 });
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting promotion:', error);
+    if ((error as any).code === 'P2025') {
+      return NextResponse.json({ error: 'Promotion not found' }, { status: 404 });
+    }
+    return NextResponse.json({ error: 'Failed to delete promotion' }, { status: 500 });
   }
-
-  db.promotions.splice(promotionIndex, 1);
-
-  return NextResponse.json({ success: true });
 }

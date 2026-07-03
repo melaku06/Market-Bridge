@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { addressesApi } from '@/lib/api';
-import type { Address } from '@/lib/mock-db';
+import type { Address } from '@/lib/types';
 
 interface AddressesState {
   addresses: Address[];

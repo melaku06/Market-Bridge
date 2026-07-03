@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Plus, Edit, Trash2, Play, Pause, Image, Eye } from 'lucide-react';
 import { adminApi } from '@/lib/api';
-import type { Promotion, BannerStatus } from '@/lib/mock-db';
+import type { Promotion, BannerStatus } from '@/lib/types';
 
 export default function AdminPromotions() {
   const [promotions, setPromotions] = useState<Promotion[]>([]);

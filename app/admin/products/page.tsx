@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Search, Eye, Check, X, Package, Clock } from 'lucide-react';
 import { productsApi, warehousesApi } from '@/lib/api';
-import type { Product, ProductStatus, Warehouse } from '@/lib/mock-db';
+import type { Product, ProductStatus, Warehouse } from '@/lib/types';
 
 export default function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([]);

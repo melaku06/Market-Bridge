@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Save, Edit, Percent } from 'lucide-react';
 import { adminApi } from '@/lib/api';
-import type { MarginRule } from '@/lib/mock-db';
+import type { MarginRule } from '@/lib/types';
 
 export default function AdminMargins() {
   const [rules, setRules] = useState<MarginRule[]>([]);

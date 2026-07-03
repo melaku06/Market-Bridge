@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Plus, Search, Eye, Edit, Trash2, Package } from 'lucide-react';
 import { productsApi, inventoryApi } from '@/lib/api';
-import type { Product, ProductStatus, Inventory } from '@/lib/mock-db';
+import type { Product, ProductStatus, Inventory } from '@/lib/types';
 
 export default function WarehouseProducts() {
   const [products, setProducts] = useState<Product[]>([]);

@@ -1,27 +1,28 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { wishlistApi } from '@/lib/api';
-import type { Product, WishlistItem } from '@/lib/mock-db';
 
-interface WishlistItemWithProduct extends WishlistItem {
-  product: Product | null;
+export interface WishlistItem {
+  productId: string;
+  name: string;
+  image: string;
+  basePrice: number;
+  marginPercent: number;
+  discountPercent: number;
+  addedAt: string;
 }
 
 interface WishlistState {
-  items: WishlistItemWithProduct[];
+  items: WishlistItem[];
   isLoading: boolean;
-  error: string | null;
 
-  // Computed
   isInWishlist: (productId: string) => boolean;
   totalItems: () => number;
 
-  // Actions
-  fetchWishlist: (customerId: string) => Promise<void>;
-  addToWishlist: (customerId: string, productId: string) => Promise<boolean>;
-  removeFromWishlist: (customerId: string, productId: string) => Promise<boolean>;
+  toggleWishlist: (item: Omit<WishlistItem, 'addedAt'>) => void;
+  addToWishlist: (item: Omit<WishlistItem, 'addedAt'>) => void;
+  removeFromWishlist: (productId: string) => void;
   clearWishlist: () => void;
-  clearError: () => void;
+  fetchWishlist: (_customerId?: string) => Promise<void>;
 }
 
 export const useWishlistStore = create<WishlistState>()(
@@ -29,66 +30,45 @@ export const useWishlistStore = create<WishlistState>()(
     (set, get) => ({
       items: [],
       isLoading: false,
-      error: null,
 
       isInWishlist: (productId: string) => {
-        return get().items.some((item) => item.product_id === productId);
+        return get().items.some((item) => item.productId === productId);
       },
 
       totalItems: () => get().items.length,
 
-      fetchWishlist: async (customerId: string) => {
-        set({ isLoading: true, error: null });
-        try {
-          const items = await wishlistApi.list(customerId);
-          set({ items: items as WishlistItemWithProduct[], isLoading: false });
-        } catch (error) {
-          set({
-            error: error instanceof Error ? error.message : 'Failed to fetch wishlist',
-            isLoading: false,
-          });
+      toggleWishlist: (item) => {
+        const exists = get().isInWishlist(item.productId);
+        if (exists) {
+          set((state) => ({
+            items: state.items.filter((i) => i.productId !== item.productId),
+          }));
+        } else {
+          set((state) => ({
+            items: [...state.items, { ...item, addedAt: new Date().toISOString() }],
+          }));
         }
       },
 
-      addToWishlist: async (customerId: string, productId: string) => {
-        set({ isLoading: true, error: null });
-        try {
-          const item = await wishlistApi.add(customerId, productId);
-          set((state) => ({
-            items: [...state.items, item as WishlistItemWithProduct],
-            isLoading: false,
-          }));
-          return true;
-        } catch (error) {
-          set({
-            error: error instanceof Error ? error.message : 'Failed to add to wishlist',
-            isLoading: false,
-          });
-          return false;
-        }
+      addToWishlist: (item) => {
+        if (get().isInWishlist(item.productId)) return;
+        set((state) => ({
+          items: [...state.items, { ...item, addedAt: new Date().toISOString() }],
+        }));
       },
 
-      removeFromWishlist: async (customerId: string, productId: string) => {
-        set({ isLoading: true, error: null });
-        try {
-          await wishlistApi.remove(customerId, productId);
-          set((state) => ({
-            items: state.items.filter((item) => item.product_id !== productId),
-            isLoading: false,
-          }));
-          return true;
-        } catch (error) {
-          set({
-            error: error instanceof Error ? error.message : 'Failed to remove from wishlist',
-            isLoading: false,
-          });
-          return false;
-        }
+      removeFromWishlist: (productId: string) => {
+        set((state) => ({
+          items: state.items.filter((item) => item.productId !== productId),
+        }));
       },
 
       clearWishlist: () => set({ items: [] }),
 
-      clearError: () => set({ error: null }),
+      fetchWishlist: async () => {
+        // Items are already loaded from localStorage by persist middleware
+        set({ isLoading: false });
+      },
     }),
     {
       name: 'wishlist-storage',

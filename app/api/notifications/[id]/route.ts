@@ -1,57 +1,59 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/mock-db';
+import { getNotificationById, markNotificationRead, deleteNotification } from '@/lib/db-service';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const notification = db.notifications.find(n => n.id === params.id);
+  try {
+    const { id } = await params;
+    const notification = await getNotificationById(id);
 
-  if (!notification) {
-    return NextResponse.json({ error: 'Notification not found' }, { status: 404 });
+    if (!notification) {
+      return NextResponse.json({ error: 'Notification not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ data: notification });
+  } catch (error) {
+    console.error('Error fetching notification:', error);
+    return NextResponse.json({ error: 'Failed to fetch notification' }, { status: 500 });
   }
-
-  return NextResponse.json({ data: notification });
 }
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const notificationIndex = db.notifications.findIndex(n => n.id === params.id);
-
-  if (notificationIndex === -1) {
-    return NextResponse.json({ error: 'Notification not found' }, { status: 404 });
-  }
-
   try {
+    const { id } = await params;
     const body = await request.json();
-    const existingNotification = db.notifications[notificationIndex];
 
-    const updatedNotification = {
-      ...existingNotification,
-      read: body.read ?? existingNotification.read,
-    };
+    const notification = await markNotificationRead(id, body.is_read ?? true);
 
-    db.notifications[notificationIndex] = updatedNotification;
-
-    return NextResponse.json({ data: updatedNotification });
+    return NextResponse.json({ data: notification });
   } catch (error) {
-    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+    console.error('Error updating notification:', error);
+    if ((error as any).code === 'P2025') {
+      return NextResponse.json({ error: 'Notification not found' }, { status: 404 });
+    }
+    return NextResponse.json({ error: 'Failed to update notification' }, { status: 500 });
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const notificationIndex = db.notifications.findIndex(n => n.id === params.id);
+  try {
+    const { id } = await params;
+    await deleteNotification(id);
 
-  if (notificationIndex === -1) {
-    return NextResponse.json({ error: 'Notification not found' }, { status: 404 });
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting notification:', error);
+    if ((error as any).code === 'P2025') {
+      return NextResponse.json({ error: 'Notification not found' }, { status: 404 });
+    }
+    return NextResponse.json({ error: 'Failed to delete notification' }, { status: 500 });
   }
-
-  db.notifications.splice(notificationIndex, 1);
-
-  return NextResponse.json({ success: true });
 }

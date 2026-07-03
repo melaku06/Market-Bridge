@@ -1,68 +1,76 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/mock-db';
+import { getWarehouseById, updateWarehouse, deleteWarehouse } from '@/lib/db-service';
+import { warehouseStatusUpdateSchema } from '@/lib/validations/warehouse';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const warehouse = db.warehouses.find(w => w.id === params.id);
+  try {
+    const { id } = await params;
+    const warehouse = await getWarehouseById(id);
 
-  if (!warehouse) {
-    return NextResponse.json({ error: 'Warehouse not found' }, { status: 404 });
+    if (!warehouse) {
+      return NextResponse.json({ error: 'Warehouse not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ data: warehouse });
+  } catch (error) {
+    console.error('Error fetching warehouse:', error);
+    return NextResponse.json({ error: 'Failed to fetch warehouse' }, { status: 500 });
   }
-
-  return NextResponse.json({ data: warehouse });
 }
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const warehouseIndex = db.warehouses.findIndex(w => w.id === params.id);
-
-  if (warehouseIndex === -1) {
-    return NextResponse.json({ error: 'Warehouse not found' }, { status: 404 });
-  }
-
   try {
+    const { id } = await params;
     const body = await request.json();
-    const existingWarehouse = db.warehouses[warehouseIndex];
 
-    const updatedWarehouse = {
-      ...existingWarehouse,
-      name: body.name ?? existingWarehouse.name,
-      owner_name: body.owner_name ?? existingWarehouse.owner_name,
-      email: body.email ?? existingWarehouse.email,
-      phone: body.phone ?? existingWarehouse.phone,
-      address: body.address ?? existingWarehouse.address,
-      city: body.city ?? existingWarehouse.city,
-      country: body.country ?? existingWarehouse.country,
-      business_type: body.business_type ?? existingWarehouse.business_type,
-      status: body.status ?? existingWarehouse.status,
-      bank_name: body.bank_name ?? existingWarehouse.bank_name,
-      bank_account: body.bank_account ?? existingWarehouse.bank_account,
-      tax_id: body.tax_id ?? existingWarehouse.tax_id,
-    };
+    // Check if this is a status update
+    const isStatusUpdate = body.status && !body.name;
 
-    db.warehouses[warehouseIndex] = updatedWarehouse;
+    if (isStatusUpdate) {
+      const result = warehouseStatusUpdateSchema.safeParse(body);
+      if (!result.success) {
+        return NextResponse.json(
+          { error: 'Validation failed', details: result.error.flatten() },
+          { status: 400 }
+        );
+      }
+    }
 
-    return NextResponse.json({ data: updatedWarehouse });
+    const warehouse = await updateWarehouse(id, {
+      ...body,
+      updated_at: new Date(),
+    });
+
+    return NextResponse.json({ data: warehouse });
   } catch (error) {
-    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+    console.error('Error updating warehouse:', error);
+    if ((error as any).code === 'P2025') {
+      return NextResponse.json({ error: 'Warehouse not found' }, { status: 404 });
+    }
+    return NextResponse.json({ error: 'Failed to update warehouse' }, { status: 500 });
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const warehouseIndex = db.warehouses.findIndex(w => w.id === params.id);
+  try {
+    const { id } = await params;
+    await deleteWarehouse(id);
 
-  if (warehouseIndex === -1) {
-    return NextResponse.json({ error: 'Warehouse not found' }, { status: 404 });
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting warehouse:', error);
+    if ((error as any).code === 'P2025') {
+      return NextResponse.json({ error: 'Warehouse not found' }, { status: 404 });
+    }
+    return NextResponse.json({ error: 'Failed to delete warehouse' }, { status: 500 });
   }
-
-  db.warehouses.splice(warehouseIndex, 1);
-
-  return NextResponse.json({ success: true });
 }

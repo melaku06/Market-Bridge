@@ -6,7 +6,7 @@ import {
   Save, ToggleLeft, ToggleRight, Image as ImageIcon, Clock, List, Languages,
 } from 'lucide-react';
 import { adminApi } from '@/lib/api';
-import type { SystemSettings } from '@/lib/mock-db';
+import type { SystemSettings } from '@/lib/types';
 
 type Tab = 'general' | 'payment' | 'shipping' | 'email' | 'sms' | 'seo' | 'api' | 'backup';
 

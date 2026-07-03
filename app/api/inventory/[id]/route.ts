@@ -1,71 +1,82 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/mock-db';
+import { getInventoryItem, updateInventory } from '@/lib/db-service';
+import prisma from '@/lib/prisma';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const inventory = db.inventory.find(i => i.id === params.id);
+  try {
+    const { id } = await params;
+    const inventory = await getInventoryItem(id);
 
-  if (!inventory) {
-    return NextResponse.json({ error: 'Inventory item not found' }, { status: 404 });
+    if (!inventory) {
+      return NextResponse.json({ error: 'Inventory item not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ data: inventory });
+  } catch (error) {
+    console.error('Error fetching inventory:', error);
+    return NextResponse.json({ error: 'Failed to fetch inventory' }, { status: 500 });
   }
-
-  return NextResponse.json({ data: inventory });
 }
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const inventoryIndex = db.inventory.findIndex(i => i.id === params.id);
-
-  if (inventoryIndex === -1) {
-    return NextResponse.json({ error: 'Inventory item not found' }, { status: 404 });
-  }
-
   try {
+    const { id } = await params;
     const body = await request.json();
-    const existing = db.inventory[inventoryIndex];
 
-    const total_stock = body.total_stock !== undefined ? parseInt(body.total_stock) : existing.total_stock;
-    const reserved_stock = body.reserved_stock !== undefined ? parseInt(body.reserved_stock) : existing.reserved_stock;
-    const available_stock = total_stock - reserved_stock;
-    const low_stock_threshold = body.low_stock_threshold !== undefined ? parseInt(body.low_stock_threshold) : existing.low_stock_threshold;
+    const quantity = body.quantity !== undefined ? parseInt(body.quantity) : undefined;
+    const reservedQuantity = body.reserved_quantity !== undefined ? parseInt(body.reserved_quantity) : undefined;
+    const lowStockThreshold = body.low_stock_threshold !== undefined ? parseInt(body.low_stock_threshold) : undefined;
 
-    let status: 'in_stock' | 'low_stock' | 'out_of_stock' = 'in_stock';
-    if (available_stock === 0) status = 'out_of_stock';
-    else if (available_stock <= low_stock_threshold) status = 'low_stock';
+    // Calculate status based on available stock
+    let status: 'in_stock' | 'low_stock' | 'out_of_stock' | undefined;
+    if (quantity !== undefined) {
+      const existing = await prisma.inventory.findUnique({ where: { id } });
+      const reserved = reservedQuantity ?? existing?.reserved_quantity ?? 0;
+      const threshold = lowStockThreshold ?? existing?.low_stock_threshold ?? 10;
+      const available = quantity - reserved;
 
-    const updatedInventory = {
-      ...existing,
-      total_stock,
-      reserved_stock,
-      available_stock,
-      low_stock_threshold,
+      if (available <= 0) status = 'out_of_stock';
+      else if (available <= threshold) status = 'low_stock';
+      else status = 'in_stock';
+    }
+
+    const inventory = await updateInventory(id, {
+      quantity,
+      reserved_quantity: reservedQuantity,
+      low_stock_threshold: lowStockThreshold,
       status,
-      last_updated: new Date().toISOString(),
-    };
+    });
 
-    db.inventory[inventoryIndex] = updatedInventory;
-
-    return NextResponse.json({ data: updatedInventory });
+    return NextResponse.json({ data: inventory });
   } catch (error) {
-    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+    console.error('Error updating inventory:', error);
+    if ((error as any).code === 'P2025') {
+      return NextResponse.json({ error: 'Inventory item not found' }, { status: 404 });
+    }
+    return NextResponse.json({ error: 'Failed to update inventory' }, { status: 500 });
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const inventoryIndex = db.inventory.findIndex(i => i.id === params.id);
+  try {
+    const { id } = await params;
+    await prisma.inventory.delete({ where: { id } });
 
-  if (inventoryIndex === -1) {
-    return NextResponse.json({ error: 'Inventory item not found' }, { status: 404 });
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting inventory:', error);
+    if ((error as any).code === 'P2025') {
+      return NextResponse.json({ error: 'Inventory item not found' }, { status: 404 });
+    }
+    return NextResponse.json({ error: 'Failed to delete inventory' }, { status: 500 });
   }
-
-  db.inventory.splice(inventoryIndex, 1);
-
-  return NextResponse.json({ success: true });
 }

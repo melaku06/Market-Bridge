@@ -19,6 +19,9 @@ import {
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/components/auth/auth-provider';
+import { useCartStore } from '@/stores/cart-store';
+import { useWishlistStore } from '@/stores/wishlist-store';
+import NotificationBell from '@/components/notifications/notification-bell';
 
 export default function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -27,6 +30,8 @@ export default function Header() {
   const [categories, setCategories] = useState<any[]>([]);
 
   const { user, isAuthenticated, isLoading } = useAuth();
+  const cartCount = useCartStore((s) => s.totalItems());
+  const wishlistCount = useWishlistStore((s) => s.totalItems());
 
   useEffect(() => {
     async function fetchCategories() {
@@ -133,11 +138,7 @@ export default function Header() {
 
             {/* Notifications - Only for authenticated users */}
             {isAuthenticated && (
-              <Link href={`${getDashboardLink()}/notifications`}>
-                <button className="p-2 rounded-md hover:bg-gray-50 transition-colors text-gray-600 hover:text-blue-600 relative">
-                  <Bell className="w-5 h-5" />
-                </button>
-              </Link>
+              <NotificationBell />
             )}
 
             {/* User / Auth */}
@@ -208,6 +209,11 @@ export default function Header() {
               <Link href="/wishlist">
                 <button className="p-2 rounded-md hover:bg-gray-50 transition-colors text-gray-600 hover:text-blue-600 relative">
                   <Heart className="w-5 h-5" />
+                  {wishlistCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                      {wishlistCount > 99 ? '99+' : wishlistCount}
+                    </span>
+                  )}
                 </button>
               </Link>
             )}
@@ -217,6 +223,11 @@ export default function Header() {
               <Link href="/dashboard/orders">
                 <button className="p-2 rounded-md hover:bg-gray-50 transition-colors text-gray-600 hover:text-blue-600 relative">
                   <ShoppingCart className="w-5 h-5" />
+                  {cartCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-blue-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                      {cartCount > 99 ? '99+' : cartCount}
+                    </span>
+                  )}
                 </button>
               </Link>
             )}

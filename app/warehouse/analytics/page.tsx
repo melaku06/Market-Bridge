@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Package, ShoppingCart, DollarSign, TrendingUp, ArrowUp, ArrowDown } from 'lucide-react';
 import { warehousesApi, inventoryApi, analyticsApi } from '@/lib/api';
-import type { Warehouse, Inventory } from '@/lib/mock-db';
+import type { Warehouse, Inventory } from '@/lib/types';
 
 export default function WarehouseAnalytics() {
   const [warehouse, setWarehouse] = useState<Warehouse | null>(null);
@@ -27,8 +27,8 @@ export default function WarehouseAnalytics() {
         const inventoryData = Array.isArray(inventoryRes) ? inventoryRes : (inventoryRes as { data?: Inventory[] }).data || [];
         setInventory(inventoryData);
         setAnalytics({
-          weekly_revenue: analyticsRes.weekly_revenue || [],
-          top_products: analyticsRes.top_products || [],
+          weekly_revenue: (analyticsRes as any).weekly_revenue || [],
+          top_products: (analyticsRes as any).top_products || [],
         });
       } catch (error) {
         console.error('Failed to fetch analytics:', error);
