@@ -242,6 +242,34 @@ export interface TelegramPost {
   created_at: string;
 }
 
+export interface Address {
+  id: string;
+  customer_id: string;
+  label: string;
+  name: string;
+  phone: string;
+  address: string;
+  city: string;
+  country: string;
+  is_default: boolean;
+  created_at: string;
+}
+
+export interface SystemSettings {
+  site_name: string;
+  site_tagline: string;
+  site_email: string;
+  site_phone: string;
+  currency: string;
+  timezone: string;
+  date_format: string;
+  time_format: string;
+  items_per_page: number;
+  maintenance_mode: boolean;
+  site_language: string;
+  site_status: 'active' | 'maintenance';
+}
+
 // ─── Mock Data Store ────────────────────────────────────────────────────
 
 export const db = {
@@ -380,6 +408,27 @@ export const db = {
     { id: 'tg-002', product_id: 'prod-002', product_name: 'Smart Watch Series 8', channel: '@marketbridge_deals', message: '⌚ Smart Watch Series 8 - $89.99!\nFull health tracking. Order now!', status: 'sent' as PostStatus, sent_at: '2024-05-17T10:00:00Z', created_at: '2024-05-17T09:55:00Z' },
     { id: 'tg-003', product_id: 'prod-009', product_name: 'Bluetooth Earbuds Pro', channel: '@marketbridge_deals', message: '🎵 Bluetooth Earbuds Pro - Coming Soon!', status: 'queued' as PostStatus, created_at: '2024-05-20T10:00:00Z' },
   ] as TelegramPost[],
+
+  addresses: [
+    { id: 'addr-001', customer_id: 'usr-001', label: 'Home', name: 'Sarah Johnson', phone: '+251 91 123 4567', address: 'Bole Sub-City, Atlas Area, House No. 48', city: 'Addis Ababa', country: 'Ethiopia', is_default: true, created_at: '2024-01-15T10:00:00Z' },
+    { id: 'addr-002', customer_id: 'usr-001', label: 'Office', name: 'Sarah Johnson', phone: '+251 91 123 4568', address: 'Kirkos Sub-City, Woreda 08, Bldg. 200', city: 'Addis Ababa', country: 'Ethiopia', is_default: false, created_at: '2024-02-01T10:00:00Z' },
+    { id: 'addr-003', customer_id: 'usr-001', label: 'Parents House', name: 'Aster Bekele', phone: '+251 91 456 7890', address: 'Gulele Sub-City, Woreda 05, No. 12', city: 'Addis Ababa', country: 'Ethiopia', is_default: false, created_at: '2024-03-01T10:00:00Z' },
+  ] as Address[],
+
+  system_settings: {
+    site_name: 'MarketBridge',
+    site_tagline: 'Bridging Markets, Building Trust',
+    site_email: 'support@marketbridge.com',
+    site_phone: '+251 (800) 123-4567',
+    currency: 'ETB - Ethiopian Birr',
+    timezone: 'Africa/Addis_Ababa (UTC+3)',
+    date_format: 'DD/MM/YYYY',
+    time_format: '12 Hour (AM/PM)',
+    items_per_page: 10,
+    maintenance_mode: false,
+    site_language: 'English',
+    site_status: 'active' as const,
+  } as SystemSettings,
 
   // Analytics computed from orders/products
   analytics: {

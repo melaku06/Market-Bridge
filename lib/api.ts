@@ -189,6 +189,39 @@ export const analyticsApi = {
     request<typeof import('@/lib/mock-db').db.analytics>('/analytics', { searchParams: params as Record<string, string> }),
 };
 
+// Addresses API
+export const addressesApi = {
+  list: (customer_id: string) =>
+    request<{ data: import('@/lib/mock-db').Address[] }>(`/addresses?customer_id=${customer_id}`),
+
+  create: (data: Partial<import('@/lib/mock-db').Address>) =>
+    request<import('@/lib/mock-db').Address>('/addresses', { method: 'POST', body: data }),
+
+  update: (id: string, data: Partial<import('@/lib/mock-db').Address>) =>
+    request<import('@/lib/mock-db').Address>(`/addresses/${id}`, { method: 'PUT', body: data }),
+
+  delete: (id: string) =>
+    request<{ success: boolean }>(`/addresses/${id}`, { method: 'DELETE' }),
+
+  setDefault: (id: string, customer_id: string) =>
+    request<import('@/lib/mock-db').Address>(`/addresses/${id}`, { method: 'PUT', body: { is_default: true, customer_id } }),
+};
+
+// Product Requests API
+export const productRequestsApi = {
+  list: (params?: { customer_id?: string; status?: string }) =>
+    request<{ data: import('@/lib/mock-db').ProductRequest[] }>('/product-requests', { searchParams: params as Record<string, string> }),
+
+  create: (data: Partial<import('@/lib/mock-db').ProductRequest>) =>
+    request<import('@/lib/mock-db').ProductRequest>('/product-requests', { method: 'POST', body: data }),
+
+  update: (id: string, data: Partial<import('@/lib/mock-db').ProductRequest>) =>
+    request<import('@/lib/mock-db').ProductRequest>(`/product-requests/${id}`, { method: 'PUT', body: data }),
+
+  delete: (id: string) =>
+    request<{ success: boolean }>(`/product-requests/${id}`, { method: 'DELETE' }),
+};
+
 // Admin API
 export const adminApi = {
   pendingProducts: () =>
@@ -231,5 +264,13 @@ export const adminApi = {
   auditLogs: {
     list: (params?: { actor_role?: string; action?: string; entity_type?: string; limit?: number; offset?: number }) =>
       request<{ data: import('@/lib/mock-db').AuditLog[]; pagination: { total: number; limit: number; offset: number; has_more: boolean } }>('/admin/audit-logs', { searchParams: params as Record<string, string> }),
+  },
+
+  systemSettings: {
+    get: () =>
+      request<import('@/lib/mock-db').SystemSettings>('/admin/system-settings'),
+
+    update: (data: Partial<import('@/lib/mock-db').SystemSettings>) =>
+      request<import('@/lib/mock-db').SystemSettings>('/admin/system-settings', { method: 'PUT', body: data as Record<string, unknown> }),
   },
 };

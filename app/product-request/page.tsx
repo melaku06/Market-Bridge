@@ -1,35 +1,81 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ChevronRight, Upload, CheckCircle, Search, ClipboardList } from 'lucide-react';
+import { ChevronRight, Upload, CheckCircle, ClipboardList, Eye, Trash2 } from 'lucide-react';
 import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
+import { productRequestsApi } from '@/lib/api';
+import type { ProductRequest } from '@/lib/mock-db';
 
-const categories = ['Electronics', 'Fashion', 'Home & Living', 'Beauty', 'Sports', 'Toys & Baby', 'Automotive', 'Books', 'Other'];
+const CATEGORIES = ['Electronics', 'Fashion', 'Home & Living', 'Beauty', 'Sports', 'Toys & Baby', 'Automotive', 'Books', 'Other'];
 
-const submittedRequests = [
-  { id: '1', name: 'Sony WH-1000XM5 Headphones', status: 'In Review', date: 'May 15, 2024' },
-  { id: '2', name: 'Nike Air Max 270', status: 'Found', date: 'Apr 28, 2024' },
-  { id: '3', name: 'Dyson V12 Vacuum', status: 'Pending', date: 'Apr 10, 2024' },
-];
+const STATUS_COLORS: Record<string, string> = {
+  pending: 'bg-yellow-100 text-yellow-700',
+  in_review: 'bg-blue-100 text-blue-700',
+  found: 'bg-green-100 text-green-700',
+  not_available: 'bg-red-100 text-red-700',
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  pending: 'Pending',
+  in_review: 'In Review',
+  found: 'Found',
+  not_available: 'Not Available',
+};
 
 export default function ProductRequestPage() {
-  const [form, setForm] = useState({ name: '', category: '', description: '', brand: '', email: '' });
+  const [form, setForm] = useState({ product_name: '', category: '', description: '', brand: '' });
+  const [requests, setRequests] = useState<ProductRequest[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [fetchingRequests, setFetchingRequests] = useState(true);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    fetchRequests();
+  }, []);
+
+  async function fetchRequests() {
+    setFetchingRequests(true);
+    try {
+      const res = await productRequestsApi.list({ customer_id: 'usr-001' });
+      const data = Array.isArray(res) ? res : (res as { data?: ProductRequest[] }).data || [];
+      setRequests(data);
+    } catch (error) {
+      console.error('Failed to fetch requests:', error);
+    } finally {
+      setFetchingRequests(false);
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => { setLoading(false); setSubmitted(true); }, 1500);
+    try {
+      await productRequestsApi.create({
+        customer_id: 'usr-001',
+        customer_email: 'sarah.johnson@email.com',
+        product_name: form.product_name,
+        category: form.category,
+        description: form.description,
+        brand: form.brand,
+      });
+      setSubmitted(true);
+      await fetchRequests();
+    } catch (error) {
+      console.error('Failed to submit request:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const statusColor: Record<string, string> = {
-    Pending: 'bg-yellow-100 text-yellow-700',
-    'In Review': 'bg-blue-100 text-blue-700',
-    Found: 'bg-green-100 text-green-700',
-    'Not Available': 'bg-red-100 text-red-700',
+  const handleDelete = async (id: string) => {
+    try {
+      await productRequestsApi.delete(id);
+      setRequests((prev) => prev.filter((r) => r.id !== id));
+    } catch (error) {
+      console.error('Failed to delete request:', error);
+    }
   };
 
   return (
@@ -55,11 +101,26 @@ export default function ProductRequestPage() {
                 <ClipboardList className="w-20 h-20 text-blue-400" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 text-center mb-2">Can't find what you're looking for?</h3>
-              <p className="text-gray-500 text-sm text-center">Tell us what product you need, and we'll try to get it for you.</p>
+              <p className="text-gray-500 text-sm text-center">Tell us what product you need, and we'll source it for you.</p>
+              <div className="mt-6 space-y-3 w-full">
+                {[
+                  { step: '1', title: 'Submit Request', desc: 'Fill in the product details below.' },
+                  { step: '2', title: 'We Search', desc: 'Our team searches for the best options.' },
+                  { step: '3', title: 'Get Notified', desc: "You'll be notified when it's available." },
+                ].map((item) => (
+                  <div key={item.step} className="flex items-start gap-3">
+                    <div className="w-7 h-7 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">{item.step}</div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">{item.title}</p>
+                      <p className="text-xs text-gray-500">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Form */}
-            <div className="lg:col-span-1 bg-white rounded-xl border border-gray-100 p-6">
+            <div className="bg-white rounded-xl border border-gray-100 p-6">
               {submitted ? (
                 <div className="text-center py-8">
                   <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -67,55 +128,45 @@ export default function ProductRequestPage() {
                   </div>
                   <h3 className="font-bold text-gray-900 mb-2">Request Submitted!</h3>
                   <p className="text-gray-500 text-sm mb-4">Our team will review your request and get back to you soon.</p>
-                  <button onClick={() => { setSubmitted(false); setForm({ name: '', category: '', description: '', brand: '', email: '' }); }} className="w-full py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
+                  <button
+                    onClick={() => { setSubmitted(false); setForm({ product_name: '', category: '', description: '', brand: '' }); }}
+                    className="w-full py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
+                  >
                     Submit Another Request
                   </button>
                 </div>
               ) : (
                 <>
-                  <h2 className="text-lg font-bold text-gray-900 mb-1">Submit a Product Request</h2>
-                  <p className="text-gray-500 text-sm mb-5">Our team will review your request and get back to you soon.</p>
+                  <h2 className="text-lg font-bold text-gray-900 mb-1">Request a Product</h2>
+                  <p className="text-gray-500 text-sm mb-5">Can't find what you're looking for? Let us know!</p>
 
                   <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1.5">Product Name *</label>
-                        <input
-                          type="text"
-                          placeholder="Enter product name"
-                          value={form.name}
-                          onChange={(e) => setForm({ ...form, name: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:outline-none"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1.5">Category</label>
-                        <select
-                          value={form.category}
-                          onChange={(e) => setForm({ ...form, category: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:outline-none bg-white"
-                        >
-                          <option value="">Select category</option>
-                          {categories.map((c) => <option key={c}>{c}</option>)}
-                        </select>
-                      </div>
-                    </div>
-
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1.5">Product Description *</label>
-                      <textarea
-                        placeholder="Describe the product you are looking for..."
-                        value={form.description}
-                        onChange={(e) => setForm({ ...form, description: e.target.value })}
-                        rows={3}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:outline-none resize-none"
+                      <label className="block text-xs font-medium text-gray-700 mb-1.5">Product Name *</label>
+                      <input
+                        type="text"
+                        placeholder="Enter product name"
+                        value={form.product_name}
+                        onChange={(e) => setForm({ ...form, product_name: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:outline-none"
                         required
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1.5">Preferred Brand (Optional)</label>
+                      <label className="block text-xs font-medium text-gray-700 mb-1.5">Category</label>
+                      <select
+                        value={form.category}
+                        onChange={(e) => setForm({ ...form, category: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:outline-none bg-white"
+                      >
+                        <option value="">Select a category</option>
+                        {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1.5">Brand (Optional)</label>
                       <input
                         type="text"
                         placeholder="Enter brand name"
@@ -126,24 +177,24 @@ export default function ProductRequestPage() {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1.5">Upload Image (Optional)</label>
-                      <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center hover:border-blue-300 transition-colors cursor-pointer">
-                        <Upload className="w-6 h-6 text-gray-400 mx-auto mb-1.5" />
-                        <p className="text-xs text-gray-500">Click to upload an image</p>
-                        <p className="text-xs text-gray-400">or drag and drop (JPG, PNG up to 5MB)</p>
-                      </div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1.5">Description *</label>
+                      <textarea
+                        placeholder="Describe the product features, specifications, etc."
+                        value={form.description}
+                        onChange={(e) => setForm({ ...form, description: e.target.value })}
+                        rows={4}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:outline-none resize-none"
+                        required
+                      />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1.5">Your Email *</label>
-                      <input
-                        type="email"
-                        placeholder="Enter your email address"
-                        value={form.email}
-                        onChange={(e) => setForm({ ...form, email: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:outline-none"
-                        required
-                      />
+                      <label className="block text-xs font-medium text-gray-700 mb-1.5">Reference Image (Optional)</label>
+                      <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center hover:border-blue-300 transition-colors cursor-pointer">
+                        <Upload className="w-6 h-6 text-gray-400 mx-auto mb-1.5" />
+                        <p className="text-xs text-gray-500">Click to upload or drag and drop</p>
+                        <p className="text-xs text-gray-400">PNG, JPG up to 5MB</p>
+                      </div>
                     </div>
 
                     <button
@@ -151,22 +202,74 @@ export default function ProductRequestPage() {
                       disabled={loading}
                       className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-xl font-semibold text-sm transition-colors flex items-center justify-center gap-2"
                     >
-                      {loading ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Submitting...</> : 'Submit Request'}
+                      {loading
+                        ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Submitting...</>
+                        : 'Submit Request'
+                      }
                     </button>
                   </form>
                 </>
               )}
             </div>
 
-            {/* Right: How It Works + Need Help */}
+            {/* Right: History + Info */}
             <div className="space-y-4">
+              {/* My Request History */}
               <div className="bg-white rounded-xl border border-gray-100 p-5">
+                <h3 className="font-semibold text-gray-900 mb-4">Your Request History</h3>
+                {fetchingRequests ? (
+                  <div className="flex justify-center py-4">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
+                  </div>
+                ) : requests.length === 0 ? (
+                  <p className="text-sm text-gray-500 text-center py-4">No requests yet.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {requests.map((req) => (
+                      <div key={req.id} className="flex items-start justify-between py-2 border-b border-gray-50 last:border-0 gap-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-gray-900 line-clamp-1">{req.product_name}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">
+                            {new Date(req.created_at).toLocaleDateString('en-ET', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </p>
+                          {req.category && <p className="text-xs text-gray-400">{req.category}</p>}
+                        </div>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_COLORS[req.status] || 'bg-gray-100 text-gray-600'}`}>
+                            {STATUS_LABELS[req.status] || req.status}
+                          </span>
+                          {req.status === 'pending' && (
+                            <button
+                              onClick={() => handleDelete(req.id)}
+                              className="p-1 rounded text-gray-400 hover:text-red-500 transition-colors"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Need Help */}
+              <div className="bg-white rounded-xl border border-gray-100 p-5">
+                <h3 className="font-semibold text-gray-900 mb-3">Need Help?</h3>
+                <p className="text-sm text-gray-500 mb-2">Our support team is here for you.</p>
+                <a href="mailto:support@marketbridge.com" className="text-sm text-blue-600 hover:underline block">
+                  support@marketbridge.com
+                </a>
+              </div>
+
+              {/* Mobile: How it works */}
+              <div className="lg:hidden bg-white rounded-xl border border-gray-100 p-5">
                 <h3 className="font-bold text-gray-900 mb-4">How It Works</h3>
                 <div className="space-y-4">
                   {[
-                    { step: 1, title: 'Submit Request', desc: 'Fill in the details of the product you need.' },
-                    { step: 2, title: 'We Search', desc: 'Our team will look for the best options for you.' },
-                    { step: 3, title: 'Get Notified', desc: "We'll notify you when the product is available." },
+                    { step: 1, title: 'Submit Request', desc: 'Fill in the product details.' },
+                    { step: 2, title: 'We Search', desc: 'Our team searches for the best options.' },
+                    { step: 3, title: 'Get Notified', desc: "You'll be notified when available." },
                   ].map((item) => (
                     <div key={item.step} className="flex items-start gap-3">
                       <div className="w-7 h-7 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">{item.step}</div>
@@ -178,34 +281,6 @@ export default function ProductRequestPage() {
                   ))}
                 </div>
               </div>
-
-              <div className="bg-white rounded-xl border border-gray-100 p-5">
-                <h3 className="font-semibold text-gray-900 mb-3">Need Help?</h3>
-                <p className="text-sm text-gray-500 mb-2">Contact our support team at</p>
-                <a href="mailto:support@marketbridge.com" className="text-sm text-blue-600 hover:underline block mb-1">support@marketbridge.com</a>
-                <p className="text-sm text-gray-500 mb-1">or call</p>
-                <a href="tel:+15551234567" className="text-sm text-blue-600 hover:underline">+1 (555) 123-4567</a>
-              </div>
-
-              {/* Submitted Requests */}
-              {submittedRequests.length > 0 && (
-                <div className="bg-white rounded-xl border border-gray-100 p-5">
-                  <h3 className="font-semibold text-gray-900 mb-3">My Requests</h3>
-                  <div className="space-y-3">
-                    {submittedRequests.map((req) => (
-                      <div key={req.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                        <div>
-                          <p className="text-sm font-medium text-gray-900 line-clamp-1">{req.name}</p>
-                          <p className="text-xs text-gray-400">{req.date}</p>
-                        </div>
-                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusColor[req.status] || 'bg-gray-100 text-gray-600'}`}>
-                          {req.status}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>

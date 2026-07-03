@@ -15,6 +15,8 @@ import {
   Settings,
   LogOut,
   ShieldCheck,
+  BarChart2,
+  FileText,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -27,8 +29,10 @@ const navigation = [
   { name: 'Promotions', href: '/admin/promotions', icon: Image },
   { name: 'Customers', href: '/admin/customers', icon: Users },
   { name: 'Orders', href: '/admin/orders', icon: ShoppingCart },
+  { name: 'Analytics', href: '/admin', icon: BarChart2 },
   { name: 'Notifications', href: '/admin/notifications', icon: Bell },
-  { name: 'Audit Logs', href: '/admin/audit-logs', icon: Settings },
+  { name: 'Audit Logs', href: '/admin/audit-logs', icon: FileText },
+  { name: 'System Settings', href: '/admin/system-settings', icon: Settings },
 ];
 
 export default function AdminSidebar() {
