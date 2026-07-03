@@ -1,5 +1,5 @@
 // Prisma Schema for MarketBridge
-// Based on existing PostgreSQL database structure
+// Works with existing Supabase database structure
 
 generator client {
   provider = "prisma-client-js"
@@ -11,33 +11,26 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// User profiles with role-based access
+// User profiles - id references auth.users.id in Supabase
 model Profile {
-  id          String    @id
-  email       String    @unique
+  id          String   @id
+  email       String   @unique
   name        String
   phone       String?
   avatar_url  String?
-  role        Role      @default(customer)
+  role        String   @default("customer")
   warehouse_id String?
-  is_active   Boolean   @default(true)
-  created_at  DateTime  @default(now())
-  updated_at  DateTime  @updatedAt
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
 
-  // Relations
-  warehouse   Warehouse?      @relation(fields: [warehouse_id], references: [id])
   credentials UserCredential?
+  warehouse   Warehouse?   @relation(fields: [warehouse_id], references: [id])
 
   @@map("profiles")
 }
 
-enum Role {
-  customer
-  warehouse
-  admin
-}
-
-// User credentials for JWT authentication
+// User credentials for password authentication
 model UserCredential {
   user_id      String   @id
   password_hash String
@@ -51,88 +44,73 @@ model UserCredential {
 
 // Warehouse/Seller information
 model Warehouse {
-  id             String            @id
+  id             String   @id @default(uuid())
   name           String
   owner_name     String
-  email          String
+  email          String   @unique
   phone          String
   address        String
   city           String
-  country        String           @default("Ethiopia")
+  country        String   @default("Ethiopia")
   business_type  String?
   bank_name      String?
   bank_account   String?
   tax_id         String?
-  status         WarehouseStatus  @default(pending_approval)
-  member_since   DateTime         @default(now())
-  created_at     DateTime         @default(now())
-  updated_at     DateTime         @updatedAt
+  status         String   @default("pending_approval")
+  member_since   DateTime @default(now())
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
 
-  // Relations
-  profiles    Profile[]
+  profiles Profile[]
 
   @@map("warehouses")
 }
 
-enum WarehouseStatus {
-  pending_approval
-  active
-  suspended
-  deactivated
-}
-
 // Product categories
 model Category {
-  id          String   @id
-  name        String
+  id          String   @id @default(uuid())
+  name        String   @unique
   slug        String   @unique
   description String?
   image_url   String?
+  parent_id   String?
   is_active   Boolean  @default(true)
   created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
 
   @@map("categories")
 }
 
 // Products
 model Product {
-  id                String        @id
+  id                String   @id @default(uuid())
   name              String
-  slug              String        @unique
-  description       String
+  slug              String   @unique
+  description       String?
   short_description String?
   warehouse_id      String
-  category_id       String
-  base_price        Decimal       @db.Decimal(15, 2)
-  margin_percent     Decimal       @default(15) @db.Decimal(5, 2)
-  discount_percent  Decimal       @default(0) @db.Decimal(5, 2)
-  images            String[]
-  rating            Decimal       @default(0) @db.Decimal(2, 1)
-  review_count      Int           @default(0)
-  sold_count        Int           @default(0)
-  status            ProductStatus @default(published)
-  tags              String[]
+  category_id       String?
+  base_price        Decimal  @db.Decimal(15, 2)
+  margin_percent    Decimal  @default(15) @db.Decimal(5, 2)
+  discount_percent  Decimal  @default(0) @db.Decimal(5, 2)
+  images            String[] @default([])
+  rating            Decimal  @default(0) @db.Decimal(2, 1)
+  review_count      Int      @default(0)
+  sold_count        Int      @default(0)
+  status            String   @default("pending")
+  tags              String[] @default([])
   brand             String?
-  sku               String?       @unique
-  weight            Decimal?      @db.Decimal(10, 2)
-  colors            String[]
-  created_at        DateTime      @default(now())
-  updated_at        DateTime      @updatedAt
+  sku               String?  @unique
+  weight            String?
+  colors            String[] @default([])
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
 
   @@map("products")
 }
 
-enum ProductStatus {
-  pending
-  published
-  rejected
-  archived
-}
-
 // Inventory tracking
 model Inventory {
-  id           String   @id
+  id           String   @id @default(uuid())
   warehouse_id String
   product_id   String
   quantity     Int      @default(0)
@@ -145,14 +123,14 @@ model Inventory {
 
 // User notifications
 model Notification {
-  id          String           @id
+  id          String   @id @default(uuid())
   user_id     String
   type        String
   title       String
   message     String
   data        String?
-  is_read     Boolean          @default(false)
-  created_at  DateTime         @default(now())
+  is_read     Boolean  @default(false)
+  created_at  DateTime @default(now())
 
   @@map("notifications")
 }
