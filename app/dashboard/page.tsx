@@ -1,10 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { Package, Clock, CheckCircle, DollarSign, ChevronRight, Star, Heart } from 'lucide-react';
-import { ordersApi, productsApi, wishlistApi } from '@/lib/api';
-import type { Order, Product } from '@/lib/mock-db';
+import { useOrdersStore, useProductsStore, useWishlistStore, useAuthStore, useNotificationsStore } from '@/stores';
 
 const statusColor: Record<string, string> = {
   delivered: 'bg-green-100 text-green-700',
@@ -23,34 +22,31 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function DashboardPage() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [recommended, setRecommended] = useState<Product[]>([]);
-  const [wishlistCount, setWishlistCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const customerId = 'usr-001';
+
+  // Auth store
+  const { user, isAuthenticated } = useAuthStore();
+
+  // Orders store
+  const { orders, fetchOrders, isLoading: ordersLoading } = useOrdersStore();
+
+  // Products store
+  const { products, fetchProducts, isLoading: productsLoading } = useProductsStore();
+
+  // Wishlist store
+  const { items: wishlistItems, fetchWishlist, totalItems: wishlistTotal } = useWishlistStore();
+
+  // Notifications store
+  const { unreadCount, fetchNotifications } = useNotificationsStore();
+
+  const loading = ordersLoading || productsLoading;
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        const customerId = 'usr-001';
-        const [ordersRes, productsRes, wishlistRes] = await Promise.all([
-          ordersApi.list({ customer_id: customerId }),
-          productsApi.list({ status: 'published', limit: 10 }),
-          wishlistApi.list(customerId),
-        ]);
-        // Handle both { data: [...] } and direct array responses
-        const ordersData = Array.isArray(ordersRes) ? ordersRes : (ordersRes as { data?: Order[] }).data || [];
-        const productsData = Array.isArray(productsRes) ? productsRes : (productsRes as { data?: Product[] }).data || [];
-        setOrders(ordersData);
-        setRecommended(productsData.slice(2, 6));
-        setWishlistCount(Array.isArray(wishlistRes) ? wishlistRes.length : 0);
-      } catch (error) {
-        console.error('Failed to fetch dashboard data:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchData();
-  }, []);
+    fetchOrders({ customer_id: customerId });
+    fetchProducts({ status: 'published', limit: 10 });
+    fetchWishlist(customerId);
+    fetchNotifications({ user_id: customerId });
+  }, [fetchOrders, fetchProducts, fetchWishlist, fetchNotifications, customerId]);
 
   if (loading) {
     return (
@@ -61,6 +57,7 @@ export default function DashboardPage() {
   }
 
   const recentOrders = orders.slice(0, 4);
+  const recommended = products.slice(2, 6);
   const totalSpent = orders.reduce((sum, o) => sum + o.total, 0);
   const deliveredCount = orders.filter(o => o.status === 'delivered').length;
   const pendingCount = orders.filter(o => o.status === 'pending' || o.status === 'processing').length;
@@ -69,7 +66,7 @@ export default function DashboardPage() {
     <div className="space-y-6">
       {/* Welcome */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Hello, Sarah!</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Hello, {user?.name?.split(' ')[0] || 'Sarah'}!</h1>
         <p className="text-gray-500 text-sm">Welcome back to MarketBridge. Explore and shop the best products.</p>
       </div>
 
@@ -156,7 +153,7 @@ export default function DashboardPage() {
                 <h3 className="font-bold text-gray-900 text-sm">Your Wishlist Summary</h3>
               </div>
             </div>
-            <p className="text-xs text-gray-500 mb-3">{wishlistCount} items in your wishlist</p>
+            <p className="text-xs text-gray-500 mb-3">{wishlistTotal()} items in your wishlist</p>
             <Link href="/wishlist">
               <button className="w-full py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
                 View Wishlist

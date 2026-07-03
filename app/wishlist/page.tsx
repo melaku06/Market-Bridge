@@ -1,56 +1,38 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Heart, ShoppingCart, Trash2, Share2, ChevronRight, Loader2 } from 'lucide-react';
 import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
 import StarRating from '@/components/ui/star-rating';
-import { wishlistApi, productsApi } from '@/lib/api';
-import type { Product, WishlistItem } from '@/lib/mock-db';
-
-interface WishlistItemWithProduct extends WishlistItem {
-  product: Product | null;
-}
+import { useWishlistStore, useCartStore } from '@/stores';
 
 export default function WishlistPage() {
-  const [items, setItems] = useState<WishlistItemWithProduct[]>([]);
-  const [loading, setLoading] = useState(true);
+  const customerId = 'usr-001';
+
+  const { items, isLoading, fetchWishlist, removeFromWishlist, isInWishlist } = useWishlistStore();
+  const { addItem } = useCartStore();
+
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [priceRange, setPriceRange] = useState([0, 10000]);
 
   useEffect(() => {
-    async function fetchWishlist() {
-      try {
-        // Using customer_id 'usr-001' as the current customer
-        const wishlistData = await wishlistApi.list('usr-001');
-        setItems(wishlistData as WishlistItemWithProduct[]);
-      } catch (error) {
-        console.error('Failed to fetch wishlist:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchWishlist();
-  }, []);
+    fetchWishlist(customerId);
+  }, [fetchWishlist, customerId]);
 
   const removeItem = async (productId: string) => {
-    try {
-      await wishlistApi.remove('usr-001', productId);
-      setItems(items.filter((item) => item.product_id !== productId));
-    } catch (error) {
-      console.error('Failed to remove item:', error);
-    }
+    await removeFromWishlist(customerId, productId);
   };
 
   const clearAll = async () => {
-    try {
-      // Remove all items one by one
-      await Promise.all(items.map((item) => wishlistApi.remove('usr-001', item.product_id)));
-      setItems([]);
-    } catch (error) {
-      console.error('Failed to clear wishlist:', error);
+    for (const item of items) {
+      await removeFromWishlist(customerId, item.product_id);
     }
+  };
+
+  const handleAddToCart = (product: NonNullable<typeof items[0]['product']>) => {
+    addItem(product, 1);
   };
 
   // Extract unique categories from products
@@ -58,7 +40,7 @@ export default function WishlistPage() {
 
   const filtered = items.filter((item) => {
     if (!item.product) return false;
-    if (selectedCategory !== 'All' && item.product.category_id !== selectedCategory) return false;
+    if (selectedCategory !== 'All' && item.product?.category_id !== selectedCategory) return false;
     if (item.product.final_price < priceRange[0] || item.product.final_price > priceRange[1]) return false;
     return true;
   });
@@ -80,7 +62,7 @@ export default function WishlistPage() {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          {loading ? (
+          {isLoading ? (
             <div className="flex items-center justify-center py-20">
               <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
             </div>
@@ -179,7 +161,10 @@ export default function WishlistPage() {
                             <StarRating rating={product.rating || 0} count={product.review_count || 0} className="mb-2" />
                             <p className="text-base font-bold text-gray-900 mb-2">{product.final_price.toLocaleString()} Br</p>
                             <div className="flex gap-2">
-                              <button className="flex-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1">
+                              <button
+                                onClick={() => handleAddToCart(product)}
+                                className="flex-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1"
+                              >
                                 <ShoppingCart className="w-3 h-3" />
                                 Add to Cart
                               </button>

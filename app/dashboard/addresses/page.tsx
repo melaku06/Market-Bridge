@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Plus, Edit2, Trash2, Home, Briefcase, MapPin, Info, CheckCircle, X, Save } from 'lucide-react';
-import { addressesApi } from '@/lib/api';
+import { useAddressesStore } from '@/stores';
 import type { Address } from '@/lib/mock-db';
 
 const LABEL_ICONS: Record<string, React.ReactNode> = {
@@ -16,29 +16,15 @@ const CUSTOMER_ID = 'usr-001';
 const EMPTY_FORM = { label: '', name: '', phone: '', address: '', city: '', country: 'Ethiopia' };
 
 export default function AddressesPage() {
-  const [addresses, setAddresses] = useState<Address[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { addresses, isLoading, fetchAddresses, addAddress, updateAddress, deleteAddress, setDefaultAddress } = useAddressesStore();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetchAddresses();
-  }, []);
-
-  async function fetchAddresses() {
-    setLoading(true);
-    try {
-      const res = await addressesApi.list(CUSTOMER_ID);
-      const data = Array.isArray(res) ? res : (res as { data?: Address[] }).data || [];
-      setAddresses(data);
-    } catch (error) {
-      console.error('Failed to fetch addresses:', error);
-    } finally {
-      setLoading(false);
-    }
-  }
+    fetchAddresses(CUSTOMER_ID);
+  }, [fetchAddresses]);
 
   const openAdd = () => {
     setEditingId(null);
@@ -64,46 +50,33 @@ export default function AddressesPage() {
     setSaving(true);
     try {
       if (editingId) {
-        const updated = await addressesApi.update(editingId, { ...form });
-        setAddresses((prev) => prev.map((a) => (a.id === editingId ? (updated as unknown as Address) ?? { ...a, ...form } : a)));
+        await updateAddress(editingId, form);
       } else {
-        const res = await addressesApi.create({
+        await addAddress({
           customer_id: CUSTOMER_ID,
           ...form,
           is_default: addresses.length === 0,
         });
-        await fetchAddresses();
-        void res;
       }
       setShowForm(false);
       setForm(EMPTY_FORM);
       setEditingId(null);
-    } catch (error) {
-      console.error('Failed to save address:', error);
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    try {
-      await addressesApi.delete(id);
-      setAddresses((prev) => prev.filter((a) => a.id !== id));
-    } catch (error) {
-      console.error('Failed to delete address:', error);
+    if (confirm('Are you sure you want to delete this address?')) {
+      await deleteAddress(id);
     }
   };
 
   const handleSetDefault = async (id: string) => {
-    try {
-      await addressesApi.setDefault(id, CUSTOMER_ID);
-      setAddresses((prev) => prev.map((a) => ({ ...a, is_default: a.id === id })));
-    } catch (error) {
-      console.error('Failed to set default:', error);
-    }
+    await setDefaultAddress(id, CUSTOMER_ID);
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
