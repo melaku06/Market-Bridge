@@ -25,8 +25,9 @@ export default function HomePage() {
         const productsData = await productsRes.json();
         const categoriesData = await categoriesRes.json();
 
-        setProducts(productsData.products || productsData || []);
-        setCategories(categoriesData.categories || categoriesData || []);
+        // API returns { data: [...], pagination: {...} } format
+        setProducts(Array.isArray(productsData.data) ? productsData.data : (Array.isArray(productsData) ? productsData : []));
+        setCategories(Array.isArray(categoriesData.data) ? categoriesData.data : (Array.isArray(categoriesData) ? categoriesData : []));
       } catch (error) {
         console.error('Failed to fetch data:', error);
       } finally {

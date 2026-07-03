@@ -34,7 +34,8 @@ export default function Header() {
         const res = await fetch('/api/categories');
         if (res.ok) {
           const data = await res.json();
-          setCategories(data.categories || data || []);
+          // API returns { data: [...] } format
+          setCategories(Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []));
         }
       } catch (error) {
         console.error('Failed to fetch categories:', error);
