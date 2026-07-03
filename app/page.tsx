@@ -2,28 +2,36 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ChevronRight, ArrowRight, Send, ShoppingBag, Star, Truck, RotateCcw, Shield, Headphones } from 'lucide-react';
+import { ChevronRight, Send, Star, Truck, RotateCcw, Shield, Headphones } from 'lucide-react';
 import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
 import ProductCard from '@/components/product/product-card';
-import { productsApi, categoriesApi } from '@/lib/api';
-import type { Product, Category } from '@/lib/mock-db';
+import { supabase } from '@/lib/supabase/client';
 
 export default function HomePage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
       try {
         const [productsRes, categoriesRes] = await Promise.all([
-          productsApi.list({ status: 'published', limit: 10 }),
-          categoriesApi.list(),
+          supabase
+            .from('products')
+            .select('*, categories(name, slug), warehouses(name)')
+            .eq('status', 'published')
+            .order('sold_count', { ascending: false })
+            .limit(10),
+          supabase
+            .from('categories')
+            .select('*')
+            .eq('is_active', true)
+            .limit(10),
         ]);
-        // Handle both { data: [...] } and direct array responses
-        setProducts(Array.isArray(productsRes) ? productsRes : (productsRes as { data: Product[] }).data || []);
-        setCategories(Array.isArray(categoriesRes) ? categoriesRes : []);
+
+        setProducts(productsRes.data || []);
+        setCategories(categoriesRes.data || []);
       } catch (error) {
         console.error('Failed to fetch data:', error);
       } finally {
@@ -41,8 +49,12 @@ export default function HomePage() {
     );
   }
 
-  const featuredProducts = (products || []).slice(0, 5);
-  const trendingProducts = (products || []).slice(0, 5).reverse();
+  const featuredProducts = products.slice(0, 5);
+  const trendingProducts = [...products].reverse().slice(0, 5);
+
+  const formatPrice = (price: number) => {
+    return price.toLocaleString() + ' Br';
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -68,7 +80,7 @@ export default function HomePage() {
                   <span className="text-blue-400">Trusted Warehouses</span>
                 </h1>
                 <p className="text-gray-300 text-sm mb-6">
-                  Shop the best products at great prices. Website first, delivered to your door.
+                  Shop the best products at great prices. Quality first, delivered to your door.
                 </p>
                 <div className="flex gap-3 flex-wrap">
                   <Link href="/products">
@@ -76,9 +88,11 @@ export default function HomePage() {
                       Shop Now
                     </button>
                   </Link>
-                  <button className="border border-white/30 text-white hover:bg-white/10 px-6 py-2.5 rounded-lg font-medium text-sm transition-colors">
-                    How It Works
-                  </button>
+                  <Link href="/register">
+                    <button className="border border-white/30 text-white hover:bg-white/10 px-6 py-2.5 rounded-lg font-medium text-sm transition-colors">
+                      Become a Seller
+                    </button>
+                  </Link>
                 </div>
               </div>
               <div className="hidden lg:block absolute right-16 top-1/2 -translate-y-1/2">
@@ -97,7 +111,7 @@ export default function HomePage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
-                { icon: <Truck className="w-5 h-5 text-blue-600" />, title: 'Free Shipping', desc: 'On orders over $50' },
+                { icon: <Truck className="w-5 h-5 text-blue-600" />, title: 'Free Shipping', desc: 'On orders over 500 Br' },
                 { icon: <Star className="w-5 h-5 text-blue-600" />, title: 'Quality Products', desc: 'Carefully selected' },
                 { icon: <RotateCcw className="w-5 h-5 text-blue-600" />, title: '30-Day Returns', desc: 'Easy returns' },
                 { icon: <Shield className="w-5 h-5 text-blue-600" />, title: 'Secure Payments', desc: '100% secure' },
@@ -121,19 +135,19 @@ export default function HomePage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-900">Top Categories</h2>
-              <Link href="/" className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
+              <Link href="/products" className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
                 View All <ChevronRight className="w-4 h-4" />
               </Link>
             </div>
-            <div className="grid grid-cols-4 md:grid-cols-6 gap-3">
-              {(categories || []).map((cat) => (
+            <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-3">
+              {categories.map((cat) => (
                 <Link
                   key={cat.id}
                   href={`/categories/${cat.slug}`}
                   className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-blue-50 hover:border-blue-200 border border-gray-100 bg-white transition-all group"
                 >
-                  <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-xl group-hover:bg-blue-100 transition-colors">
-                    {cat.icon}
+                  <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-xl group-hover:bg-blue-100 transition-colors">
+                    📦
                   </div>
                   <span className="text-xs font-medium text-gray-700 text-center leading-tight group-hover:text-blue-700">
                     {cat.name}
@@ -153,11 +167,40 @@ export default function HomePage() {
                 View All <ChevronRight className="w-4 h-4" />
               </Link>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {featuredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
+            {products.length === 0 ? (
+              <div className="text-center py-12 bg-white rounded-xl border border-gray-100">
+                <p className="text-gray-500">No products available yet.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {featuredProducts.map((product) => (
+                  <Link key={product.id} href={`/products/${product.id}`}>
+                    <div className="bg-white rounded-xl border border-gray-100 hover:border-blue-200 hover:shadow-md transition-all overflow-hidden group">
+                      <div className="relative aspect-square overflow-hidden bg-gray-50">
+                        <img
+                          src={product.images?.[0] || '/placeholder.jpg'}
+                          alt={product.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      </div>
+                      <div className="p-3">
+                        <p className="text-xs text-blue-600 font-medium mb-1">
+                          {product.categories?.name || 'General'}
+                        </p>
+                        <h3 className="text-sm font-medium text-gray-900 line-clamp-2 mb-1">{product.name}</h3>
+                        <div className="flex items-center gap-1 mb-2">
+                          <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+                          <span className="text-xs text-gray-500">{product.rating || 0}</span>
+                        </div>
+                        <p className="text-sm font-bold text-gray-900">
+                          {formatPrice(product.base_price * (1 + (product.margin_percent || 15) / 100) * (1 - (product.discount_percent || 0) / 100))}
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         </section>
 
@@ -195,7 +238,30 @@ export default function HomePage() {
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {trendingProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <Link key={product.id} href={`/products/${product.id}`}>
+                  <div className="bg-white rounded-xl border border-gray-100 hover:border-blue-200 hover:shadow-md transition-all overflow-hidden group">
+                    <div className="relative aspect-square overflow-hidden bg-gray-50">
+                      <img
+                        src={product.images?.[0] || '/placeholder.jpg'}
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                    <div className="p-3">
+                      <p className="text-xs text-blue-600 font-medium mb-1">
+                        {product.categories?.name || 'General'}
+                      </p>
+                      <h3 className="text-sm font-medium text-gray-900 line-clamp-2 mb-1">{product.name}</h3>
+                      <div className="flex items-center gap-1 mb-2">
+                        <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+                        <span className="text-xs text-gray-500">{product.rating || 0}</span>
+                      </div>
+                      <p className="text-sm font-bold text-gray-900">
+                        {formatPrice(product.base_price * (1 + (product.margin_percent || 15) / 100) * (1 - (product.discount_percent || 0) / 100))}
+                      </p>
+                    </div>
+                  </div>
+                </Link>
               ))}
             </div>
           </div>
@@ -206,7 +272,7 @@ export default function HomePage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
               {[
-                { icon: <Truck className="w-5 h-5" />, title: 'Free Shipping', desc: 'On orders over $50' },
+                { icon: <Truck className="w-5 h-5" />, title: 'Free Shipping', desc: 'On orders over 500 Br' },
                 { icon: <RotateCcw className="w-5 h-5" />, title: '30-Day Returns', desc: 'Easy returns' },
                 { icon: <Headphones className="w-5 h-5" />, title: '24/7 Support', desc: 'We are here to help' },
                 { icon: <Shield className="w-5 h-5" />, title: 'Secure Checkout', desc: '100% secure payments' },
