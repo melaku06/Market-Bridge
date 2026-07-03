@@ -17,7 +17,7 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
   const [sortBy, setSortBy] = useState('Newest');
-  const [priceRange, setPriceRange] = useState([0, 500]);
+  const [priceRange, setPriceRange] = useState([0, 10000]);
   const [gridView, setGridView] = useState(true);
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedRating, setSelectedRating] = useState(0);
@@ -99,14 +99,14 @@ export default function ProductsPage() {
           <input
             type="range"
             min={0}
-            max={500}
+            max={10000}
             value={priceRange[1]}
             onChange={(e) => setPriceRange([0, Number(e.target.value)])}
             className="w-full accent-blue-600"
           />
           <div className="flex justify-between text-sm text-gray-500">
-            <span>$0</span>
-            <span>${priceRange[1]}+</span>
+            <span>Br 0</span>
+            <span>Br {priceRange[1]}+</span>
           </div>
         </div>
       </div>
@@ -222,7 +222,7 @@ export default function ProductsPage() {
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No products found</h3>
                   <p className="text-gray-500 mb-4">Try adjusting your filters.</p>
                   <button
-                    onClick={() => { setSelectedCategory('All Categories'); setPriceRange([0, 500]); setSelectedRating(0); }}
+                    onClick={() => { setSelectedCategory('All Categories'); setPriceRange([0, 10000]); setSelectedRating(0); }}
                     className="text-blue-600 hover:underline font-medium"
                   >
                     Clear all filters

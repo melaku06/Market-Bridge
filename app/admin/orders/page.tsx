@@ -170,7 +170,7 @@ export default function AdminOrders() {
                       )}
                     </div>
                   </td>
-                  <td className="px-4 py-3 font-bold text-gray-900">${order.total.toFixed(2)}</td>
+                  <td className="px-4 py-3 font-bold text-gray-900">{order.total.toLocaleString()} Br</td>
                   <td className="px-4 py-3">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[order.status]}`}>
                       {statusLabels[order.status]}

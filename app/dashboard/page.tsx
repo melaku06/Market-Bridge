@@ -79,7 +79,7 @@ export default function DashboardPage() {
           { label: 'Total Orders', value: orders.length.toString(), sub: 'View all orders', href: '/dashboard/orders', icon: <Package className="w-5 h-5 text-blue-600" />, bg: 'bg-blue-50' },
           { label: 'Pending Orders', value: pendingCount.toString(), sub: 'Track now', href: '/dashboard/orders', icon: <Clock className="w-5 h-5 text-yellow-600" />, bg: 'bg-yellow-50' },
           { label: 'Delivered Orders', value: deliveredCount.toString(), sub: 'View history', href: '/dashboard/orders', icon: <CheckCircle className="w-5 h-5 text-green-600" />, bg: 'bg-green-50' },
-          { label: 'Total Spent', value: `$${totalSpent.toFixed(2)}`, sub: 'This year', href: '#', icon: <DollarSign className="w-5 h-5 text-purple-600" />, bg: 'bg-purple-50' },
+          { label: 'Total Spent', value: `${totalSpent.toLocaleString()} Br`, sub: 'This year', href: '#', icon: <DollarSign className="w-5 h-5 text-purple-600" />, bg: 'bg-purple-50' },
         ].map((stat) => (
           <Link key={stat.label} href={stat.href}>
             <div className="bg-white rounded-xl border border-gray-100 p-4 hover:border-blue-200 hover:shadow-sm transition-all cursor-pointer">
@@ -120,7 +120,7 @@ export default function DashboardPage() {
                 <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${statusColor[order.status] || 'bg-gray-100 text-gray-600'}`}>
                   {statusLabels[order.status] || order.status}
                 </span>
-                <p className="text-sm font-bold text-gray-900">${order.total.toFixed(2)}</p>
+                <p className="text-sm font-bold text-gray-900">{order.total.toLocaleString()} Br</p>
               </div>
             ))}
           </div>
@@ -182,7 +182,7 @@ export default function DashboardPage() {
                   <img src={product.images?.[0] || ''} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
                 </div>
                 <p className="text-xs font-medium text-gray-900 line-clamp-1">{product.name}</p>
-                <p className="text-xs font-bold text-blue-600 mt-0.5">${(product.final_price ?? 0).toFixed(2)}</p>
+                <p className="text-xs font-bold text-blue-600 mt-0.5">{(product.final_price ?? 0).toLocaleString()} Br</p>
                 <div className="flex items-center gap-0.5 mt-0.5">
                   <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
                   <span className="text-xs text-gray-500">{product.rating}</span>

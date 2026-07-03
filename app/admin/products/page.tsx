@@ -142,7 +142,7 @@ export default function AdminProducts() {
                 <h3 className="font-semibold text-gray-900 mb-1 line-clamp-1">{product.name}</h3>
                 <p className="text-sm text-gray-500 mb-2">by {warehouse?.name || 'Unknown'}</p>
                 <div className="flex items-center justify-between mb-3">
-                  <p className="font-bold text-gray-900">${product.final_price.toFixed(2)}</p>
+                  <p className="font-bold text-gray-900">{product.final_price.toLocaleString()} Br</p>
                   <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                     product.status === 'published' ? 'bg-green-100 text-green-700' :
                     product.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
@@ -225,7 +225,7 @@ export default function AdminProducts() {
                 </div>
                 <div className="bg-gray-50 rounded-lg p-3">
                   <p className="text-xs text-gray-500">Price</p>
-                  <p className="font-medium text-gray-900">${selectedProductData.final_price.toFixed(2)}</p>
+                  <p className="font-medium text-gray-900">{selectedProductData.final_price.toLocaleString()} Br</p>
                 </div>
                 <div className="bg-gray-50 rounded-lg p-3">
                   <p className="text-xs text-gray-500">SKU</p>

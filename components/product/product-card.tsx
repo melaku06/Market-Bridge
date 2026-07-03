@@ -78,9 +78,9 @@ export default function ProductCard({ product, className }: ProductCardProps) {
           <StarRating rating={product.rating} count={reviewCount} className="mb-2" />
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
-              <span className="text-base font-bold text-gray-900">${price.toFixed(2)}</span>
+              <span className="text-base font-bold text-gray-900">{price.toLocaleString()} Br</span>
               {discount > 0 && originalPrice > price && (
-                <span className="text-xs text-gray-400 line-through">${originalPrice.toFixed(2)}</span>
+                <span className="text-xs text-gray-400 line-through">{originalPrice.toLocaleString()} Br</span>
               )}
             </div>
           </div>

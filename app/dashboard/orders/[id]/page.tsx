@@ -94,7 +94,7 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
                     <p className="text-sm font-medium text-gray-900">{item.name}</p>
                     <p className="text-xs text-gray-500">Qty: {item.qty}</p>
                   </div>
-                  <p className="text-sm font-bold text-gray-900">${item.price.toFixed(2)}</p>
+                  <p className="text-sm font-bold text-gray-900">{item.price.toLocaleString()} Br</p>
                 </div>
               ))}
             </div>
@@ -130,13 +130,13 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
           <div className="bg-white rounded-xl border border-gray-100 p-5">
             <h2 className="font-bold text-gray-900 mb-4">Order Summary</h2>
             <div className="space-y-3">
-              <div className="flex justify-between text-sm"><span className="text-gray-500">Subtotal</span><span className="font-medium">${order.subtotal.toFixed(2)}</span></div>
+              <div className="flex justify-between text-sm"><span className="text-gray-500">Subtotal</span><span className="font-medium">{order.subtotal.toLocaleString()} Br</span></div>
               <div className="flex justify-between text-sm"><span className="text-gray-500">Shipping</span><span className="font-medium text-green-600">Free</span></div>
-              <div className="flex justify-between text-sm"><span className="text-gray-500">Discount</span><span className="font-medium text-red-500">-${order.discount.toFixed(2)}</span></div>
-              <div className="flex justify-between text-sm"><span className="text-gray-500">Tax</span><span className="font-medium">${order.tax.toFixed(2)}</span></div>
+              <div className="flex justify-between text-sm"><span className="text-gray-500">Discount</span><span className="font-medium text-red-500">-{order.discount.toLocaleString()} Br</span></div>
+              <div className="flex justify-between text-sm"><span className="text-gray-500">Tax</span><span className="font-medium">{order.tax.toLocaleString()} Br</span></div>
               <div className="border-t border-gray-100 pt-3 flex justify-between">
                 <span className="font-bold text-gray-900">Total</span>
-                <span className="font-bold text-gray-900 text-lg">${order.total.toFixed(2)}</span>
+                <span className="font-bold text-gray-900 text-lg">{order.total.toLocaleString()} Br</span>
               </div>
             </div>
           </div>

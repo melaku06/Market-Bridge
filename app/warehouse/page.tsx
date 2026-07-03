@@ -52,7 +52,7 @@ export default function WarehouseDashboard() {
   const stats = [
     { name: 'Total Products', value: warehouse.total_products, icon: Package, change: '+12 this month', color: 'blue' },
     { name: 'Total Orders', value: warehouse.total_orders, icon: ShoppingCart, change: '+45 today', color: 'green' },
-    { name: 'Total Revenue', value: `$${warehouse.total_sales.toLocaleString()}`, icon: DollarSign, change: '+8.2%', color: 'purple' },
+    { name: 'Total Revenue', value: `${warehouse.total_sales.toLocaleString()} Br`, icon: DollarSign, change: '+8.2%', color: 'purple' },
     { name: 'Performance Score', value: `${warehouse.performance_score}%`, icon: TrendingUp, change: 'Excellent', color: 'orange' },
   ];
 
@@ -144,7 +144,7 @@ export default function WarehouseDashboard() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-medium text-gray-900">${order.total.toFixed(2)}</p>
+                  <p className="font-medium text-gray-900">{order.total.toLocaleString()} Br</p>
                   <span className={`text-xs px-2 py-1 rounded-full ${
                     order.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'
                   }`}>

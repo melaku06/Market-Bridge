@@ -154,7 +154,7 @@ export default function OrdersPage() {
                       </div>
                     </td>
                     <td className="px-5 py-4">
-                      <span className="text-sm font-bold text-gray-900">${order.total.toFixed(2)}</span>
+                      <span className="text-sm font-bold text-gray-900">{order.total.toLocaleString()} Br</span>
                     </td>
                     <td className="px-5 py-4">
                       <span className={`inline-flex items-center text-xs font-medium px-2.5 py-1 rounded-full ${statusColor[order.status] || 'bg-gray-100 text-gray-600'}`}>

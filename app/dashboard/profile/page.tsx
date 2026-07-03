@@ -8,11 +8,11 @@ export default function ProfilePage() {
   const [form, setForm] = useState({
     name: 'Sarah Johnson',
     email: 'sarah.johnson@email.com',
-    phone: '+1 (555) 123-4567',
+    phone: '+251 91 234 5678',
     dob: '1992-05-12',
     gender: 'Female',
     language: 'English',
-    currency: 'USD - US Dollar',
+    currency: 'ETB - Ethiopian Birr',
     newsletter: true,
   });
   const [saving, setSaving] = useState(false);
@@ -74,12 +74,7 @@ export default function ProfilePage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone Number</label>
-                <div className="flex">
-                  <div className="flex items-center gap-1 px-3 border border-r-0 border-gray-200 rounded-l-xl bg-gray-50 text-sm text-gray-500">
-                    +1
-                  </div>
-                  <input type="tel" value="(555) 123-4567" readOnly className="flex-1 px-3 py-2.5 border border-gray-200 rounded-r-xl text-sm focus:border-blue-500 focus:outline-none" />
-                </div>
+                <input type="tel" value="+251 91 234 5678" readOnly className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:border-blue-500 focus:outline-none bg-gray-50" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Date of Birth</label>
@@ -104,9 +99,9 @@ export default function ProfilePage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Currency</label>
-                  <select value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })} className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:border-blue-500 focus:outline-none bg-white">
-                    <option>USD - US Dollar</option><option>EUR - Euro</option><option>GBP - British Pound</option>
-                  </select>
+                  <div className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 text-gray-700">
+                    ETB - Ethiopian Birr
+                  </div>
                 </div>
               </div>
               <label className="flex items-center gap-2 mt-4 cursor-pointer">

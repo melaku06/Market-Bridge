@@ -126,7 +126,7 @@ export default function WarehouseOrders() {
                 <p className="text-sm text-gray-500 mt-1">{order.customer_name}</p>
               </div>
               <div className="text-right">
-                <p className="font-bold text-gray-900">${order.total.toFixed(2)}</p>
+                <p className="font-bold text-gray-900">{order.total.toLocaleString()} Br</p>
                 <p className="text-xs text-gray-500">{new Date(order.created_at).toLocaleDateString()}</p>
               </div>
             </div>

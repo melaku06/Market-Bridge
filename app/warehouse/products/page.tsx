@@ -143,9 +143,9 @@ export default function WarehouseProducts() {
                   <td className="px-4 py-3 text-sm text-gray-600">{product.category_name}</td>
                   <td className="px-4 py-3">
                     <div>
-                      <p className="font-medium text-gray-900">${product.final_price.toFixed(2)}</p>
+                      <p className="font-medium text-gray-900">{product.final_price.toLocaleString()} Br</p>
                       {product.discount_percent > 0 && (
-                        <p className="text-xs text-gray-400 line-through">${product.original_price.toFixed(2)}</p>
+                        <p className="text-xs text-gray-400 line-through">{product.original_price.toLocaleString()} Br</p>
                       )}
                     </div>
                   </td>

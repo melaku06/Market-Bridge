@@ -51,7 +51,7 @@ export default function WishlistPage() {
                 <div className="mb-5">
                   <h4 className="text-sm font-medium text-gray-700 mb-2">Price Range</h4>
                   <input type="range" min={0} max={500} value={priceRange[1]} onChange={(e) => setPriceRange([0, Number(e.target.value)])} className="w-full accent-blue-600 mb-1" />
-                  <div className="flex justify-between text-xs text-gray-500"><span>$0</span><span>${priceRange[1]}+</span></div>
+                  <div className="flex justify-between text-xs text-gray-500"><span>Br 0</span><span>Br {priceRange[1]}+</span></div>
                 </div>
 
                 <div>
@@ -125,7 +125,7 @@ export default function WishlistPage() {
                         <p className="text-xs text-blue-600 font-medium mb-1">{product.category}</p>
                         <h3 className="text-sm font-medium text-gray-900 line-clamp-2 mb-1">{product.name}</h3>
                         <StarRating rating={product.rating} count={product.reviews} className="mb-2" />
-                        <p className="text-base font-bold text-gray-900 mb-2">${product.price.toFixed(2)}</p>
+                        <p className="text-base font-bold text-gray-900 mb-2">{product.price.toLocaleString()} Br</p>
                         <div className="flex gap-2">
                           <button className="flex-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1">
                             <ShoppingCart className="w-3 h-3" />

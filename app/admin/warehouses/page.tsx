@@ -259,7 +259,7 @@ export default function AdminWarehouses() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Total Sales</p>
-                  <p className="font-medium text-gray-900">${selectedWarehouseData.total_sales.toLocaleString()}</p>
+                  <p className="font-medium text-gray-900">{selectedWarehouseData.total_sales.toLocaleString()} Br</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Performance</p>

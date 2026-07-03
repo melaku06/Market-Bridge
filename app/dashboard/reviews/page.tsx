@@ -38,7 +38,7 @@ export default function ReviewHistoryPage() {
                   <Link href={`/products/${review.productId}`}>
                     <p className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors line-clamp-2">{review.productName}</p>
                   </Link>
-                  <p className="text-xs text-gray-500">${review.productPrice.toFixed(2)}</p>
+                  <p className="text-xs text-gray-500">{review.productPrice.toLocaleString()} Br</p>
                 </div>
               </div>
 

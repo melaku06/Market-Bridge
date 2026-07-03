@@ -55,7 +55,7 @@ export default function AdminDashboard() {
   const pendingWarehouses = warehouses.filter(w => w.status === 'pending_approval');
 
   const stats = [
-    { name: 'Total Revenue', value: `$${analytics.revenue.total.toLocaleString()}`, change: '+12.5%', icon: DollarSign, color: 'green', isUp: true },
+    { name: 'Total Revenue', value: `${analytics.revenue.total.toLocaleString()} Br`, change: '+12.5%', icon: DollarSign, color: 'green', isUp: true },
     { name: 'Total Orders', value: analytics.orders.total.toLocaleString(), change: '+8.2%', icon: ShoppingBag, color: 'blue', isUp: true },
     { name: 'Customers', value: analytics.customers.total.toLocaleString(), change: '+234 today', icon: Users, color: 'purple', isUp: true },
     { name: 'Active Warehouses', value: activeWarehouses.length.toString(), icon: WarehouseIcon, color: 'orange', isUp: true },
@@ -192,7 +192,7 @@ export default function AdminDashboard() {
                   <span className="font-medium text-gray-900">{product.name}</span>
                 </div>
                 <div className="text-right">
-                  <p className="font-medium text-gray-900">${product.revenue.toFixed(2)}</p>
+                  <p className="font-medium text-gray-900">{product.revenue.toLocaleString()} Br</p>
                   <p className="text-xs text-gray-500">{product.units} units</p>
                 </div>
               </div>
@@ -208,7 +208,7 @@ export default function AdminDashboard() {
               <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <span className="font-medium text-gray-900">{cat.name}</span>
                 <div className="flex items-center gap-4">
-                  <p className="font-medium text-gray-900">${cat.revenue.toFixed(2)}</p>
+                  <p className="font-medium text-gray-900">{cat.revenue.toLocaleString()} Br</p>
                   <span className="text-xs text-gray-500">{cat.percentage}%</span>
                 </div>
               </div>

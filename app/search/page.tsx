@@ -18,7 +18,7 @@ function SearchResults() {
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
   const [sortBy, setSortBy] = useState('Relevance');
-  const [priceRange, setPriceRange] = useState([0, 500]);
+  const [priceRange, setPriceRange] = useState([0, 10000]);
   const [gridView, setGridView] = useState(true);
   const [filterOpen, setFilterOpen] = useState(false);
 
@@ -98,8 +98,8 @@ function SearchResults() {
       </div>
       <div>
         <h3 className="font-semibold text-gray-900 text-sm mb-3">Price Range</h3>
-        <input type="range" min={0} max={500} value={priceRange[1]} onChange={(e) => setPriceRange([0, Number(e.target.value)])} className="w-full accent-blue-600" />
-        <div className="flex justify-between text-sm text-gray-500 mt-1"><span>$0</span><span>${priceRange[1]}+</span></div>
+        <input type="range" min={0} max={10000} value={priceRange[1]} onChange={(e) => setPriceRange([0, Number(e.target.value)])} className="w-full accent-blue-600" />
+        <div className="flex justify-between text-sm text-gray-500 mt-1"><span>Br 0</span><span>Br {priceRange[1]}+</span></div>
       </div>
       <div>
         <h3 className="font-semibold text-gray-900 text-sm mb-3">Brand</h3>

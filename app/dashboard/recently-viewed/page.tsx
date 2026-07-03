@@ -31,7 +31,7 @@ export default function RecentlyViewedPage() {
               <p className="text-xs text-blue-600 font-medium mb-1">{product.category}</p>
               <h3 className="text-sm font-medium text-gray-900 line-clamp-2 mb-1 leading-snug">{product.name}</h3>
               <StarRating rating={product.rating} count={product.reviews} className="mb-2" />
-              <p className="text-sm font-bold text-gray-900 mb-2">${product.price.toFixed(2)}</p>
+              <p className="text-sm font-bold text-gray-900 mb-2">{product.price.toLocaleString()} Br</p>
               <Link href={`/products/${product.id}`}>
                 <button className="w-full py-1.5 border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white rounded-lg text-xs font-medium transition-colors">
                   View Product

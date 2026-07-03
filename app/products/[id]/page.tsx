@@ -146,10 +146,10 @@ export default function ProductDetailPage() {
 
                 {/* Price */}
                 <div className="flex items-baseline gap-3">
-                  <span className="text-3xl font-bold text-gray-900">${product.final_price.toFixed(2)}</span>
+                  <span className="text-3xl font-bold text-gray-900">{product.final_price.toLocaleString()} Br</span>
                   {product.discount_percent > 0 && (
                     <>
-                      <span className="text-lg text-gray-400 line-through">${product.original_price.toFixed(2)}</span>
+                      <span className="text-lg text-gray-400 line-through">{product.original_price.toLocaleString()} Br</span>
                       <span className="bg-red-100 text-red-600 text-sm font-semibold px-2 py-0.5 rounded-full">
                         {product.discount_percent}% OFF
                       </span>
@@ -368,8 +368,8 @@ export default function ProductDetailPage() {
               {activeTab === 'shipping' && (
                 <div className="space-y-4">
                   {[
-                    { title: 'Standard Shipping', time: '3-5 business days', price: 'Free on orders over $50' },
-                    { title: 'Express Shipping', time: '1-2 business days', price: '$9.99' },
+                    { title: 'Standard Shipping', time: '3-5 business days', price: 'Free on orders over 5000 Br' },
+                    { title: 'Express Shipping', time: '1-2 business days', price: '999 Br' },
                     { title: 'Returns', time: 'Within 30 days', price: 'Free return shipping' },
                   ].map((item) => (
                     <div key={item.title} className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">

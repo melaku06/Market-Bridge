@@ -48,7 +48,7 @@ export default function WarehouseAnalytics() {
   }
 
   const stats = [
-    { name: 'Total Revenue', value: `$${warehouse.total_sales.toLocaleString()}`, change: '+12.5%', icon: DollarSign, color: 'green', isUp: true },
+    { name: 'Total Revenue', value: `${warehouse.total_sales.toLocaleString()} Br`, change: '+12.5%', icon: DollarSign, color: 'green', isUp: true },
     { name: 'Total Orders', value: warehouse.total_orders.toLocaleString(), change: '+8.2%', icon: ShoppingCart, color: 'blue', isUp: true },
     { name: 'Total Products', value: warehouse.total_products.toLocaleString(), change: '+3', icon: Package, color: 'purple', isUp: true },
     { name: 'Rating', value: warehouse.rating.toFixed(1), change: '+0.2', icon: TrendingUp, color: 'orange', isUp: true },
@@ -129,7 +129,7 @@ export default function WarehouseAnalytics() {
                   <span className="font-medium text-gray-900">{product.name}</span>
                 </div>
                 <div className="text-right">
-                  <p className="font-medium text-gray-900">${product.revenue.toFixed(2)}</p>
+                  <p className="font-medium text-gray-900">{product.revenue.toLocaleString()} Br</p>
                   <p className="text-xs text-gray-500">{product.units} units</p>
                 </div>
               </div>
