@@ -19,10 +19,6 @@ import {
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/components/auth/auth-provider';
-import { useCartStore } from '@/stores/cart-store';
-import { useWishlistStore } from '@/stores/wishlist-store';
-import { useNotificationsStore } from '@/stores/notifications-store';
-import { supabase } from '@/lib/supabase/client';
 
 export default function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -31,24 +27,24 @@ export default function Header() {
   const [categories, setCategories] = useState<any[]>([]);
 
   const { user, isAuthenticated, isLoading } = useAuth();
-  const { totalItems } = useCartStore();
-  const { totalItems: wishlistCount } = useWishlistStore();
-  const { unreadCount } = useNotificationsStore();
 
   useEffect(() => {
     async function fetchCategories() {
-      const { data } = await supabase
-        .from('categories')
-        .select('*')
-        .eq('is_active', true)
-        .limit(10);
-      setCategories(data || []);
+      try {
+        const res = await fetch('/api/categories');
+        if (res.ok) {
+          const data = await res.json();
+          setCategories(data.categories || data || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+      }
     }
     fetchCategories();
   }, []);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
     window.location.href = '/';
   };
 
@@ -139,11 +135,6 @@ export default function Header() {
               <Link href={`${getDashboardLink()}/notifications`}>
                 <button className="p-2 rounded-md hover:bg-gray-50 transition-colors text-gray-600 hover:text-blue-600 relative">
                   <Bell className="w-5 h-5" />
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
-                      {unreadCount > 9 ? '9+' : unreadCount}
-                    </span>
-                  )}
                 </button>
               </Link>
             )}
@@ -216,25 +207,15 @@ export default function Header() {
               <Link href="/wishlist">
                 <button className="p-2 rounded-md hover:bg-gray-50 transition-colors text-gray-600 hover:text-blue-600 relative">
                   <Heart className="w-5 h-5" />
-                  {wishlistCount() > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
-                      {wishlistCount() > 9 ? '9+' : wishlistCount()}
-                    </span>
-                  )}
                 </button>
               </Link>
             )}
 
             {/* Cart - Only for customers */}
             {isAuthenticated && user?.role === 'customer' && (
-              <Link href="/cart">
+              <Link href="/dashboard/orders">
                 <button className="p-2 rounded-md hover:bg-gray-50 transition-colors text-gray-600 hover:text-blue-600 relative">
                   <ShoppingCart className="w-5 h-5" />
-                  {totalItems() > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-blue-600 text-white text-xs rounded-full flex items-center justify-center font-medium">
-                      {totalItems() > 9 ? '9+' : totalItems()}
-                    </span>
-                  )}
                 </button>
               </Link>
             )}

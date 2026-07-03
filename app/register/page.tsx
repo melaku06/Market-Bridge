@@ -4,13 +4,15 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff, ShoppingBag, User, Building2, Shield, Check } from 'lucide-react';
-import { useAuthStore } from '@/stores/auth-store';
+import { useAuth } from '@/components/auth/auth-provider';
 import type { UserRole } from '@/lib/auth/types';
 import { getDashboardPath } from '@/lib/auth/types';
 
 export default function RegisterPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -19,9 +21,8 @@ export default function RegisterPage() {
     role: 'customer' as UserRole,
   });
 
-  const { register, isLoading, error, clearError, isAuthenticated, user } = useAuthStore();
+  const { user, isAuthenticated, refreshUser } = useAuth();
 
-  // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated && user) {
       router.push(getDashboardPath(user.role));
@@ -34,15 +35,49 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    clearError();
+    setError('');
 
     if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
       return;
     }
 
-    const success = await register(formData.email, formData.password, formData.name, formData.role);
-    if (success && user) {
-      router.push(getDashboardPath(user.role));
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          role: formData.role,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setError(data.error || 'Registration failed');
+        setIsLoading(false);
+        return;
+      }
+
+      await refreshUser();
+
+      if (data.user) {
+        router.push(getDashboardPath(data.user.role));
+      }
+    } catch (err) {
+      setError('An error occurred. Please try again.');
+      setIsLoading(false);
     }
   };
 

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff, ShoppingBag, Shield, Truck, RotateCcw, Clock } from 'lucide-react';
-import { useAuthStore } from '@/stores/auth-store';
+import { useAuth } from '@/components/auth/auth-provider';
 import { getDashboardPath } from '@/lib/auth/types';
 
 export default function LoginPage() {
@@ -12,10 +12,11 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const { login, isLoading, error, clearError, isAuthenticated, user } = useAuthStore();
+  const { user, isAuthenticated, refreshUser } = useAuth();
 
-  // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated && user) {
       router.push(getDashboardPath(user.role));
@@ -28,11 +29,33 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    clearError();
+    setError('');
+    setIsLoading(true);
 
-    const success = await login(email, password);
-    if (success && user) {
-      router.push(getDashboardPath(user.role));
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setError(data.error || 'Login failed');
+        setIsLoading(false);
+        return;
+      }
+
+      await refreshUser();
+
+      if (data.user) {
+        router.push(getDashboardPath(data.user.role));
+      }
+    } catch (err) {
+      setError('An error occurred. Please try again.');
+      setIsLoading(false);
     }
   };
 

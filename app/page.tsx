@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { ChevronRight, Send, Star, Truck, RotateCcw, Shield, Headphones, ArrowRight } from 'lucide-react';
 import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
-import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/components/auth/auth-provider';
 
 export default function HomePage() {
@@ -19,21 +18,15 @@ export default function HomePage() {
     async function fetchData() {
       try {
         const [productsRes, categoriesRes] = await Promise.all([
-          supabase
-            .from('products')
-            .select('*, categories(name, slug), warehouses(name)')
-            .eq('status', 'published')
-            .order('sold_count', { ascending: false })
-            .limit(10),
-          supabase
-            .from('categories')
-            .select('*')
-            .eq('is_active', true)
-            .limit(10),
+          fetch('/api/products?status=published&limit=10'),
+          fetch('/api/categories?active=true&limit=10'),
         ]);
 
-        setProducts(productsRes.data || []);
-        setCategories(categoriesRes.data || []);
+        const productsData = await productsRes.json();
+        const categoriesData = await categoriesRes.json();
+
+        setProducts(productsData.products || productsData || []);
+        setCategories(categoriesData.categories || categoriesData || []);
       } catch (error) {
         console.error('Failed to fetch data:', error);
       } finally {

@@ -1,11 +1,9 @@
 'use client';
 
-import { useEffect, useState, createContext, useContext, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { supabase } from '@/lib/supabase/client';
-import { useAuthStore } from '@/stores/auth-store';
 import type { AuthUser, UserRole } from '@/lib/auth/types';
-import { getCurrentUser, getDashboardPath, hasRole } from '@/lib/auth/types';
+import { getDashboardPath, hasRole } from '@/lib/auth/types';
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -27,9 +25,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   const refreshUser = useCallback(async () => {
-    const currentUser = await getCurrentUser();
-    setUser(currentUser);
-    return currentUser;
+    try {
+      const res = await fetch('/api/auth/me', {
+        credentials: 'include',
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data.user);
+        return data.user;
+      } else {
+        setUser(null);
+        return null;
+      }
+    } catch (error) {
+      console.error('Failed to refresh user:', error);
+      setUser(null);
+      return null;
+    }
   }, []);
 
   const isCustomer = () => hasRole(user, 'customer');
@@ -37,33 +50,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isAdmin = () => hasRole(user, 'admin');
 
   useEffect(() => {
-    // Initial session check
     refreshUser().finally(() => setIsLoading(false));
-
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        const currentUser = await getCurrentUser();
-        setUser(currentUser);
-      } else if (event === 'SIGNED_OUT') {
-        setUser(null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
   }, [refreshUser]);
 
-  // Route protection
   useEffect(() => {
     if (isLoading) return;
 
     const publicPaths = ['/', '/login', '/register', '/forgot-password', '/products', '/search', '/categories'];
     const isPublicPath = publicPaths.some(path => pathname?.startsWith(path)) || pathname === '/';
 
-    // Allow public paths
     if (isPublicPath) return;
 
-    // Check protected routes
     if (pathname?.startsWith('/admin') && !isAdmin()) {
       router.push('/login');
       return;
@@ -79,7 +76,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Redirect authenticated users from auth pages
     if (user && (pathname === '/login' || pathname === '/register')) {
       const dashboardPath = getDashboardPath(user.role);
       router.push(dashboardPath);
