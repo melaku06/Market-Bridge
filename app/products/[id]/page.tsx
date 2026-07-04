@@ -7,15 +7,8 @@ import ProductCardInteractive from '@/components/product/product-card-interactiv
 import ProductDetailInteractive from '@/components/product/product-detail-interactive';
 import { getCachedProductById, getCachedReviews, getCachedProductsByCategory } from '@/lib/cached-data';
 
-// Revalidate every 10 minutes
-export const revalidate = 600;
-
-// Pre-generate top product pages at build time
-export async function generateStaticParams() {
-  // The homepage fetches featured products; we can't easily access that here
-  // without a direct query. Next.js will ISR-generate pages on first request.
-  return [];
-}
+// Force dynamic rendering to avoid build-time database requirement
+export const dynamic = 'force-dynamic';
 
 interface PageProps {
   params: { id: string };

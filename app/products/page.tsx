@@ -5,8 +5,8 @@ import Footer from '@/components/layout/footer';
 import ProductsBrowser from '@/components/product/products-browser';
 import { getCachedProducts, getCachedCategories } from '@/lib/cached-data';
 
-// Revalidate every 5 minutes
-export const revalidate = 300;
+// Force dynamic rendering to avoid build-time database requirement
+export const dynamic = 'force-dynamic';
 
 export default async function ProductsPage() {
   // Fetch products and categories in parallel on the server

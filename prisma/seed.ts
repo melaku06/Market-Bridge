@@ -1,7 +1,11 @@
+import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import pg from 'pg';
 import bcrypt from 'bcrypt';
 
-const prisma = new PrismaClient();
+const adapter = new PrismaPg(new pg.Pool({ connectionString: process.env.DATABASE_URL }));
+const prisma = new PrismaClient({ adapter });
 
 const SALT_ROUNDS = 12;
 

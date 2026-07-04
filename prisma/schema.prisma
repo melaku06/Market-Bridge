@@ -7,9 +7,7 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
 }
 
 // ============================================================================
@@ -125,7 +123,7 @@ enum PostStatus {
 // USER MANAGEMENT
 // ============================================================================
 
-/// User profiles - extends Supabase auth or standalone auth
+/// User profiles
 model Profile {
   id            String       @id
   email         String       @unique

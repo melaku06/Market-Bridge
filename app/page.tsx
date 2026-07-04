@@ -7,8 +7,8 @@ import ProductCardInteractive from '@/components/product/product-card-interactiv
 import { getCachedFeaturedProducts, getCachedTrendingProducts, getCachedCategories } from '@/lib/cached-data';
 import { formatPrice } from '@/lib/price';
 
-// Revalidate every 5 minutes - homepage content doesn't need to be real-time
-export const revalidate = 300;
+// Force dynamic rendering to avoid build-time database requirement
+export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
   // Fetch all data in parallel on the server, cached via cache-aside

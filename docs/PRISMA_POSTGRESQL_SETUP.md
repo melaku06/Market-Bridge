@@ -1,6 +1,6 @@
-# Prisma & PostgreSQL Local Setup Guide
+# Prisma 7 & PostgreSQL Local Setup Guide
 
-This guide covers setting up Prisma ORM with local PostgreSQL for development.
+This guide covers setting up Prisma 7 ORM with local PostgreSQL for development.
 
 ## The Error You May Encounter
 
@@ -8,20 +8,23 @@ This guide covers setting up Prisma ORM with local PostgreSQL for development.
 Error: Cannot find module '.prisma/client/default'
 ```
 
-**Fix:** Run `npx prisma generate` to generate the Prisma Client.
+**Fix:** Run `pnpm prisma generate` to generate the Prisma Client.
 
 ---
 
 ## Quick Start
 
-### 1. Create PostgreSQL Database
+### 1. Create PostgreSQL Databases
 
 ```bash
 # Connect to PostgreSQL
 psql -U postgres
 
-# Create database
+# Create main database
 CREATE DATABASE marketbridge;
+
+# Create shadow database (required for Prisma 7 migrations)
+CREATE DATABASE marketbridge_shadow;
 
 # Exit
 \q
@@ -29,31 +32,35 @@ CREATE DATABASE marketbridge;
 
 ### 2. Configure Environment
 
-Your `.env` is already configured for local PostgreSQL:
+Your `.env` should have:
 
 ```env
 DATABASE_URL="postgresql://postgres:2134@localhost:5432/marketbridge"
 DIRECT_URL="postgresql://postgres:2134@localhost:5432/marketbridge"
-JWT_SECRET=marketbridge-super-secret-jwt-key-2024-production
+SHADOW_DATABASE_URL="postgresql://postgres:2134@localhost:5432/marketbridge_shadow"
+JWT_SECRET=your-jwt-secret
 ```
 
 ### 3. Initialize Database
 
 ```bash
+# Install dependencies
+pnpm install
+
 # Generate Prisma Client
-npx prisma generate
+pnpm prisma generate
 
 # Push schema to database (creates all tables)
-npx prisma db push
+pnpm prisma:push
 
-# (Optional) Seed demo data
-npm run prisma:db:seed
+# Seed demo data
+pnpm prisma:db:seed
 ```
 
 ### 4. Start Development Server
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
@@ -74,14 +81,14 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ```bash
 # Development
-npm run dev              # Start development server
-npm run build            # Build for production
+pnpm dev              # Start development server
+pnpm build            # Build for production
 
 # Prisma
-npm run prisma:generate  # Generate Prisma Client
-npm run prisma:push      # Push schema to database
-npm run prisma:studio    # Open Prisma Studio GUI
-npm run prisma:db:seed   # Seed demo data
+pnpm prisma:generate  # Generate Prisma Client
+pnpm prisma:push      # Push schema to database
+pnpm prisma:studio    # Open Prisma Studio GUI
+pnpm prisma:db:seed   # Seed demo data
 ```
 
 ---
@@ -95,40 +102,54 @@ Prisma uses code-generation:
 3. Generated client is stored in `node_modules/@prisma/client`
 
 **Run `prisma generate`:**
-- After `npm install`
+- After `pnpm install`
 - After changing `prisma/schema.prisma`
 - After cloning the repository
 
 ---
 
-## Database Schema
+## Prisma 7 Configuration
 
-### Core Tables
+Prisma 7 uses a new configuration format:
 
-| Table | Description |
-|-------|-------------|
-| `profiles` | User accounts with roles |
-| `user_credentials` | Password hashes |
-| `warehouses` | Seller accounts |
-| `products` | Product listings |
-| `categories` | Product categories |
-| `orders` | Customer orders |
-| `order_items` | Order line items |
-| `reviews` | Product reviews |
-| `notifications` | User notifications |
+### `prisma.config.ts`
 
-### Entity Relationships
+```typescript
+import { defineConfig } from 'prisma/config';
 
+export default defineConfig({
+  schema: {
+    datasourceUrl: process.env.DATABASE_URL,
+    shadowDatabaseUrl: process.env.SHADOW_DATABASE_URL,
+  },
+});
 ```
-profiles ─┬─< orders ────< order_items
-          ├─< reviews
-          ├─< wishlist_items
-          └─< notifications
 
-warehouses ─┬─< products
-            └─< orders
+### `prisma/schema.prisma`
 
-categories ────< products
+```prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+```
+
+Note: URLs are now in `prisma.config.ts`, not in the schema file.
+
+### `lib/prisma.ts`
+
+```typescript
+import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import pg from 'pg';
+
+const adapter = new PrismaPg(new pg.Pool({ connectionString: process.env.DATABASE_URL }));
+export const prisma = new PrismaClient({ adapter });
+
+export default prisma;
 ```
 
 ---
@@ -138,12 +159,12 @@ categories ────< products
 ### Error: "Cannot find module '.prisma/client/default'"
 
 ```bash
-npx prisma generate
+pnpm prisma generate
 rm -rf .next
-npm run dev
+pnpm dev
 ```
 
-### Error: "Can't reach database server"
+### Error: "Can't reach database server at `localhost:5432`"
 
 Check PostgreSQL is running:
 
@@ -171,12 +192,27 @@ DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@localhost:5432/marketbridge"
 
 ```bash
 psql -U postgres -c "CREATE DATABASE marketbridge;"
+psql -U postgres -c "CREATE DATABASE marketbridge_shadow;"
 ```
 
-### Error: "P2021: The table does not exist"
+### Error: "The table does not exist"
 
 ```bash
-npx prisma db push
+pnpm prisma:push
+```
+
+### Error: "shadow database appears to be the same as the main database"
+
+Create a shadow database:
+
+```bash
+psql -U postgres -c "CREATE DATABASE marketbridge_shadow;"
+```
+
+Then add to `.env`:
+
+```env
+SHADOW_DATABASE_URL="postgresql://postgres:2134@localhost:5432/marketbridge_shadow"
 ```
 
 ---
@@ -213,32 +249,26 @@ const result = await prisma.$transaction([
 
 ---
 
-## Realtime Notifications (Optional)
+## Database Schema
 
-By default, the app uses local PostgreSQL without realtime features. Notifications work via polling (every 30 seconds).
+### Core Tables
 
-To enable realtime notifications with Supabase:
-
-1. Add to `.env`:
-```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-```
-
-2. Enable realtime in Supabase dashboard for the `notifications` table
-
----
-
-## Production Deployment
-
-1. Set production environment variables
-2. Run migrations: `npx prisma migrate deploy`
-3. Build: `npm run build`
+| Table | Description |
+|-------|-------------|
+| `profiles` | User accounts with roles |
+| `user_credentials` | Password hashes |
+| `warehouses` | Seller accounts |
+| `products` | Product listings |
+| `categories` | Product categories |
+| `orders` | Customer orders |
+| `order_items` | Order line items |
+| `reviews` | Product reviews |
+| `notifications` | User notifications |
 
 ---
 
 ## Additional Resources
 
-- [Prisma Documentation](https://www.prisma.io/docs)
+- [Prisma 7 Documentation](https://www.prisma.io/docs)
 - [Prisma Client API Reference](https://www.prisma.io/docs/reference/api-reference/prisma-client-reference)
 - [PostgreSQL Documentation](https://www.postgresql.org/docs/)
