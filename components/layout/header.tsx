@@ -6,6 +6,7 @@ import {
   ShoppingCart, Heart, User, Search, Menu, X, ChevronDown, LogOut, Settings, Package, ShoppingBag,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/auth-provider';
+import { useAuthStore } from '@/stores/auth/auth-store';
 import { useCartStore } from '@/stores/cart/cart-store';
 import { useWishlistStore } from '@/stores/wishlist/wishlist-store';
 
@@ -15,6 +16,7 @@ export default function Header() {
   const [categories, setCategories] = useState<any[]>([]);
 
   const { user, isAuthenticated, isLoading } = useAuth();
+  const logout = useAuthStore((s) => s.logout);
   const cartCount = useCartStore((s) => s.totalItems());
   const wishlistCount = useWishlistStore((s) => s.totalItems());
 
@@ -32,7 +34,7 @@ export default function Header() {
   }, []);
 
   const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    await logout();
     window.location.href = '/';
   };
 

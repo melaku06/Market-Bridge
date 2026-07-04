@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/auth/require-auth';
 import { getAddresses, createAddress } from '@/lib/db-service';
 import { addressCreateSchema } from '@/lib/validations/common';
 
 export async function GET(request: NextRequest) {
   try {
+    const { error } = await requireAuth(request);
+    if (error) return error;
+
     const { searchParams } = request.nextUrl;
     const customer_id = searchParams.get('customer_id');
 
@@ -22,6 +26,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const { error } = await requireAuth(request);
+    if (error) return error;
+
     const body = await request.json();
 
     // Validate input

@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getMarginRules, createMarginRule } from '@/lib/db-service';
 import { marginRuleCreateSchema } from '@/lib/validations/common';
+import { requireAuth } from '@/lib/auth/require-auth';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { error } = await requireAuth(request, ['admin']);
+    if (error) return error;
     const margins = await getMarginRules();
 
     const serialized = margins.map(m => ({
@@ -23,6 +26,8 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const { error } = await requireAuth(request, ['admin']);
+    if (error) return error;
     const body = await request.json();
 
     // Validate input

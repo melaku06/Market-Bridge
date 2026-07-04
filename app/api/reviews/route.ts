@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/auth/require-auth';
 import { getReviews, createReview } from '@/lib/db-service';
 import { reviewCreateSchema } from '@/lib/validations/common';
 import prisma from '@/lib/prisma';
@@ -34,6 +35,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const { error } = await requireAuth(request);
+    if (error) return error;
+
     const body = await request.json();
 
     // Validate input

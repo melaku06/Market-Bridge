@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/auth/require-auth';
 import { removeFromWishlist } from '@/lib/db-service';
 
 export async function DELETE(
@@ -6,6 +7,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { error } = await requireAuth(request);
+    if (error) return error;
+
     const { id } = await params;
     await removeFromWishlist(id);
 

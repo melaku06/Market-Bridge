@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/auth/require-auth';
 import { getAnalytics, getDashboardStats } from '@/lib/db-service';
 
 export async function GET(request: NextRequest) {
   try {
+    const { error } = await requireAuth(request, ['admin']);
+    if (error) return error;
+
     const { searchParams } = request.nextUrl;
     const type = searchParams.get('type');
     const warehouse_id = searchParams.get('warehouse_id') || undefined;

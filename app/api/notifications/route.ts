@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/auth/require-auth';
 import { getNotifications, createNotification, getUnreadCount } from '@/lib/db-service';
 import { notificationCreateSchema } from '@/lib/validations/common';
 
 export async function GET(request: NextRequest) {
   try {
+    const { error } = await requireAuth(request);
+    if (error) return error;
+
     const { searchParams } = request.nextUrl;
     const user_id = searchParams.get('user_id');
     const type = searchParams.get('type') || undefined;
@@ -36,6 +40,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const { error } = await requireAuth(request);
+    if (error) return error;
+
     const body = await request.json();
 
     // Validate input

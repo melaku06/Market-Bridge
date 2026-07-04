@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPromotions, createPromotion } from '@/lib/db-service';
 import { promotionCreateSchema } from '@/lib/validations/common';
+import { requireAuth } from '@/lib/auth/require-auth';
 
 export async function GET(request: NextRequest) {
   try {
+    const { error } = await requireAuth(request, ['admin']);
+    if (error) return error;
     const { searchParams } = request.nextUrl;
     const status = searchParams.get('status') || undefined;
     const type = searchParams.get('type') || undefined;
@@ -19,6 +22,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const { error } = await requireAuth(request, ['admin']);
+    if (error) return error;
     const body = await request.json();
 
     // Validate input

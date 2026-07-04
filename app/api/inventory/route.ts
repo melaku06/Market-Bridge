@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/auth/require-auth';
 import { getInventory, createInventory, updateInventory } from '@/lib/db-service';
 import prisma from '@/lib/prisma';
 
@@ -26,6 +27,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const { error } = await requireAuth(request, ['warehouse', 'admin']);
+    if (error) return error;
+
     const body = await request.json();
 
     const quantity = parseInt(body.quantity) || 0;

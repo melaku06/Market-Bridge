@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/auth/require-auth';
 import prisma from '@/lib/prisma';
 import { userQuerySchema } from '@/lib/validations/user';
 
 export async function GET(request: NextRequest) {
   try {
+    const { error } = await requireAuth(request, ['admin']);
+    if (error) return error;
+
     const { searchParams } = request.nextUrl;
 
     const result = userQuerySchema.safeParse({
@@ -57,6 +61,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const { error } = await requireAuth(request, ['admin']);
+    if (error) return error;
+
     const body = await request.json();
     const { registerUser } = await import('@/lib/auth/db-service');
 

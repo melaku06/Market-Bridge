@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/auth/require-auth';
 import { getOrderById, updateOrder } from '@/lib/db-service';
 import { orderStatusUpdateSchema } from '@/lib/validations/order';
 
@@ -7,6 +8,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { error } = await requireAuth(request);
+    if (error) return error;
+
     const { id } = await params;
     const order = await getOrderById(id);
 
@@ -26,6 +30,9 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { error } = await requireAuth(request);
+    if (error) return error;
+
     const { id } = await params;
     const body = await request.json();
 
@@ -60,6 +67,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { error } = await requireAuth(request);
+    if (error) return error;
+
     const { id } = await params;
     const prisma = (await import('@/lib/prisma')).default;
     await prisma.order.delete({ where: { id } });

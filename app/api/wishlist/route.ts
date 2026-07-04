@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/auth/require-auth';
 import { getWishlist, addToWishlist, removeFromWishlist, isInWishlist } from '@/lib/db-service';
 import { wishlistAddSchema } from '@/lib/validations/common';
 import prisma from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
+    const { error } = await requireAuth(request);
+    if (error) return error;
+
     const { searchParams } = request.nextUrl;
     const customer_id = searchParams.get('customer_id');
 
@@ -23,6 +27,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const { error } = await requireAuth(request);
+    if (error) return error;
+
     const body = await request.json();
 
     // Validate input
@@ -56,6 +63,9 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const { error } = await requireAuth(request);
+    if (error) return error;
+
     const { searchParams } = request.nextUrl;
     const id = searchParams.get('id');
     const customer_id = searchParams.get('customer_id');

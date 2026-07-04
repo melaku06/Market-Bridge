@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSystemSettings, updateSystemSettings } from '@/lib/db-service';
+import { requireAuth } from '@/lib/auth/require-auth';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { error } = await requireAuth(request, ['admin']);
+    if (error) return error;
+
     const settings = await getSystemSettings();
 
     if (!settings) {
@@ -23,6 +27,9 @@ export async function GET() {
 
 export async function PUT(request: NextRequest) {
   try {
+    const { error } = await requireAuth(request, ['admin']);
+    if (error) return error;
+
     const body = await request.json();
 
     const settings = await updateSystemSettings(body);

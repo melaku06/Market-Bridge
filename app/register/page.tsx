@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff, ShoppingBag, Tag, Heart, ShoppingCart, MapPin } from 'lucide-react';
-import { useAuth } from '@/components/auth/auth-provider';
-import type { UserRole } from '@/lib/auth/types';
+import { useAuthStore } from '@/stores/auth/auth-store';
 import { getDashboardPath } from '@/lib/auth/types';
 
 export default function RegisterPage() {
@@ -21,18 +20,18 @@ export default function RegisterPage() {
     phone: '',
     password: '',
     confirmPassword: '',
-    role: 'customer' as UserRole,
   });
 
-  const { user, isAuthenticated, refreshUser } = useAuth();
+  const user = useAuthStore((s) => s.user);
+  const register = useAuthStore((s) => s.register);
 
   useEffect(() => {
-    if (isAuthenticated && user) {
+    if (user) {
       router.push(getDashboardPath(user.role));
     }
-  }, [isAuthenticated, user, router]);
+  }, [user, router]);
 
-  if (isAuthenticated && user) {
+  if (user) {
     return null;
   }
 
@@ -58,30 +57,18 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      const res = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-          role: formData.role,
-        }),
+      const result = await register({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        phone: formData.phone,
       });
 
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        setError(data.error || 'Registration failed');
+      if (result.success && result.user) {
+        router.push(getDashboardPath(result.user.role));
+      } else {
+        setError(result.error || 'Registration failed');
         setIsLoading(false);
-        return;
-      }
-
-      await refreshUser();
-
-      if (data.user) {
-        router.push(getDashboardPath(data.user.role));
       }
     } catch {
       setError('An error occurred. Please try again.');

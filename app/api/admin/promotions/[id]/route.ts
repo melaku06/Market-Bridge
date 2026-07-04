@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPromotionById, updatePromotion, deletePromotion } from '@/lib/db-service';
+import { requireAuth } from '@/lib/auth/require-auth';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { error } = await requireAuth(request, ['admin']);
+    if (error) return error;
+
     const { id } = await params;
     const promotion = await getPromotionById(id);
 
@@ -25,6 +29,9 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { error } = await requireAuth(request, ['admin']);
+    if (error) return error;
+
     const { id } = await params;
     const body = await request.json();
 
@@ -45,6 +52,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { error } = await requireAuth(request, ['admin']);
+    if (error) return error;
+
     const { id } = await params;
     await deletePromotion(id);
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/auth/require-auth';
 import { getOrders, createOrder } from '@/lib/db-service';
 import { orderCreateSchema, generateOrderNumber } from '@/lib/validations/order';
 import prisma from '@/lib/prisma';
@@ -6,6 +7,9 @@ import { invalidateOrders, invalidateProducts } from '@/lib/cached-data';
 
 export async function GET(request: NextRequest) {
   try {
+    const { error } = await requireAuth(request);
+    if (error) return error;
+
     const { searchParams } = request.nextUrl;
     const status = searchParams.get('status') || undefined;
     const customer_id = searchParams.get('customer_id') || undefined;
@@ -41,6 +45,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const { error } = await requireAuth(request);
+    if (error) return error;
+
     const body = await request.json();
 
     // Validate input

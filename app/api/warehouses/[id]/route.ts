@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/auth/require-auth';
 import { getWarehouseById, updateWarehouse, deleteWarehouse } from '@/lib/db-service';
 import { warehouseStatusUpdateSchema } from '@/lib/validations/warehouse';
 
@@ -7,6 +8,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { error } = await requireAuth(request, ['warehouse', 'admin']);
+    if (error) return error;
+
     const { id } = await params;
     const warehouse = await getWarehouseById(id);
 
@@ -26,6 +30,9 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { error } = await requireAuth(request, ['warehouse', 'admin']);
+    if (error) return error;
+
     const { id } = await params;
     const body = await request.json();
 
@@ -62,6 +69,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { error } = await requireAuth(request, ['warehouse', 'admin']);
+    if (error) return error;
+
     const { id } = await params;
     await deleteWarehouse(id);
 

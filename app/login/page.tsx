@@ -1,29 +1,32 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff, Shield, Truck, RotateCcw, Clock, ShoppingBag } from 'lucide-react';
-import { useAuth } from '@/components/auth/auth-provider';
+import { useAuthStore } from '@/stores/auth/auth-store';
 import { getDashboardPath } from '@/lib/auth/types';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const { user, isAuthenticated, refreshUser } = useAuth();
+  const user = useAuthStore((s) => s.user);
+  const login = useAuthStore((s) => s.login);
+  const fromPath = searchParams.get('from');
 
   useEffect(() => {
-    if (isAuthenticated && user) {
-      router.push(getDashboardPath(user.role));
+    if (user) {
+      router.push(fromPath || getDashboardPath(user.role));
     }
-  }, [isAuthenticated, user, router]);
+  }, [user, router, fromPath]);
 
-  if (isAuthenticated && user) {
+  if (user) {
     return null;
   }
 
@@ -33,25 +36,13 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ email, password }),
-      });
+      const result = await login(email, password);
 
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        setError(data.error || 'Login failed');
+      if (result.success && result.user) {
+        router.push(fromPath || getDashboardPath(result.user.role));
+      } else {
+        setError(result.error || 'Login failed');
         setIsLoading(false);
-        return;
-      }
-
-      await refreshUser();
-
-      if (data.user) {
-        router.push(getDashboardPath(data.user.role));
       }
     } catch {
       setError('An error occurred. Please try again.');

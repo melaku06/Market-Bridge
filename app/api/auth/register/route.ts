@@ -4,7 +4,7 @@ import { registerUser } from '@/lib/auth/db-service';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, password, name, role } = body;
+    const { email, password, name, phone } = body;
 
     if (!email || !password || !name) {
       return NextResponse.json(
@@ -24,7 +24,8 @@ export async function POST(request: NextRequest) {
       email,
       password,
       name,
-      role: role || 'customer',
+      role: 'customer',
+      phone,
     });
 
     if (!result.success) {

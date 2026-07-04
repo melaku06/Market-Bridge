@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuditLogs, createAuditLog } from '@/lib/db-service';
+import { requireAuth } from '@/lib/auth/require-auth';
 
 export async function GET(request: NextRequest) {
   try {
+    const { error } = await requireAuth(request, ['admin']);
+    if (error) return error;
     const { searchParams } = request.nextUrl;
     const actor_id = searchParams.get('actor_id') || undefined;
     const entity_type = searchParams.get('entity_type') || undefined;

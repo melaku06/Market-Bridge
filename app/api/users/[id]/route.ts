@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/auth/require-auth';
 import prisma from '@/lib/prisma';
 import { profileUpdateSchema, userStatusUpdateSchema } from '@/lib/validations/user';
 
@@ -7,6 +8,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { error } = await requireAuth(request, ['admin']);
+    if (error) return error;
+
     const { id } = await params;
     const user = await prisma.profile.findUnique({
       where: { id },
@@ -32,6 +36,9 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { error } = await requireAuth(request, ['admin']);
+    if (error) return error;
+
     const { id } = await params;
     const body = await request.json();
 
@@ -82,6 +89,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { error } = await requireAuth(request, ['admin']);
+    if (error) return error;
+
     const { id } = await params;
     await prisma.profile.delete({ where: { id } });
 

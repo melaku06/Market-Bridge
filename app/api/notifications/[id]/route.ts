@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/auth/require-auth';
 import { getNotificationById, markNotificationRead, deleteNotification } from '@/lib/db-service';
 
 export async function GET(
@@ -6,6 +7,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { error } = await requireAuth(request);
+    if (error) return error;
+
     const { id } = await params;
     const notification = await getNotificationById(id);
 
@@ -25,6 +29,9 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { error } = await requireAuth(request);
+    if (error) return error;
+
     const { id } = await params;
     const body = await request.json();
 
@@ -45,6 +52,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { error } = await requireAuth(request);
+    if (error) return error;
+
     const { id } = await params;
     await deleteNotification(id);
 

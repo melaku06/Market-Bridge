@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/auth/require-auth';
 import { getAddressById, updateAddress, deleteAddress } from '@/lib/db-service';
 import { addressUpdateSchema } from '@/lib/validations/common';
 
@@ -7,6 +8,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { error } = await requireAuth(request);
+    if (error) return error;
+
     const { id } = await params;
     const address = await getAddressById(id);
 
@@ -26,6 +30,9 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { error } = await requireAuth(request);
+    if (error) return error;
+
     const { id } = await params;
     const body = await request.json();
 
@@ -55,6 +62,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { error } = await requireAuth(request);
+    if (error) return error;
+
     const { id } = await params;
     await deleteAddress(id);
 

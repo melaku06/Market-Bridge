@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/auth/require-auth';
 import { getWarehouses, createWarehouse } from '@/lib/db-service';
 import { warehouseCreateSchema } from '@/lib/validations/warehouse';
 
@@ -29,6 +30,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const { error } = await requireAuth(request, ['warehouse', 'admin']);
+    if (error) return error;
+
     const body = await request.json();
 
     // Validate input

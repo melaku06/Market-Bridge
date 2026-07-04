@@ -6,6 +6,22 @@ import type { AuthUser, UserRole } from '@/lib/auth/types';
 import { getDashboardPath, hasRole } from '@/lib/auth/types';
 import { useAuthStore } from '@/stores/auth/auth-store';
 
+const PUBLIC_EXACT = new Set(['/', '/login', '/register', '/forgot-password', '/product-request']);
+const PUBLIC_PREFIXES = ['/products', '/search', '/categories'];
+
+function isPublicPath(pathname: string | null | undefined): boolean {
+  if (!pathname) return true;
+  if (PUBLIC_EXACT.has(pathname)) return true;
+  return PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/') || pathname.startsWith(p + '?'));
+}
+
+function getRoleForPath(pathname: string): UserRole | null {
+  if (pathname.startsWith('/admin')) return 'admin';
+  if (pathname.startsWith('/warehouse')) return 'warehouse';
+  if (pathname.startsWith('/dashboard')) return 'customer';
+  return null;
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -46,33 +62,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [refreshUser, isInitialized, setLoading, setInitialized]);
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || !isInitialized) return;
+    if (!pathname) return;
 
-    const publicPaths = ['/', '/login', '/register', '/forgot-password', '/products', '/search', '/categories'];
-    const isPublicPath = publicPaths.some(path => pathname?.startsWith(path)) || pathname === '/';
+    if (isPublicPath(pathname)) {
+      if (user && (pathname === '/login' || pathname === '/register')) {
+        router.push(getDashboardPath(user.role));
+      }
+      return;
+    }
 
-    if (isPublicPath) return;
-
-    if (pathname?.startsWith('/admin') && !hasRole(user, 'admin')) {
+    if (!user) {
       router.push('/login');
       return;
     }
 
-    if (pathname?.startsWith('/warehouse') && !hasRole(user, 'warehouse')) {
-      router.push('/login');
+    const requiredRole = getRoleForPath(pathname);
+    if (requiredRole && !hasRole(user, requiredRole)) {
+      router.push('/forbidden');
       return;
     }
-
-    if (pathname?.startsWith('/dashboard') && !hasRole(user, 'customer')) {
-      router.push('/login');
-      return;
-    }
-
-    if (user && (pathname === '/login' || pathname === '/register')) {
-      const dashboardPath = getDashboardPath(user.role);
-      router.push(dashboardPath);
-    }
-  }, [user, isLoading, pathname, router]);
+  }, [user, isLoading, isInitialized, pathname, router]);
 
   return <>{children}</>;
 }

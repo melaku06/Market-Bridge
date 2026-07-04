@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { updateProduct } from '@/lib/db-service';
 import { invalidateProducts, invalidateProduct } from '@/lib/cached-data';
+import { requireAuth } from '@/lib/auth/require-auth';
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { error } = await requireAuth(request, ['admin']);
+    if (error) return error;
+
     const { id } = await params;
 
     const product = await updateProduct(id, {
