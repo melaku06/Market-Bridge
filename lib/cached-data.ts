@@ -19,7 +19,7 @@ import {
 // CACHED READ OPERATIONS
 // ============================================================================
 // These wrappers use the cache-aside pattern with in-memory LRU caching.
-// The data adapter uses Supabase PostgreSQL (via Prisma) for all data.
+// The data adapter uses PostgreSQL via Prisma for all data.
 
 export async function getCachedProducts(params?: Parameters<typeof getProductsAdapter>[0]) {
   const key = cacheKeys.products.list(params || {});
@@ -127,10 +127,6 @@ export async function getCachedCategoryBySlug(slug: string) {
   const categories = await getCachedCategories({ is_active: true });
   return categories.find((c: any) => c.slug === slug) || null;
 }
-
-// ============================================================================
-// CACHE INVALIDATION
-// ============================================================================
 
 export function invalidateProducts() {
   memoryCache.deletePattern('mb:products:');

@@ -5,8 +5,8 @@ import { useLiveNotifications } from '@/hooks/use-live-notifications';
 import { useAuth } from '@/components/auth/auth-provider';
 
 /**
- * Wraps the app to activate Supabase Realtime notification
- * subscriptions for the authenticated user. Must be placed
+ * Wraps the app to activate notification polling
+ * for the authenticated user. Must be placed
  * inside AuthProvider but outside the main layout content.
  */
 export function NotificationsProvider({ children }: { children: ReactNode }) {

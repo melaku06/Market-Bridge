@@ -2,10 +2,10 @@ import 'server-only';
 
 /**
  * Data Adapter
- * Unified data access layer that uses Supabase PostgreSQL (via Prisma)
+ * Unified data access layer that uses PostgreSQL via Prisma
  * for all database operations.
  *
- * All data is persisted in Supabase. Pages use this adapter through
+ * All data is persisted in PostgreSQL. Pages use this adapter through
  * the cached-data layer for server-side rendering with ISR.
  */
 
