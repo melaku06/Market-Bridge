@@ -3,125 +3,100 @@
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState } from 'react';
-import { DollarSign, ShoppingCart, Users, TrendingUp, TrendingDown } from 'lucide-react';
-import { analyticsApi, inventoryApi, ordersApi, warehousesApi } from '@/lib/api';
+import Link from 'next/link';
+import { Package, ShoppingCart, DollarSign, TrendingUp, ArrowUp, ArrowDown, ChevronRight, BarChart2, Star, Download } from 'lucide-react';
+import { warehousesApi, inventoryApi, analyticsApi } from '@/lib/api';
 import { useAuth } from '@/components/auth/auth-provider';
+import type { Warehouse, Inventory } from '@/lib/types';
 
-const FALLBACK_BARS = [
-  { l: 'Jan', v: 42 }, { l: 'Feb', v: 63 }, { l: 'Mar', v: 55 }, { l: 'Apr', v: 78 },
-  { l: 'May', v: 68 }, { l: 'Jun', v: 91 }, { l: 'Jul', v: 72 }, { l: 'Aug', v: 88 },
-];
-const TOP_PRODUCTS_FALLBACK = [
-  { name: 'Wireless Earbuds Pro', units: 342, revenue: 85500 },
-  { name: 'Smart Watch Series X', units: 289, revenue: 72250 },
-  { name: 'Premium Backpack', units: 215, revenue: 32250 },
-  { name: 'Bluetooth Speaker', units: 198, revenue: 19800 },
-  { name: 'Portable Charger', units: 156, revenue: 10920 },
-];
-const CATEGORIES_FALLBACK = [
-  { name: 'Electronics', pct: 49, color: '#7c3aed' },
-  { name: 'Fashion', pct: 28, color: '#3b82f6' },
-  { name: 'Footwear', pct: 14, color: '#10b981' },
-  { name: 'Home & Kitchen', pct: 9, color: '#f59e0b' },
-];
-
-export default function AnalyticsPage() {
+export default function WarehouseAnalytics() {
   const { user } = useAuth();
+  const [warehouse, setWarehouse] = useState<Warehouse | null>(null);
+  const [inventory, setInventory] = useState<Inventory[]>([]);
   const [analytics, setAnalytics] = useState<any>(null);
-  const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState('This Month');
 
   useEffect(() => {
-    const wid = user?.warehouse_id;
-    if (!wid) return;
-    Promise.all([
-      analyticsApi.get({ warehouse_id: wid }),
-      ordersApi.list({ warehouse_id: wid }),
-    ]).then(([a, o]) => {
-      setAnalytics(a);
-      setOrders(Array.isArray(o) ? o : (o as any).data || []);
-    }).catch(console.error).finally(() => setLoading(false));
+    async function fetchData() {
+      const warehouseId = user?.warehouse_id;
+      if (!warehouseId) return;
+      try {
+        const [warehouseRes, inventoryRes, analyticsRes] = await Promise.all([
+          warehousesApi.get(warehouseId),
+          inventoryApi.list({ warehouse_id: warehouseId }),
+          analyticsApi.get({ warehouse_id: warehouseId }),
+        ]);
+        setWarehouse(warehouseRes);
+        setInventory(Array.isArray(inventoryRes) ? inventoryRes : (inventoryRes as any).data || []);
+        setAnalytics(analyticsRes);
+      } catch (error) {
+        console.error('Failed to fetch analytics:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    if (user?.warehouse_id) fetchData();
   }, [user?.warehouse_id]);
 
-  if (loading) return (
-    <div className="flex items-center justify-center py-32">
-      <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
-    </div>
-  );
-
-  const totalRevenue = analytics?.revenue?.total || 0;
-  const monthRevenue = analytics?.revenue?.month || 0;
-  const totalOrders = analytics?.orders?.total || orders.length;
-  const avgOrder = totalOrders > 0 ? totalRevenue / totalOrders : 0;
-  const totalCustomers = analytics?.orders?.active || Math.round(totalOrders * 0.7);
-
-  const stats = [
-    { label: 'Total Revenue', value: `${Number(totalRevenue).toLocaleString()} Br`, change: '+18.3%', up: true, icon: DollarSign, iconBg: 'bg-purple-100', iconColor: 'text-purple-600' },
-    { label: 'Total Orders', value: totalOrders, change: '+12.5%', up: true, icon: ShoppingCart, iconBg: 'bg-blue-100', iconColor: 'text-blue-600' },
-    { label: 'Avg. Order Value', value: `${avgOrder.toFixed(0)} Br`, change: '+4.2%', up: true, icon: TrendingUp, iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600' },
-    { label: 'Total Customers', value: totalCustomers, change: '-2.1%', up: false, icon: Users, iconBg: 'bg-amber-100', iconColor: 'text-amber-600' },
-  ];
+  if (loading || !warehouse) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
+      </div>
+    );
+  }
 
   const weeklyRevenue: Array<{ date: string; revenue: number }> = analytics?.weekly_revenue || [];
-  const maxRev = Math.max(...weeklyRevenue.map(r => r.revenue), 1);
-  const bars = weeklyRevenue.length > 0
-    ? weeklyRevenue.map((r, i) => ({ l: r.date?.split(' ')?.[1] || String(i + 1), v: Math.max(4, (r.revenue / maxRev) * 160), active: i === weeklyRevenue.length - 1 }))
-    : FALLBACK_BARS.map((b, i) => ({ l: b.l, v: b.v / 100 * 160, active: i === FALLBACK_BARS.length - 1 }));
+  const topProducts: Array<{ name: string; revenue: number; units: number }> = analytics?.top_products || [];
+  const maxRevenue = weeklyRevenue.length > 0 ? Math.max(...weeklyRevenue.map(r => r.revenue), 1) : 1;
 
-  const statusCounts = {
-    pending: orders.filter(o => o.status === 'pending' || o.status === 'confirmed').length,
-    processing: orders.filter(o => o.status === 'processing').length,
-    shipped: orders.filter(o => o.status === 'shipped').length,
-    delivered: orders.filter(o => o.status === 'delivered').length,
-    cancelled: orders.filter(o => o.status === 'cancelled').length,
-  };
-
-  const DONUT_SEGS = [
-    { label: 'Pending', count: statusCounts.pending, color: '#f59e0b' },
-    { label: 'Processing', count: statusCounts.processing, color: '#8b5cf6' },
-    { label: 'Shipped', count: statusCounts.shipped, color: '#3b82f6' },
-    { label: 'Delivered', count: statusCounts.delivered, color: '#10b981' },
-    { label: 'Cancelled', count: statusCounts.cancelled, color: '#ef4444' },
+  const stats = [
+    { name: 'Total Revenue', value: `${Number(warehouse.total_sales).toLocaleString()} Br`, change: '+12.5%', icon: DollarSign, iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600', borderColor: 'border-t-emerald-500', isUp: true },
+    { name: 'Total Orders', value: Number(warehouse.total_orders).toLocaleString(), change: '+8.2%', icon: ShoppingCart, iconBg: 'bg-blue-50', iconColor: 'text-blue-600', borderColor: 'border-t-blue-500', isUp: true },
+    { name: 'Total Products', value: Number(warehouse.total_products).toLocaleString(), change: '+3', icon: Package, iconBg: 'bg-violet-50', iconColor: 'text-violet-600', borderColor: 'border-t-violet-500', isUp: true },
+    { name: 'Rating', value: Number(warehouse.rating).toFixed(1), change: '+0.2', icon: Star, iconBg: 'bg-amber-50', iconColor: 'text-amber-600', borderColor: 'border-t-amber-500', isUp: true },
   ];
-  const totalDonut = Math.max(orders.length, 1);
-  const CIRC = 2 * Math.PI * 38;
-  let offset = 0;
 
-  const topProducts = analytics?.top_products || TOP_PRODUCTS_FALLBACK;
-  const maxUnits = Math.max(...topProducts.map((p: any) => p.units || p.total_orders || 1), 1);
+  const lowStockItems = inventory.filter(i => i.status === 'low_stock');
+  const outOfStockItems = inventory.filter(i => i.status === 'out_of_stock');
+  const inStockCount = inventory.filter(i => i.status === 'in_stock').length;
 
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Analytics</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Performance insights for your warehouse</p>
+          <div className="flex items-center gap-2 text-sm text-gray-400 mb-1">
+            <Link href="/warehouse" className="hover:text-blue-600 transition-colors">Dashboard</Link>
+            <ChevronRight className="w-3.5 h-3.5" />
+            <span className="text-gray-700 font-medium">Analytics</span>
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Analytics & Reports</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Track your warehouse performance and metrics.</p>
         </div>
-        <select value={period} onChange={e => setPeriod(e.target.value)}
-          className="text-sm border border-gray-200 rounded-xl px-3 py-2 text-gray-600 focus:outline-none focus:border-purple-400 bg-white cursor-pointer shadow-sm">
-          {['This Week', 'This Month', 'Last 3 Months', 'This Year'].map(p => <option key={p}>{p}</option>)}
-        </select>
+        <button className="flex items-center gap-1.5 px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50 text-gray-600 transition-colors bg-white">
+          <Download className="w-4 h-4" />
+          <span className="hidden sm:inline">Export Report</span>
+        </button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-        {stats.map(s => {
-          const Icon = s.icon;
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map((stat) => {
+          const Icon = stat.icon;
           return (
-            <div key={s.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-              <div className="flex items-center justify-between mb-4">
-                <div className={`w-10 h-10 ${s.iconBg} rounded-xl flex items-center justify-center`}>
-                  <Icon className={s.iconColor} style={{ width: 18, height: 18 }} />
+            <div key={stat.name} className={`bg-white rounded-2xl border border-gray-100 border-t-4 ${stat.borderColor} p-5 hover:shadow-md hover:-translate-y-0.5 transition-all`}>
+              <div className="flex items-center justify-between mb-3">
+                <div className={`w-10 h-10 ${stat.iconBg} rounded-xl flex items-center justify-center`}>
+                  <Icon className={`w-5 h-5 ${stat.iconColor}`} />
                 </div>
-                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 ${s.up ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
-                  {s.up ? <TrendingUp style={{ width: 10, height: 10 }} /> : <TrendingDown style={{ width: 10, height: 10 }} />}
-                  {s.change}
-                </span>
+                <div className={`flex items-center gap-1 text-xs font-semibold ${stat.isUp ? 'text-emerald-600' : 'text-red-600'}`}>
+                  {stat.isUp ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
+                  {stat.change}
+                </div>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{s.value}</p>
-              <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
+              <p className="text-2xl font-bold text-gray-900 mb-0.5">{stat.value}</p>
+              <p className="text-xs font-semibold text-gray-500">{stat.name}</p>
             </div>
           );
         })}
@@ -129,114 +104,141 @@ export default function AnalyticsPage() {
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Revenue Bar Chart */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+        {/* Revenue Chart */}
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h2 className="text-sm font-bold text-gray-900">Revenue Overview</h2>
-              <p className="text-xs text-gray-400 mt-0.5">Monthly revenue trend</p>
+              <h2 className="font-bold text-gray-900">Revenue Overview</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Weekly revenue performance</p>
             </div>
+            <BarChart2 className="w-5 h-5 text-gray-400" />
           </div>
-          <div className="flex items-end gap-2 h-48">
-            {bars.map((bar, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-1.5 group">
-                <div className="relative w-full rounded-xl transition-all group-hover:opacity-90 cursor-pointer"
-                  style={{
-                    height: `${bar.v}px`,
-                    background: bar.active
-                      ? 'linear-gradient(180deg,#a855f7,#7c3aed)'
-                      : 'linear-gradient(180deg,#ede9fe,#ddd6fe)',
-                  }} />
-                <span className="text-[10px] text-gray-400">{bar.l}</span>
+          <div className="h-56 flex items-end justify-between gap-2">
+            {weeklyRevenue.length > 0 ? weeklyRevenue.map((item, idx) => {
+              const height = (item.revenue / maxRevenue) * 100;
+              return (
+                <div key={idx} className="flex-1 flex flex-col items-center gap-2 group">
+                  <div className="w-full relative">
+                    <div
+                      className="w-full bg-gradient-to-t from-blue-600 to-blue-400 rounded-t-lg transition-all hover:from-blue-700 hover:to-blue-500"
+                      style={{ height: `${height * 1.8}px` }}
+                    />
+                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-900 text-white text-xs px-2 py-1 rounded-lg whitespace-nowrap pointer-events-none">
+                      {item.revenue.toLocaleString()} Br
+                    </div>
+                  </div>
+                  <span className="text-xs text-gray-500">{item.date?.split(' ')[1] || idx + 1}</span>
+                </div>
+              );
+            }) : Array.from({ length: 7 }).map((_, i) => (
+              <div key={i} className="flex-1 flex flex-col items-center gap-2">
+                <div className="w-full bg-gray-100 rounded-t-lg" style={{ height: `${20 + Math.random() * 140}px` }} />
+                <span className="text-xs text-gray-400">{['M', 'T', 'W', 'T', 'F', 'S', 'S'][i]}</span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Donut */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-          <h2 className="text-sm font-bold text-gray-900 mb-1">Order Status</h2>
-          <p className="text-xs text-gray-400 mb-4">Distribution breakdown</p>
-          <div className="flex justify-center mb-4">
-            <svg width="110" height="110" viewBox="0 0 110 110">
-              <circle cx="55" cy="55" r="38" fill="none" stroke="#f3f4f6" strokeWidth="14" />
-              {DONUT_SEGS.map((seg, idx) => {
-                const len = (seg.count / totalDonut) * CIRC;
-                const el = (
-                  <circle key={idx} cx="55" cy="55" r="38" fill="none"
-                    stroke={seg.color} strokeWidth="14"
-                    strokeDasharray={`${len} ${CIRC - len}`}
-                    strokeDashoffset={-offset}
-                    transform="rotate(-90 55 55)"
-                    strokeLinecap="round" />
-                );
-                offset += len;
-                return el;
-              })}
-              <text x="55" y="51" textAnchor="middle" fontSize="16" fontWeight="700" fill="#111827">{orders.length}</text>
-              <text x="55" y="63" textAnchor="middle" fontSize="9" fill="#9ca3af">orders</text>
-            </svg>
-          </div>
-          <div className="space-y-2">
-            {DONUT_SEGS.map(seg => (
-              <div key={seg.label} className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full" style={{ background: seg.color }} />
-                  <span className="text-xs text-gray-600">{seg.label}</span>
+        {/* Top Products */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h2 className="font-bold text-gray-900 mb-1">Top Products</h2>
+          <p className="text-xs text-gray-500 mb-4">By revenue this month</p>
+          <div className="space-y-3">
+            {topProducts.length > 0 ? topProducts.slice(0, 5).map((product, idx) => (
+              <div key={idx} className="flex items-center gap-3">
+                <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                  idx === 0 ? 'bg-amber-100 text-amber-700' :
+                  idx === 1 ? 'bg-gray-100 text-gray-700' :
+                  idx === 2 ? 'bg-orange-100 text-orange-700' :
+                  'bg-gray-50 text-gray-500'
+                }`}>
+                  {idx + 1}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">{product.name}</p>
+                  <p className="text-xs text-gray-500">{product.units} units</p>
                 </div>
-                <span className="text-xs font-semibold text-gray-700">{seg.count}</span>
+                <p className="text-sm font-bold text-gray-900 flex-shrink-0">{product.revenue.toLocaleString()} Br</p>
               </div>
-            ))}
+            )) : (
+              <p className="text-sm text-gray-400 text-center py-8">No data available</p>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Bottom Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Top Selling */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-          <h2 className="text-sm font-bold text-gray-900 mb-4">Top Selling Products</h2>
-          <div className="space-y-4">
-            {topProducts.slice(0, 5).map((p: any, i: number) => {
-              const units = p.units || p.total_orders || 0;
-              const rev = p.revenue || p.total_revenue || 0;
-              return (
-                <div key={i}>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <span className="w-5 h-5 rounded-lg bg-purple-50 text-purple-600 text-[10px] font-bold flex items-center justify-center flex-shrink-0">{i + 1}</span>
-                      <span className="text-sm text-gray-700 truncate">{p.name || p.product_name}</span>
-                    </div>
-                    <span className="text-xs font-bold text-gray-900 flex-shrink-0 ml-2">{Number(rev).toFixed(0)} Br</span>
-                  </div>
-                  <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                    <div className="h-full rounded-full transition-all" style={{ width: `${(units / maxUnits) * 100}%`, background: 'linear-gradient(90deg,#7c3aed,#a855f7)' }} />
-                  </div>
-                  <p className="text-[10px] text-gray-400 mt-0.5">{units} units sold</p>
-                </div>
-              );
-            })}
+      {/* Inventory Status + Performance */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* Inventory Status */}
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h2 className="font-bold text-gray-900 mb-4">Inventory Status</h2>
+          <div className="grid grid-cols-3 gap-4 mb-5">
+            <div className="bg-emerald-50 rounded-xl p-4 text-center">
+              <p className="text-3xl font-bold text-emerald-700">{inStockCount}</p>
+              <p className="text-xs text-emerald-600 font-medium mt-1">In Stock</p>
+            </div>
+            <div className="bg-amber-50 rounded-xl p-4 text-center">
+              <p className="text-3xl font-bold text-amber-700">{lowStockItems.length}</p>
+              <p className="text-xs text-amber-600 font-medium mt-1">Low Stock</p>
+            </div>
+            <div className="bg-red-50 rounded-xl p-4 text-center">
+              <p className="text-3xl font-bold text-red-700">{outOfStockItems.length}</p>
+              <p className="text-xs text-red-600 font-medium mt-1">Out of Stock</p>
+            </div>
           </div>
+          {(lowStockItems.length > 0 || outOfStockItems.length > 0) && (
+            <div className="border-t border-gray-100 pt-4">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">Products Needing Attention</h3>
+              <div className="space-y-2">
+                {outOfStockItems.map(item => (
+                  <div key={item.id} className="flex items-center justify-between p-3 bg-red-50 rounded-xl">
+                    <span className="text-sm font-medium text-red-700">{item.product_name}</span>
+                    <span className="text-xs text-red-600 font-semibold">Out of Stock</span>
+                  </div>
+                ))}
+                {lowStockItems.map(item => (
+                  <div key={item.id} className="flex items-center justify-between p-3 bg-amber-50 rounded-xl">
+                    <span className="text-sm font-medium text-amber-700">{item.product_name}</span>
+                    <span className="text-xs text-amber-600 font-semibold">{item.available_stock} left</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Sales by Category */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-          <h2 className="text-sm font-bold text-gray-900 mb-4">Sales by Category</h2>
-          <div className="space-y-4">
-            {CATEGORIES_FALLBACK.map(c => (
-              <div key={c.name}>
-                <div className="flex justify-between mb-1.5">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full" style={{ background: c.color }} />
-                    <span className="text-sm text-gray-700">{c.name}</span>
-                  </div>
-                  <span className="text-xs font-bold text-gray-800">{c.pct}%</span>
-                </div>
-                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-full rounded-full transition-all" style={{ width: `${c.pct}%`, background: c.color }} />
-                </div>
+        {/* Performance Score */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h2 className="font-bold text-gray-900 mb-4">Performance Score</h2>
+          <div className="flex flex-col items-center">
+            <div className="relative w-32 h-32 mb-4">
+              <svg className="w-full h-full transform -rotate-90">
+                <circle cx="64" cy="64" r="56" stroke="#f3f4f6" strokeWidth="12" fill="none" />
+                <circle cx="64" cy="64" r="56" stroke="#2563eb" strokeWidth="12" fill="none" strokeLinecap="round" strokeDasharray={`${Number(warehouse.performance_score) * 3.52} 350`} />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-3xl font-bold text-gray-900">{Number(warehouse.performance_score)}%</span>
               </div>
-            ))}
+            </div>
+            <p className="text-sm text-gray-500 text-center mb-4">
+              {Number(warehouse.performance_score) >= 90 ? 'Excellent performance!' : Number(warehouse.performance_score) >= 80 ? 'Good performance' : 'Needs improvement'}
+            </p>
+            <div className="w-full space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-500">Order Fulfillment</span>
+                <span className="font-semibold text-gray-900">98%</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-500">Customer Rating</span>
+                <span className="font-semibold text-gray-900 flex items-center gap-1">
+                  {Number(warehouse.rating).toFixed(1)} <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-500">On-time Delivery</span>
+                <span className="font-semibold text-gray-900">95%</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -3,319 +3,398 @@
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ArrowRight, Save, Upload, X, Info, Plus } from 'lucide-react';
-import { categoriesApi, productsApi, inventoryApi } from '@/lib/api';
+import { ArrowLeft, Upload, X, Save, Tag, Package, DollarSign, Info, Image as ImageIcon, CheckCircle } from 'lucide-react';
+import Link from 'next/link';
+import { productsApi, categoriesApi, inventoryApi } from '@/lib/api';
 import { useAuth } from '@/components/auth/auth-provider';
 import type { Category } from '@/lib/types';
 
-const STEPS = ['Product Info', 'Pricing', 'Images', 'Inventory', 'SEO Info'] as const;
-type Step = typeof STEPS[number];
-
-export default function AddProductPage() {
-  const { user } = useAuth();
+export default function AddProduct() {
   const router = useRouter();
-  const [step, setStep] = useState(0);
+  const { user } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
-  const [submitting, setSubmitting] = useState(false);
-  const [tags, setTags] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState('');
-  const [imageUrl] = useState('https://images.pexels.com/photos/1152077/pexels-photo-1152077.jpeg?w=400');
-  const [form, setForm] = useState({
-    name: '', sku: '', barcode: '', category_id: '', brand: '',
-    short_description: '', description: '',
-    base_price: '', margin_percent: '18', discount_percent: '0',
-    weight: '', colors: '',
-    meta_title: '', meta_description: '',
+  const [loading, setLoading] = useState(true);
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    short_description: '',
+    category: '',
+    base_price: '',
+    margin_percent: '18',
+    discount_percent: '0',
+    sku: '',
+    brand: '',
+    weight: '',
+    tags: '',
+    colors: '',
   });
+  const [images, setImages] = useState<string[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    categoriesApi.list().then((res: any) => setCategories(Array.isArray(res) ? res : res.data || [])).catch(() => {});
+    async function fetchCategories() {
+      try {
+        const res = await categoriesApi.list();
+        setCategories(res);
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchCategories();
   }, []);
 
-  const set = (k: keyof typeof form, v: string) => setForm(f => ({ ...f, [k]: v }));
-
-  const basePrice = parseFloat(form.base_price) || 0;
-  const margin = parseFloat(form.margin_percent) || 0;
-  const discount = parseFloat(form.discount_percent) || 0;
+  const basePrice = parseFloat(formData.base_price) || 0;
+  const margin = parseFloat(formData.margin_percent) || 18;
   const finalPrice = basePrice * (1 + margin / 100);
-  const originalPrice = discount > 0 ? finalPrice / (1 - discount / 100) : finalPrice;
+  const discountPct = parseInt(formData.discount_percent) || 0;
+  const originalPrice = discountPct > 0 ? finalPrice / (1 - discountPct / 100) : finalPrice;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const wid = user?.warehouse_id;
-    if (!wid) return;
+    if (!user?.warehouse_id) return;
     setSubmitting(true);
+
+    const category = categories.find(c => c.id === formData.category);
+    const newProduct = {
+      name: formData.name,
+      slug: formData.name.toLowerCase().replace(/\s+/g, '-'),
+      description: formData.description,
+      short_description: formData.short_description,
+      warehouse_id: user.warehouse_id,
+      category_id: formData.category,
+      category_name: category?.name || '',
+      base_price: basePrice,
+      margin_percent: margin,
+      final_price: finalPrice,
+      discount_percent: discountPct,
+      original_price: originalPrice,
+      images: images.length > 0 ? images : ['https://images.pexels.com/photos/356056/pexels-photo-356056.jpeg?auto=compress&cs=tinysrgb&w=600'],
+      rating: 0,
+      review_count: 0,
+      sold_count: 0,
+      status: 'pending' as const,
+      tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
+      brand: formData.brand,
+      sku: formData.sku,
+      weight: formData.weight,
+      colors: formData.colors.split(',').map(c => c.trim()).filter(Boolean),
+    };
+
     try {
-      const product = await productsApi.create({
-        name: form.name, sku: form.sku, barcode: form.barcode,
-        category_id: form.category_id, brand: form.brand,
-        short_description: form.short_description, description: form.description,
-        base_price: parseFloat(form.base_price),
-        margin_percent: parseFloat(form.margin_percent),
-        discount_percent: parseFloat(form.discount_percent),
-        final_price: finalPrice, original_price: originalPrice,
-        weight: form.weight ? parseFloat(form.weight) : undefined,
-        tags, colors: form.colors ? form.colors.split(',').map(s => s.trim()) : [],
-        images: [imageUrl],
-        warehouse_id: wid,
-        status: 'pending',
-      });
+      const created = await productsApi.create(newProduct);
       await inventoryApi.create({
-        product_id: (product as any).id,
-        warehouse_id: wid,
-        sku: form.sku,
-        product_name: form.name,
-        total_stock: 0, reserved_stock: 0, available_stock: 0,
-        low_stock_threshold: 10, status: 'out_of_stock',
+        product_id: created.id,
+        product_name: created.name,
+        warehouse_id: user.warehouse_id,
+        sku: created.sku || '',
+        total_stock: 0,
+        reserved_stock: 0,
+        available_stock: 0,
+        low_stock_threshold: 10,
+        status: 'out_of_stock' as const,
       });
-      router.push('/warehouse/products');
-    } catch (err) {
-      console.error(err);
+      setSubmitted(true);
+      setTimeout(() => router.push('/warehouse/products'), 1200);
+    } catch (error) {
+      console.error('Failed to create product:', error);
     } finally {
       setSubmitting(false);
     }
   };
 
-  const addTag = () => {
-    const t = tagInput.trim();
-    if (t && !tags.includes(t)) setTags([...tags, t]);
-    setTagInput('');
-  };
-
-  const StepLabel = ({ index }: { index: number }) => {
-    const label = STEPS[index];
-    const done = index < step;
-    const active = index === step;
+  if (loading) {
     return (
-      <button onClick={() => setStep(index)}
-        className={`flex items-center gap-3 px-4 py-3 rounded-xl w-full text-left transition-all ${active ? 'bg-purple-600 text-white shadow-md shadow-purple-200' : done ? 'text-emerald-600 bg-emerald-50' : 'text-gray-500 hover:bg-gray-50'}`}>
-        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 border-2 ${active ? 'border-white bg-white/20 text-white' : done ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-gray-300 text-gray-400'}`}>
-          {done ? '✓' : index + 1}
-        </div>
-        <span className="text-sm font-medium">{label}</span>
-      </button>
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
+      </div>
     );
-  };
+  }
+
+  const field = (label: string, required = false) => (
+    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+  );
 
   return (
     <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link href="/warehouse/products">
-          <button className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors">
-            <ArrowLeft style={{ width: 15, height: 15 }} />
-            Back
+          <button className="p-2 rounded-xl hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors border border-gray-200">
+            <ArrowLeft className="w-5 h-5" />
           </button>
         </Link>
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Add New Product</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Fill in the details to list your product</p>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Add New Product</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Fill in the details below to list your product.</p>
         </div>
       </div>
 
-      {/* Pending Notice */}
-      <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 flex items-start gap-3">
-        <Info className="text-amber-500 flex-shrink-0 mt-0.5" style={{ width: 16, height: 16 }} />
-        <p className="text-xs text-amber-700">New products require admin approval before going live. Your product will be reviewed within 24 hours.</p>
-      </div>
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          {/* Left Main */}
+          <div className="lg:col-span-2 space-y-5">
+            {/* Basic Info */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              <div className="flex items-center gap-2 mb-5">
+                <div className="w-7 h-7 bg-blue-50 rounded-lg flex items-center justify-center">
+                  <Package className="w-3.5 h-3.5 text-blue-600" />
+                </div>
+                <h2 className="font-bold text-gray-900">Basic Information</h2>
+              </div>
 
-      <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-5 items-start">
-          {/* Steps Sidebar */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 space-y-1">
-            {STEPS.map((_, i) => <StepLabel key={i} index={i} />)}
+              <div className="space-y-4">
+                <div>
+                  {field('Product Name', true)}
+                  <input
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-gray-50 focus:bg-white transition-all"
+                    placeholder="Enter product name"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    {field('Category', true)}
+                    <select
+                      required
+                      value={formData.category}
+                      onChange={e => setFormData({ ...formData, category: e.target.value })}
+                      className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white"
+                    >
+                      <option value="">Select category</option>
+                      {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    {field('SKU')}
+                    <input
+                      type="text"
+                      value={formData.sku}
+                      onChange={e => setFormData({ ...formData, sku: e.target.value })}
+                      className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-gray-50 focus:bg-white transition-all"
+                      placeholder="Product SKU"
+                    />
+                  </div>
+                </div>
+                <div>
+                  {field('Short Description')}
+                  <input
+                    type="text"
+                    value={formData.short_description}
+                    onChange={e => setFormData({ ...formData, short_description: e.target.value })}
+                    className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-gray-50 focus:bg-white transition-all"
+                    placeholder="Brief product summary"
+                  />
+                </div>
+                <div>
+                  {field('Full Description')}
+                  <textarea
+                    rows={4}
+                    value={formData.description}
+                    onChange={e => setFormData({ ...formData, description: e.target.value })}
+                    className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-gray-50 focus:bg-white transition-all resize-none"
+                    placeholder="Detailed product description..."
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Pricing */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              <div className="flex items-center gap-2 mb-5">
+                <div className="w-7 h-7 bg-emerald-50 rounded-lg flex items-center justify-center">
+                  <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
+                </div>
+                <h2 className="font-bold text-gray-900">Pricing</h2>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  {field('Base Price', true)}
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">Br</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      required
+                      value={formData.base_price}
+                      onChange={e => setFormData({ ...formData, base_price: e.target.value })}
+                      className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-gray-50 focus:bg-white transition-all"
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+                <div>
+                  {field('Margin %')}
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={formData.margin_percent}
+                      onChange={e => setFormData({ ...formData, margin_percent: e.target.value })}
+                      className="w-full px-3.5 pr-8 py-2.5 border border-gray-200 rounded-xl text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-gray-50 focus:bg-white transition-all"
+                      placeholder="18"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
+                  </div>
+                </div>
+                <div>
+                  {field('Discount %')}
+                  <div className="relative">
+                    <input
+                      type="number"
+                      value={formData.discount_percent}
+                      onChange={e => setFormData({ ...formData, discount_percent: e.target.value })}
+                      className="w-full px-3.5 pr-8 py-2.5 border border-gray-200 rounded-xl text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-gray-50 focus:bg-white transition-all"
+                      placeholder="0"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
+                  </div>
+                </div>
+              </div>
+              {basePrice > 0 && (
+                <div className="mt-4 p-3.5 bg-blue-50 rounded-xl border border-blue-100">
+                  <p className="text-xs font-medium text-blue-700">
+                    Final Price: <span className="font-bold text-base">{finalPrice.toLocaleString()} Br</span>
+                    {discountPct > 0 && <span className="ml-2 line-through text-blue-400">{originalPrice.toLocaleString()} Br</span>}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Additional Details */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              <div className="flex items-center gap-2 mb-5">
+                <div className="w-7 h-7 bg-amber-50 rounded-lg flex items-center justify-center">
+                  <Tag className="w-3.5 h-3.5 text-amber-600" />
+                </div>
+                <h2 className="font-bold text-gray-900">Additional Details</h2>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  {field('Brand')}
+                  <input
+                    type="text"
+                    value={formData.brand}
+                    onChange={e => setFormData({ ...formData, brand: e.target.value })}
+                    className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-gray-50 focus:bg-white transition-all"
+                    placeholder="Brand name"
+                  />
+                </div>
+                <div>
+                  {field('Weight')}
+                  <input
+                    type="text"
+                    value={formData.weight}
+                    onChange={e => setFormData({ ...formData, weight: e.target.value })}
+                    className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-gray-50 focus:bg-white transition-all"
+                    placeholder="e.g., 500g"
+                  />
+                </div>
+                <div>
+                  {field('Tags')}
+                  <input
+                    type="text"
+                    value={formData.tags}
+                    onChange={e => setFormData({ ...formData, tags: e.target.value })}
+                    className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-gray-50 focus:bg-white transition-all"
+                    placeholder="wireless, bluetooth (comma separated)"
+                  />
+                </div>
+                <div>
+                  {field('Colors')}
+                  <input
+                    type="text"
+                    value={formData.colors}
+                    onChange={e => setFormData({ ...formData, colors: e.target.value })}
+                    className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-gray-50 focus:bg-white transition-all"
+                    placeholder="Black, White, Blue (comma separated)"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Main Form */}
-          <div className="lg:col-span-3 bg-white rounded-2xl border border-gray-100 shadow-sm">
-            <div className="px-6 py-5 border-b border-gray-50">
-              <h2 className="text-base font-bold text-gray-900">{STEPS[step]}</h2>
-            </div>
-            <div className="p-6 space-y-5">
-              {step === 0 && (
-                <>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    <Field label="Product Name *" required>
-                      <Input value={form.name} onChange={e => set('name', e.target.value)} placeholder="e.g. Wireless Earbuds" required />
-                    </Field>
-                    <Field label="SKU">
-                      <Input value={form.sku} onChange={e => set('sku', e.target.value)} placeholder="Auto-generated if empty" />
-                    </Field>
-                    <Field label="Barcode">
-                      <Input value={form.barcode} onChange={e => set('barcode', e.target.value)} placeholder="e.g. 1234567890123" />
-                    </Field>
-                    <Field label="Category">
-                      <select value={form.category_id} onChange={e => set('category_id', e.target.value)}
-                        className="w-full px-3 h-10 border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 bg-white transition-all cursor-pointer">
-                        <option value="">Select category</option>
-                        {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                      </select>
-                    </Field>
-                    <Field label="Brand">
-                      <Input value={form.brand} onChange={e => set('brand', e.target.value)} placeholder="e.g. Samsung" />
-                    </Field>
-                    <Field label="Weight (kg)">
-                      <Input value={form.weight} onChange={e => set('weight', e.target.value)} type="number" step="0.01" placeholder="0.00" />
-                    </Field>
-                  </div>
-                  <Field label="Short Description">
-                    <Input value={form.short_description} onChange={e => set('short_description', e.target.value)} placeholder="One-line summary" />
-                  </Field>
-                  <Field label="Full Description">
-                    <textarea value={form.description} onChange={e => set('description', e.target.value)}
-                      rows={5} placeholder="Detailed product description…"
-                      className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 resize-none transition-all" />
-                  </Field>
-                  <Field label="Tags">
-                    <div className="flex flex-wrap gap-2 mb-2">
-                      {tags.map(t => (
-                        <span key={t} className="flex items-center gap-1 px-2.5 py-1 bg-purple-50 text-purple-600 text-xs rounded-full font-medium">
-                          {t}
-                          <button type="button" onClick={() => setTags(tags.filter(x => x !== t))} className="hover:text-purple-800">
-                            <X style={{ width: 10, height: 10 }} />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                    <div className="flex gap-2">
-                      <Input value={tagInput} onChange={e => setTagInput(e.target.value)} placeholder="Add a tag" onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } }} />
-                      <button type="button" onClick={addTag} className="px-3 h-10 rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors">
-                        <Plus style={{ width: 15, height: 15 }} />
-                      </button>
-                    </div>
-                  </Field>
-                </>
-              )}
-
-              {step === 1 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <Field label="Base Price (Br) *" required>
-                    <Input value={form.base_price} onChange={e => set('base_price', e.target.value)} type="number" step="0.01" placeholder="0.00" required />
-                  </Field>
-                  <Field label="Margin (%)">
-                    <Input value={form.margin_percent} onChange={e => set('margin_percent', e.target.value)} type="number" step="0.1" placeholder="18" />
-                  </Field>
-                  <Field label="Discount (%)">
-                    <Input value={form.discount_percent} onChange={e => set('discount_percent', e.target.value)} type="number" step="0.1" placeholder="0" />
-                  </Field>
-                  <Field label="Colors (comma-separated)">
-                    <Input value={form.colors} onChange={e => set('colors', e.target.value)} placeholder="Red, Blue, Green" />
-                  </Field>
-                  <div className="sm:col-span-2">
-                    <div className="bg-purple-50 border border-purple-100 rounded-2xl p-4 grid grid-cols-3 gap-4">
-                      <div className="text-center">
-                        <p className="text-[11px] text-gray-500 mb-1">Base Price</p>
-                        <p className="text-lg font-bold text-gray-900">{basePrice.toFixed(2)} Br</p>
-                      </div>
-                      <div className="text-center border-x border-purple-100">
-                        <p className="text-[11px] text-gray-500 mb-1">Final Price</p>
-                        <p className="text-lg font-bold text-purple-600">{finalPrice.toFixed(2)} Br</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-[11px] text-gray-500 mb-1">Original Price</p>
-                        <p className="text-lg font-bold text-gray-900">{originalPrice.toFixed(2)} Br</p>
-                      </div>
-                    </div>
-                  </div>
+          {/* Right Sidebar */}
+          <div className="space-y-5">
+            {/* Images */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              <div className="flex items-center gap-2 mb-5">
+                <div className="w-7 h-7 bg-violet-50 rounded-lg flex items-center justify-center">
+                  <ImageIcon className="w-3.5 h-3.5 text-violet-600" />
                 </div>
-              )}
-
-              {step === 2 && (
-                <div className="space-y-4">
-                  <div className="border-2 border-dashed border-gray-200 rounded-2xl p-8 text-center hover:border-purple-300 transition-colors cursor-pointer">
-                    <div className="w-12 h-12 bg-purple-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                      <Upload className="text-purple-500" style={{ width: 20, height: 20 }} />
-                    </div>
-                    <p className="text-sm font-semibold text-gray-700">Drag & drop images here</p>
-                    <p className="text-xs text-gray-400 mt-1">PNG, JPG, WEBP up to 5MB each</p>
-                    <button type="button" className="mt-3 px-4 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors">
-                      Browse Files
+                <h2 className="font-bold text-gray-900">Product Images</h2>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {images.map((img, idx) => (
+                  <div key={idx} className="relative aspect-square rounded-xl overflow-hidden bg-gray-50 border border-gray-100">
+                    <img src={img} alt="" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setImages(images.filter((_, i) => i !== idx))}
+                      className="absolute top-1.5 right-1.5 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow-sm hover:bg-red-600 transition-colors"
+                    >
+                      <X className="w-3 h-3" />
                     </button>
                   </div>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="aspect-square rounded-2xl overflow-hidden border border-gray-100 bg-gray-50">
-                      <img src={imageUrl} alt="preview" className="w-full h-full object-cover" />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {step === 3 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div className="sm:col-span-2 bg-amber-50 border border-amber-100 rounded-2xl p-4">
-                    <p className="text-xs text-amber-700">Initial stock will be set to 0. You can update inventory after product approval from the Inventory Management page.</p>
-                  </div>
-                  <Field label="Low Stock Alert Threshold">
-                    <Input type="number" placeholder="10" defaultValue="10" />
-                  </Field>
-                  <Field label="Warehouse Location">
-                    <Input placeholder="e.g. Shelf A-12" />
-                  </Field>
-                </div>
-              )}
-
-              {step === 4 && (
-                <div className="space-y-5">
-                  <Field label="Meta Title">
-                    <Input value={form.meta_title} onChange={e => set('meta_title', e.target.value)} placeholder="SEO page title" />
-                  </Field>
-                  <Field label="Meta Description">
-                    <textarea value={form.meta_description} onChange={e => set('meta_description', e.target.value)}
-                      rows={3} placeholder="Brief SEO description…"
-                      className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 resize-none transition-all" />
-                  </Field>
-                </div>
-              )}
+                ))}
+                <label className="aspect-square rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 hover:border-blue-300 transition-all">
+                  <Upload className="w-6 h-6 text-gray-300" />
+                  <span className="text-xs text-gray-400 mt-1.5">Upload</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={e => {
+                      if (e.target.files?.[0]) {
+                        setImages([...images, 'https://images.pexels.com/photos/356056/pexels-photo-356056.jpeg?auto=compress&cs=tinysrgb&w=600']);
+                      }
+                    }}
+                  />
+                </label>
+              </div>
+              <p className="text-xs text-gray-400 mt-3">JPG or PNG. First image will be the cover.</p>
             </div>
 
-            {/* Footer Actions */}
-            <div className="px-6 py-4 border-t border-gray-50 flex items-center justify-between">
-              <button type="button" onClick={() => step > 0 && setStep(s => s - 1)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors ${step === 0 ? 'opacity-40 pointer-events-none' : ''}`}>
-                <ArrowLeft style={{ width: 14, height: 14 }} /> Previous
-              </button>
-              <div className="flex items-center gap-3">
-                <button type="button" className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
-                  <Save style={{ width: 14, height: 14 }} /> Save Draft
-                </button>
-                {step < STEPS.length - 1 ? (
-                  <button type="button" onClick={() => setStep(s => s + 1)}
-                    className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90 shadow-sm"
-                    style={{ background: 'linear-gradient(135deg,#7c3aed,#a855f7)' }}>
-                    Next <ArrowRight style={{ width: 14, height: 14 }} />
-                  </button>
-                ) : (
-                  <button type="submit" disabled={submitting}
-                    className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90 shadow-sm disabled:opacity-60"
-                    style={{ background: 'linear-gradient(135deg,#7c3aed,#a855f7)' }}>
-                    {submitting ? 'Submitting…' : 'Submit for Review'}
-                  </button>
-                )}
+            {/* Review Info */}
+            <div className="bg-amber-50 rounded-2xl border border-amber-200 p-5">
+              <div className="flex items-start gap-2">
+                <Info className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-amber-900 mb-1">Pending Review</p>
+                  <p className="text-xs text-amber-700 leading-relaxed">Your product will be reviewed by the admin team before being published. This usually takes 1-2 business days.</p>
+                </div>
               </div>
+            </div>
+
+            {/* Submit */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3">
+              <button
+                type="submit"
+                disabled={submitting || submitted}
+                className="w-full flex items-center justify-center gap-2 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-xl font-semibold text-sm transition-colors shadow-sm shadow-blue-600/20"
+              >
+                {submitting && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                {submitted && <CheckCircle className="w-4 h-4" />}
+                {!submitting && !submitted && <Save className="w-4 h-4" />}
+                {submitted ? 'Submitted!' : submitting ? 'Submitting...' : 'Submit for Review'}
+              </button>
+              <Link href="/warehouse/products">
+                <button type="button" className="w-full py-2.5 border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors text-gray-700">
+                  Cancel
+                </button>
+              </Link>
             </div>
           </div>
         </div>
       </form>
     </div>
-  );
-}
-
-function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
-  return (
-    <div className="space-y-1.5">
-      <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
-        {label} {required && <span className="text-red-400">*</span>}
-      </label>
-      {children}
-    </div>
-  );
-}
-
-function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <input {...props}
-      className={`w-full px-3 h-10 border border-gray-200 rounded-xl text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition-all ${props.className || ''}`} />
   );
 }
