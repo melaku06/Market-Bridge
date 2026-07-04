@@ -6,7 +6,15 @@ export async function GET() {
   try {
     const margins = await getMarginRules();
 
-    return NextResponse.json({ data: margins });
+    const serialized = margins.map(m => ({
+      ...m,
+      warehouse_margin: Number(m.warehouse_margin),
+      platform_margin: Number(m.platform_margin),
+      total_margin: Number(m.total_margin),
+      status: m.is_active ? 'active' : 'inactive' as const,
+    }));
+
+    return NextResponse.json({ data: serialized });
   } catch (error) {
     console.error('Error fetching margin rules:', error);
     return NextResponse.json({ error: 'Failed to fetch margin rules' }, { status: 500 });

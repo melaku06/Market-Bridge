@@ -64,15 +64,15 @@ export async function POST(request: NextRequest) {
     // Generate slug if not provided
     const slug = generateSlug(data.name);
 
-    // Create product
-    const product = await createProduct({
+    // Prepare product data with proper Decimal conversion
+    const productData: any = {
       name: data.name,
       slug,
       description: data.description,
       short_description: data.short_description,
       base_price: data.base_price,
       margin_percent: data.margin_percent,
-      discount_percent: data.discount_percent,
+      discount_percent: data.discount_percent ?? 0,
       images: data.images,
       tags: data.tags,
       brand: data.brand,
@@ -81,8 +81,15 @@ export async function POST(request: NextRequest) {
       colors: data.colors,
       status: 'pending',
       warehouse: { connect: { id: body.warehouse_id || 'ccccccea-cccc-cccc-cccc-cccccccccccc' } },
-      category: data.category_id ? { connect: { id: data.category_id } } : undefined,
-    });
+    };
+
+    // Only add category if provided
+    if (data.category_id) {
+      productData.category = { connect: { id: data.category_id } };
+    }
+
+    // Create product
+    const product = await createProduct(productData);
 
     // Create initial inventory if quantity provided
     if (data.quantity && data.quantity > 0) {

@@ -1,9 +1,12 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useEffect, useState } from 'react';
 import { Search, Eye, Truck, XCircle, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { ordersApi } from '@/lib/api';
+import { useAuth } from '@/components/auth/auth-provider';
 import type { Order, OrderStatus } from '@/lib/types';
 
 const statusLabels: Record<string, string> = {
@@ -26,6 +29,7 @@ const statusColors: Record<string, string> = {
 };
 
 export default function WarehouseOrders() {
+  const { user } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -33,8 +37,10 @@ export default function WarehouseOrders() {
 
   useEffect(() => {
     async function fetchOrders() {
+      const warehouseId = user?.warehouse_id;
+      if (!warehouseId) return;
       try {
-        const res = await ordersApi.list({ warehouse_id: 'wh-001' });
+        const res = await ordersApi.list({ warehouse_id: warehouseId });
         const ordersData = Array.isArray(res) ? res : (res as { data?: Order[] }).data || [];
         setOrders(ordersData);
       } catch (error) {
@@ -43,8 +49,8 @@ export default function WarehouseOrders() {
         setLoading(false);
       }
     }
-    fetchOrders();
-  }, []);
+    if (user?.warehouse_id) fetchOrders();
+  }, [user?.warehouse_id]);
 
   let filteredOrders = orders;
   if (statusFilter !== 'all') {

@@ -1,14 +1,18 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Upload, X, Save } from 'lucide-react';
 import Link from 'next/link';
 import { productsApi, categoriesApi, inventoryApi } from '@/lib/api';
+import { useAuth } from '@/components/auth/auth-provider';
 import type { Category } from '@/lib/types';
 
 export default function AddProduct() {
   const router = useRouter();
+  const { user } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
@@ -45,6 +49,7 @@ export default function AddProduct() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user?.warehouse_id) return;
     setSubmitting(true);
 
     const category = categories.find(c => c.id === formData.category);
@@ -59,7 +64,7 @@ export default function AddProduct() {
       slug: formData.name.toLowerCase().replace(/\s+/g, '-'),
       description: formData.description,
       short_description: formData.short_description,
-      warehouse_id: 'wh-001',
+      warehouse_id: user.warehouse_id,
       category_id: formData.category,
       category_name: category?.name || '',
       base_price: basePrice,
@@ -86,7 +91,7 @@ export default function AddProduct() {
       await inventoryApi.create({
         product_id: created.id,
         product_name: created.name,
-        warehouse_id: 'wh-001',
+        warehouse_id: user.warehouse_id,
         sku: created.sku || '',
         total_stock: 0,
         reserved_stock: 0,

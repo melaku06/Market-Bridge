@@ -5,7 +5,16 @@ export async function GET() {
   try {
     const settings = await getSystemSettings();
 
-    return NextResponse.json({ data: settings });
+    if (!settings) {
+      return NextResponse.json({ data: null });
+    }
+
+    const serialized = {
+      ...settings,
+      site_phone: settings.site_phone ?? '',
+    };
+
+    return NextResponse.json({ data: serialized });
   } catch (error) {
     console.error('Error fetching system settings:', error);
     return NextResponse.json({ error: 'Failed to fetch system settings' }, { status: 500 });

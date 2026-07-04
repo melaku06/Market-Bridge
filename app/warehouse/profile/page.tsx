@@ -1,11 +1,15 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useEffect, useState } from 'react';
 import { Save, Camera } from 'lucide-react';
 import { warehousesApi } from '@/lib/api';
+import { useAuth } from '@/components/auth/auth-provider';
 import type { Warehouse } from '@/lib/types';
 
 export default function WarehouseProfile() {
+  const { user } = useAuth();
   const [warehouse, setWarehouse] = useState<Warehouse | null>(null);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
@@ -27,8 +31,10 @@ export default function WarehouseProfile() {
 
   useEffect(() => {
     async function fetchWarehouse() {
+      const warehouseId = user?.warehouse_id;
+      if (!warehouseId) return;
       try {
-        const warehouseRes = await warehousesApi.get('wh-001');
+        const warehouseRes = await warehousesApi.get(warehouseId);
         setWarehouse(warehouseRes);
         setFormData({
           name: warehouseRes.name,
@@ -49,8 +55,8 @@ export default function WarehouseProfile() {
         setLoading(false);
       }
     }
-    fetchWarehouse();
-  }, []);
+    if (user?.warehouse_id) fetchWarehouse();
+  }, [user?.warehouse_id]);
 
   if (loading || !warehouse) {
     return (

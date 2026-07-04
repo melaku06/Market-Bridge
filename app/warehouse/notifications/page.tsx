@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useEffect, useState } from 'react';
 import { Bell, Truck, Tag, CheckCircle, Package, AlertCircle, User, Trash2, Loader2, ChevronRight } from 'lucide-react';
 import Link from 'next/link';

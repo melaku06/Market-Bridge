@@ -1,11 +1,15 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useEffect, useState } from 'react';
 import { Search, AlertTriangle, Package, Plus, Minus } from 'lucide-react';
 import { inventoryApi, productsApi } from '@/lib/api';
+import { useAuth } from '@/components/auth/auth-provider';
 import type { Inventory, Product } from '@/lib/types';
 
 export default function WarehouseInventory() {
+  const { user } = useAuth();
   const [inventory, setInventory] = useState<Inventory[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -14,8 +18,9 @@ export default function WarehouseInventory() {
 
   useEffect(() => {
     async function fetchData() {
+      const warehouseId = user?.warehouse_id;
+      if (!warehouseId) return;
       try {
-        const warehouseId = 'wh-001';
         const [inventoryRes, productsRes] = await Promise.all([
           inventoryApi.list({ warehouse_id: warehouseId }),
           productsApi.list({ warehouse_id: warehouseId }),
@@ -30,8 +35,8 @@ export default function WarehouseInventory() {
         setLoading(false);
       }
     }
-    fetchData();
-  }, []);
+    if (user?.warehouse_id) fetchData();
+  }, [user?.warehouse_id]);
 
   const getProduct = (productId: string) => products.find(p => p.id === productId);
 

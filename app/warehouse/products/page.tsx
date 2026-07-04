@@ -1,12 +1,16 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Plus, Search, Eye, Edit, Trash2, Package } from 'lucide-react';
 import { productsApi, inventoryApi } from '@/lib/api';
+import { useAuth } from '@/components/auth/auth-provider';
 import type { Product, ProductStatus, Inventory } from '@/lib/types';
 
 export default function WarehouseProducts() {
+  const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [inventory, setInventory] = useState<Inventory[]>([]);
   const [loading, setLoading] = useState(true);
@@ -15,8 +19,9 @@ export default function WarehouseProducts() {
 
   useEffect(() => {
     async function fetchData() {
+      const warehouseId = user?.warehouse_id;
+      if (!warehouseId) return;
       try {
-        const warehouseId = 'wh-001';
         const [productsRes, inventoryRes] = await Promise.all([
           productsApi.list({ warehouse_id: warehouseId }),
           inventoryApi.list({ warehouse_id: warehouseId }),
@@ -31,8 +36,8 @@ export default function WarehouseProducts() {
         setLoading(false);
       }
     }
-    fetchData();
-  }, []);
+    if (user?.warehouse_id) fetchData();
+  }, [user?.warehouse_id]);
 
   let filteredProducts = products;
   if (statusFilter !== 'all') {

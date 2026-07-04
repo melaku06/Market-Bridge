@@ -1,11 +1,15 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useEffect, useState } from 'react';
 import { Package, ShoppingCart, DollarSign, TrendingUp, ArrowUp, ArrowDown } from 'lucide-react';
 import { warehousesApi, inventoryApi, analyticsApi } from '@/lib/api';
+import { useAuth } from '@/components/auth/auth-provider';
 import type { Warehouse, Inventory } from '@/lib/types';
 
 export default function WarehouseAnalytics() {
+  const { user } = useAuth();
   const [warehouse, setWarehouse] = useState<Warehouse | null>(null);
   const [inventory, setInventory] = useState<Inventory[]>([]);
   const [analytics, setAnalytics] = useState<{
@@ -16,8 +20,9 @@ export default function WarehouseAnalytics() {
 
   useEffect(() => {
     async function fetchData() {
+      const warehouseId = user?.warehouse_id;
+      if (!warehouseId) return;
       try {
-        const warehouseId = 'wh-001';
         const [warehouseRes, inventoryRes, analyticsRes] = await Promise.all([
           warehousesApi.get(warehouseId),
           inventoryApi.list({ warehouse_id: warehouseId }),
@@ -36,8 +41,8 @@ export default function WarehouseAnalytics() {
         setLoading(false);
       }
     }
-    fetchData();
-  }, []);
+    if (user?.warehouse_id) fetchData();
+  }, [user?.warehouse_id]);
 
   if (loading || !warehouse || !analytics) {
     return (

@@ -20,7 +20,7 @@ export interface User {
   phone: string;
   password_hash: string;
   role: Role;
-  status: 'active' | 'suspended' | 'banned';
+  status: 'active' | 'suspended' | 'blocked';
   avatar?: string;
   created_at: string;
   last_login: string;

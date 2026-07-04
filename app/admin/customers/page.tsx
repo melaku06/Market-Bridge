@@ -12,7 +12,7 @@ export default function AdminCustomers() {
   const [analytics, setAnalytics] = useState<{ customers: { new_this_month: number } } | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'suspended' | 'banned'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'suspended' | 'blocked'>('all');
 
   useEffect(() => {
     async function fetchData() {
@@ -48,18 +48,18 @@ export default function AdminCustomers() {
     all: customers.length,
     active: customers.filter(u => u.status === 'active').length,
     suspended: customers.filter(u => u.status === 'suspended').length,
-    banned: customers.filter(u => u.status === 'banned').length,
+    blocked: customers.filter(u => u.status === 'blocked').length,
   };
 
   const toggleStatus = async (userId: string) => {
     const customer = customers.find(u => u.id === userId);
     if (!customer) return;
 
-    const newStatus = customer.status === 'active' ? 'banned' : 'active';
+    const newStatus = customer.status === 'active' ? 'blocked' : 'active';
     try {
       await usersApi.update(userId, { status: newStatus });
       setCustomers(prev =>
-        prev.map(u => u.id === userId ? { ...u, status: newStatus as 'active' | 'suspended' | 'banned' } : u)
+        prev.map(u => u.id === userId ? { ...u, status: newStatus as 'active' | 'suspended' | 'blocked' } : u)
       );
     } catch (error) {
       console.error('Failed to toggle customer status:', error);
@@ -96,7 +96,7 @@ export default function AdminCustomers() {
         </div>
         <div className="bg-white rounded-xl border border-gray-100 p-4 text-center">
           <UserX className="w-8 h-8 text-red-600 mx-auto mb-2" />
-          <p className="text-2xl font-bold text-red-600">{statusCounts.banned}</p>
+          <p className="text-2xl font-bold text-red-600">{statusCounts.blocked}</p>
           <p className="text-sm text-gray-500">Blocked</p>
         </div>
         <div className="bg-white rounded-xl border border-gray-100 p-4 text-center">
@@ -118,7 +118,7 @@ export default function AdminCustomers() {
           />
         </div>
         <div className="flex gap-2">
-          {(['all', 'active', 'banned'] as const).map((status) => (
+          {(['all', 'active', 'blocked'] as const).map((status) => (
             <button
               key={status}
               onClick={() => setStatusFilter(status)}
@@ -181,7 +181,7 @@ export default function AdminCustomers() {
                 <td className="px-4 py-3">
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                     customer.status === 'active' ? 'bg-green-100 text-green-700' :
-                    customer.status === 'banned' ? 'bg-red-100 text-red-700' :
+                    customer.status === 'blocked' ? 'bg-red-100 text-red-700' :
                     'bg-yellow-100 text-yellow-700'
                   }`}>
                     {customer.status}
