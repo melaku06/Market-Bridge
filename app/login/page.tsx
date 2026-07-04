@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Eye, EyeOff, Shield, Truck, RotateCcw, Clock, Star } from 'lucide-react';
+import { Eye, EyeOff, Shield, Truck, RotateCcw, Clock } from 'lucide-react';
 import { useAuth } from '@/components/auth/auth-provider';
 import { getDashboardPath } from '@/lib/auth/types';
 import { SidebarIcon } from '@/components/ui/market-bridge-logo';
@@ -69,20 +69,18 @@ export default function LoginPage() {
     <div className="min-h-screen flex">
       {/* Left Form */}
       <div className="w-full lg:w-[480px] flex flex-col bg-white flex-shrink-0">
-        {/* Header */}
         <div className="px-8 py-5 border-b border-gray-100">
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2.5">
               <SidebarIcon />
               <span className="font-bold text-gray-900 text-lg tracking-tight">MarketBridge</span>
             </Link>
-            <Link href="/" className="text-sm text-violet-600 hover:text-violet-700 font-medium">
+            <Link href="/" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
               Back to Home
             </Link>
           </div>
         </div>
 
-        {/* Form */}
         <div className="flex-1 flex items-center justify-center px-8 py-10">
           <div className="w-full max-w-sm">
             <h1 className="text-2xl font-bold text-gray-900 mb-1">Welcome Back!</h1>
@@ -96,13 +94,13 @@ export default function LoginPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Email or Phone</label>
                 <input
                   type="email"
-                  placeholder="Enter your email"
+                  placeholder="Enter your email or phone number"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20 transition-all bg-gray-50 focus:bg-white"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all bg-gray-50 focus:bg-white"
                   required
                 />
               </div>
@@ -115,7 +113,7 @@ export default function LoginPage() {
                     placeholder="Enter your password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20 transition-all bg-gray-50 focus:bg-white pr-11"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all bg-gray-50 focus:bg-white pr-11"
                     required
                   />
                   <button
@@ -127,7 +125,7 @@ export default function LoginPage() {
                   </button>
                 </div>
                 <div className="flex justify-end mt-1.5">
-                  <Link href="/forgot-password" className="text-xs text-violet-600 hover:text-violet-700 font-medium">
+                  <Link href="/forgot-password" className="text-xs text-blue-600 hover:text-blue-700 font-medium">
                     Forgot Password?
                   </Link>
                 </div>
@@ -136,25 +134,53 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3 bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 disabled:opacity-60 text-white rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
+                className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-xl font-semibold text-sm transition-colors flex items-center justify-center gap-2 shadow-sm"
               >
                 {isLoading ? (
                   <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Signing in...</>
-                ) : 'Sign In'}
+                ) : 'Login'}
+              </button>
+
+              <div className="relative my-1">
+                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-100" /></div>
+                <div className="relative flex justify-center"><span className="bg-white px-3 text-xs text-gray-400">or</span></div>
+              </div>
+
+              <button
+                type="button"
+                className="w-full py-3 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center justify-center gap-3 transition-colors"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Continue with Google
+              </button>
+
+              <button
+                type="button"
+                className="w-full py-3 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center justify-center gap-3 transition-colors"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                </svg>
+                Continue with Apple
               </button>
 
               <p className="text-center text-sm text-gray-500">
                 Don&apos;t have an account?{' '}
-                <Link href="/register" className="text-violet-600 hover:text-violet-700 font-semibold">Create Account</Link>
+                <Link href="/register" className="text-blue-600 hover:text-blue-700 font-semibold">Create Account</Link>
               </p>
             </form>
 
             {/* Demo accounts */}
-            <div className="mt-8 p-4 bg-gray-50 rounded-xl border border-gray-100">
+            <div className="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Quick Demo Login</p>
               <div className="space-y-2">
                 {[
-                  { role: 'Customer', email: 'customer@demo.com', color: 'text-violet-600 bg-violet-50 border-violet-200' },
+                  { role: 'Customer', email: 'customer@demo.com', color: 'text-blue-600 bg-blue-50 border-blue-200' },
                   { role: 'Warehouse', email: 'warehouse@demo.com', color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
                   { role: 'Admin', email: 'admin@demo.com', color: 'text-purple-600 bg-purple-50 border-purple-200' },
                 ].map((demo) => (
@@ -175,66 +201,41 @@ export default function LoginPage() {
       </div>
 
       {/* Right Panel */}
-      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-violet-800 via-violet-700 to-purple-700 items-center justify-center p-12 relative overflow-hidden">
-        {/* Background pattern */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-32 -left-32 w-96 h-96 bg-white/5 rounded-full" />
-          <div className="absolute -bottom-32 -right-32 w-[500px] h-[500px] bg-white/5 rounded-full" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-white/3 rounded-full" />
-        </div>
-
-        {/* Product image overlay */}
+      <div className="hidden lg:flex flex-1 flex-col relative overflow-hidden">
+        {/* Image background */}
         <div className="absolute inset-0">
           <img
             src="https://images.pexels.com/photos/1350789/pexels-photo-1350789.jpeg?auto=compress&cs=tinysrgb&w=1200"
             alt="Quality Products"
-            className="w-full h-full object-cover opacity-10"
+            className="w-full h-full object-cover"
           />
+          <div className="absolute inset-0 bg-gradient-to-b from-blue-900/80 via-blue-800/70 to-blue-900/80" />
         </div>
 
-        <div className="relative z-10 text-center max-w-md">
-          <div className="flex items-center justify-center gap-4 mb-8">
-            <div className="w-20 h-20 bg-white/15 rounded-3xl flex items-center justify-center backdrop-blur-sm ring-1 ring-white/20">
-              <svg viewBox="0 0 28 28" className="w-10 h-10" fill="none">
-                <rect x="3" y="3" width="10" height="10" rx="2" fill="white" opacity="0.95"/>
-                <rect x="15" y="3" width="10" height="10" rx="2" fill="white" opacity="0.6"/>
-                <rect x="3" y="15" width="10" height="10" rx="2" fill="white" opacity="0.6"/>
-                <rect x="15" y="15" width="10" height="10" rx="2" fill="white" opacity="0.95"/>
-              </svg>
-            </div>
-          </div>
-          <h2 className="text-3xl font-bold text-white mb-3">Quality Products<br />Delivered to You</h2>
-          <p className="text-violet-200 text-sm mb-10 leading-relaxed">
-            Join thousands of happy customers shopping with confidence from trusted warehouses.
-          </p>
-          <div className="space-y-3 text-left max-w-xs mx-auto">
-            {[
-              { icon: Shield, text: 'Secure & Protected Payments' },
-              { icon: Truck, text: 'Fast & Reliable Delivery' },
-              { icon: RotateCcw, text: 'Hassle-Free 30-Day Returns' },
-              { icon: Clock, text: '24/7 Customer Support' },
-            ].map((item) => {
-              const Icon = item.icon;
-              return (
-                <div key={item.text} className="flex items-center gap-3 bg-white/10 rounded-xl px-4 py-3 backdrop-blur-sm ring-1 ring-white/10">
-                  <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Icon className="w-4 h-4 text-white" />
+        <div className="relative z-10 flex flex-col h-full p-12">
+          <div className="flex-1 flex flex-col justify-center max-w-md">
+            <h2 className="text-3xl font-bold text-white mb-3">Quality Products<br />Delivered to You</h2>
+            <p className="text-blue-200 text-sm mb-10 leading-relaxed">
+              Join thousands of happy customers shopping with confidence.
+            </p>
+            <div className="space-y-3">
+              {[
+                { icon: Shield, text: 'Secure Payments' },
+                { icon: Truck, text: 'Fast & Reliable Delivery' },
+                { icon: RotateCcw, text: 'Easy Returns' },
+                { icon: Clock, text: '24/7 Customer Support' },
+              ].map((item) => {
+                const Icon = item.icon;
+                return (
+                  <div key={item.text} className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Icon className="w-4 h-4 text-white" />
+                    </div>
+                    <span className="text-white text-sm font-medium">{item.text}</span>
                   </div>
-                  <span className="text-white text-sm font-medium">{item.text}</span>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Rating card */}
-          <div className="mt-8 bg-white/10 backdrop-blur-sm rounded-2xl p-4 text-left ring-1 ring-white/15">
-            <div className="flex items-center gap-1 mb-2">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} className="w-4 h-4 text-yellow-300 fill-yellow-300" />
-              ))}
+                );
+              })}
             </div>
-            <p className="text-white text-sm font-medium">&ldquo;Amazing selection and fast delivery!&rdquo;</p>
-            <p className="text-violet-300 text-xs mt-1">— Sarah M., Verified Customer</p>
           </div>
         </div>
       </div>
