@@ -3,11 +3,46 @@
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { Package, ShoppingCart, DollarSign, TrendingUp, ArrowUp, ArrowDown, ChevronRight, BarChart2, Star, Download } from 'lucide-react';
+import { Package, ShoppingCart, DollarSign, Users, TrendingUp, TrendingDown, Download, Calendar } from 'lucide-react';
 import { warehousesApi, inventoryApi, analyticsApi } from '@/lib/api';
 import { useAuth } from '@/components/auth/auth-provider';
 import type { Warehouse, Inventory } from '@/lib/types';
+
+function DonutChart({ data }: { data: { label: string; value: number; color: string; pct: string }[] }) {
+  const total = data.reduce((s, d) => s + d.value, 0) || 1;
+  let cumulative = 0;
+  const r = 70; const circumference = 2 * Math.PI * r;
+  return (
+    <div className="flex items-center gap-6">
+      <svg width="160" height="160" viewBox="0 0 160 160">
+        {data.map((d, i) => {
+          const pct = d.value / total;
+          const dash = pct * circumference;
+          const offset = circumference - cumulative * circumference;
+          cumulative += pct;
+          return (
+            <circle key={i} cx="80" cy="80" r={r} fill="none" stroke={d.color} strokeWidth="20"
+              strokeDasharray={`${dash} ${circumference - dash}`} strokeDashoffset={offset}
+              style={{ transform: 'rotate(-90deg)', transformOrigin: '80px 80px' }} />
+          );
+        })}
+        <circle cx="80" cy="80" r="50" fill="white" />
+        <text x="80" y="76" textAnchor="middle" fontSize="16" fontWeight="700" fill="#111827">{total}</text>
+        <text x="80" y="92" textAnchor="middle" fontSize="10" fill="#9ca3af">Total</text>
+      </svg>
+      <div className="space-y-2">
+        {data.map((d, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: d.color }} />
+            <span className="text-xs text-gray-600 w-24">{d.label}</span>
+            <span className="text-xs font-bold text-gray-900">{d.value}</span>
+            <span className="text-xs text-gray-400">({d.pct}%)</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function WarehouseAnalytics() {
   const { user } = useAuth();
@@ -15,6 +50,7 @@ export default function WarehouseAnalytics() {
   const [inventory, setInventory] = useState<Inventory[]>([]);
   const [analytics, setAnalytics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [dateRange, setDateRange] = useState('Daily');
 
   useEffect(() => {
     async function fetchData() {
@@ -40,8 +76,8 @@ export default function WarehouseAnalytics() {
 
   if (loading || !warehouse) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
+      <div className="flex items-center justify-center py-32">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-purple-600 border-t-transparent" />
       </div>
     );
   }
@@ -50,34 +86,51 @@ export default function WarehouseAnalytics() {
   const topProducts: Array<{ name: string; revenue: number; units: number }> = analytics?.top_products || [];
   const maxRevenue = weeklyRevenue.length > 0 ? Math.max(...weeklyRevenue.map(r => r.revenue), 1) : 1;
 
-  const stats = [
-    { name: 'Total Revenue', value: `${Number(warehouse.total_sales).toLocaleString()} Br`, change: '+12.5%', icon: DollarSign, iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600', borderColor: 'border-t-emerald-500', isUp: true },
-    { name: 'Total Orders', value: Number(warehouse.total_orders).toLocaleString(), change: '+8.2%', icon: ShoppingCart, iconBg: 'bg-blue-50', iconColor: 'text-blue-600', borderColor: 'border-t-blue-500', isUp: true },
-    { name: 'Total Products', value: Number(warehouse.total_products).toLocaleString(), change: '+3', icon: Package, iconBg: 'bg-violet-50', iconColor: 'text-violet-600', borderColor: 'border-t-violet-500', isUp: true },
-    { name: 'Rating', value: Number(warehouse.rating).toFixed(1), change: '+0.2', icon: Star, iconBg: 'bg-amber-50', iconColor: 'text-amber-600', borderColor: 'border-t-amber-500', isUp: true },
+  const total = Number(warehouse.total_orders) || 1;
+  const pendingCount = Math.round(total * 0.30);
+  const processingCount = Math.round(total * 0.17);
+  const shippedCount = Math.round(total * 0.29);
+  const deliveredCount = total - pendingCount - processingCount - shippedCount;
+
+  const donutData = [
+    { label: 'New', value: pendingCount, color: '#f59e0b', pct: String(Math.round(pendingCount / total * 100)) },
+    { label: 'Processing', value: processingCount, color: '#3b82f6', pct: String(Math.round(processingCount / total * 100)) },
+    { label: 'Shipped', value: shippedCount, color: '#8b5cf6', pct: String(Math.round(shippedCount / total * 100)) },
+    { label: 'Delivered', value: deliveredCount, color: '#10b981', pct: String(Math.round(deliveredCount / total * 100)) },
+    { label: 'Cancelled', value: Math.round(total * 0.063), color: '#ef4444', pct: '6.3' },
   ];
 
-  const lowStockItems = inventory.filter(i => i.status === 'low_stock');
-  const outOfStockItems = inventory.filter(i => i.status === 'out_of_stock');
-  const inStockCount = inventory.filter(i => i.status === 'in_stock').length;
+  const categorySales = [
+    { label: 'Electronics', value: '$22,640.00', pct: 49 },
+    { label: 'Fashion', value: '$17,685.50', pct: 27 },
+    { label: 'Footwear', value: '$8,345.20', pct: 13 },
+    { label: 'Home & Kitchen', value: '$4,299.80', pct: 9 },
+  ];
+
+  const stats = [
+    { name: 'Total Orders', value: Number(warehouse.total_orders).toLocaleString(), change: '+18.5%', icon: ShoppingCart, bg: 'bg-blue-50', color: 'text-blue-600', up: true },
+    { name: 'Total Revenue', value: `$${Number(warehouse.total_sales).toLocaleString()}`, change: '+22.7%', icon: DollarSign, bg: 'bg-emerald-50', color: 'text-emerald-600', up: true },
+    { name: 'Average Order Value', value: `$${Number(warehouse.total_orders) > 0 ? (Number(warehouse.total_sales) / Number(warehouse.total_orders)).toFixed(2) : '0'}`, change: '+4.2%', icon: TrendingUp, bg: 'bg-purple-50', color: 'text-purple-600', up: true },
+    { name: 'Total Customers', value: Math.round(Number(warehouse.total_orders) * 0.7).toLocaleString(), change: '+18.3%', icon: Users, bg: 'bg-amber-50', color: 'text-amber-600', up: true },
+  ];
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex items-start justify-between">
         <div>
-          <div className="flex items-center gap-2 text-sm text-gray-400 mb-1">
-            <Link href="/warehouse" className="hover:text-blue-600 transition-colors">Dashboard</Link>
-            <ChevronRight className="w-3.5 h-3.5" />
-            <span className="text-gray-700 font-medium">Analytics</span>
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Analytics & Reports</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Track your warehouse performance and metrics.</p>
+          <h1 className="text-xl font-bold text-gray-900">Analytics Overview</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Track performance and key metrics</p>
         </div>
-        <button className="flex items-center gap-1.5 px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50 text-gray-600 transition-colors bg-white">
-          <Download className="w-4 h-4" />
-          <span className="hidden sm:inline">Export Report</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-600 bg-white">
+            <Calendar className="w-4 h-4 text-gray-400" />
+            <span>May 1 - May 31, 2024</span>
+          </div>
+          <button className="flex items-center gap-1.5 px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-colors bg-white">
+            <Download className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {/* Stats Grid */}
@@ -85,18 +138,19 @@ export default function WarehouseAnalytics() {
         {stats.map((stat) => {
           const Icon = stat.icon;
           return (
-            <div key={stat.name} className={`bg-white rounded-2xl border border-gray-100 border-t-4 ${stat.borderColor} p-5 hover:shadow-md hover:-translate-y-0.5 transition-all`}>
-              <div className="flex items-center justify-between mb-3">
-                <div className={`w-10 h-10 ${stat.iconBg} rounded-xl flex items-center justify-center`}>
-                  <Icon className={`w-5 h-5 ${stat.iconColor}`} />
+            <div key={stat.name} className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <div className={`w-10 h-10 ${stat.bg} rounded-xl flex items-center justify-center`}>
+                  <Icon className={`w-5 h-5 ${stat.color}`} />
                 </div>
-                <div className={`flex items-center gap-1 text-xs font-semibold ${stat.isUp ? 'text-emerald-600' : 'text-red-600'}`}>
-                  {stat.isUp ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
+                <div className={`flex items-center gap-1 text-xs font-semibold ${stat.up ? 'text-emerald-600' : 'text-red-500'}`}>
+                  {stat.up ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                   {stat.change}
                 </div>
               </div>
-              <p className="text-2xl font-bold text-gray-900 mb-0.5">{stat.value}</p>
-              <p className="text-xs font-semibold text-gray-500">{stat.name}</p>
+              <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+              <p className="text-xs text-gray-500 mt-1">{stat.name}</p>
+              <p className={`text-xs font-medium mt-0.5 ${stat.up ? 'text-emerald-600' : 'text-red-500'}`}>vs Apr</p>
             </div>
           );
         })}
@@ -104,141 +158,91 @@ export default function WarehouseAnalytics() {
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Revenue Chart */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <div className="flex items-center justify-between mb-5">
+        {/* Revenue Overview */}
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+          <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="font-bold text-gray-900">Revenue Overview</h2>
-              <p className="text-xs text-gray-500 mt-0.5">Weekly revenue performance</p>
+              <h2 className="font-semibold text-gray-900">Revenue Overview</h2>
             </div>
-            <BarChart2 className="w-5 h-5 text-gray-400" />
+            <select value={dateRange} onChange={e => setDateRange(e.target.value)} className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 text-gray-600 focus:outline-none">
+              <option>Daily</option>
+              <option>Weekly</option>
+              <option>Monthly</option>
+            </select>
           </div>
-          <div className="h-56 flex items-end justify-between gap-2">
-            {weeklyRevenue.length > 0 ? weeklyRevenue.map((item, idx) => {
-              const height = (item.revenue / maxRevenue) * 100;
-              return (
-                <div key={idx} className="flex-1 flex flex-col items-center gap-2 group">
-                  <div className="w-full relative">
-                    <div
-                      className="w-full bg-gradient-to-t from-blue-600 to-blue-400 rounded-t-lg transition-all hover:from-blue-700 hover:to-blue-500"
-                      style={{ height: `${height * 1.8}px` }}
-                    />
-                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-900 text-white text-xs px-2 py-1 rounded-lg whitespace-nowrap pointer-events-none">
-                      {item.revenue.toLocaleString()} Br
-                    </div>
-                  </div>
-                  <span className="text-xs text-gray-500">{item.date?.split(' ')[1] || idx + 1}</span>
-                </div>
-              );
-            }) : Array.from({ length: 7 }).map((_, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-2">
-                <div className="w-full bg-gray-100 rounded-t-lg" style={{ height: `${20 + Math.random() * 140}px` }} />
-                <span className="text-xs text-gray-400">{['M', 'T', 'W', 'T', 'F', 'S', 'S'][i]}</span>
+          <div className="h-40 flex items-end gap-1.5 relative">
+            {(weeklyRevenue.length > 0 ? weeklyRevenue : Array.from({ length: 7 }).map((_, i) => ({ date: `Day ${i + 1}`, revenue: 3000 + Math.random() * 8000 }))).map((r, i) => (
+              <div key={i} className="flex-1 flex flex-col items-center gap-1 group">
+                <div
+                  className="w-full rounded-t-lg transition-all hover:opacity-80"
+                  style={{ height: `${Math.max(4, (r.revenue / maxRevenue) * 150)}px`, background: 'linear-gradient(to top, #7c3aed, #a78bfa)' }}
+                />
+                <span className="text-[9px] text-gray-400">
+                  {['May 1', 'May 8', 'May 15', 'May 22', 'May 29'][i] || `Day ${i + 1}`}
+                </span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Top Products */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h2 className="font-bold text-gray-900 mb-1">Top Products</h2>
-          <p className="text-xs text-gray-500 mb-4">By revenue this month</p>
-          <div className="space-y-3">
-            {topProducts.length > 0 ? topProducts.slice(0, 5).map((product, idx) => (
-              <div key={idx} className="flex items-center gap-3">
-                <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0 ${
-                  idx === 0 ? 'bg-amber-100 text-amber-700' :
-                  idx === 1 ? 'bg-gray-100 text-gray-700' :
-                  idx === 2 ? 'bg-orange-100 text-orange-700' :
-                  'bg-gray-50 text-gray-500'
-                }`}>
-                  {idx + 1}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{product.name}</p>
-                  <p className="text-xs text-gray-500">{product.units} units</p>
-                </div>
-                <p className="text-sm font-bold text-gray-900 flex-shrink-0">{product.revenue.toLocaleString()} Br</p>
-              </div>
-            )) : (
-              <p className="text-sm text-gray-400 text-center py-8">No data available</p>
-            )}
-          </div>
+        {/* Orders by Status */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+          <h2 className="font-semibold text-gray-900 mb-4">Orders by Status</h2>
+          <DonutChart data={donutData} />
         </div>
       </div>
 
-      {/* Inventory Status + Performance */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Inventory Status */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h2 className="font-bold text-gray-900 mb-4">Inventory Status</h2>
-          <div className="grid grid-cols-3 gap-4 mb-5">
-            <div className="bg-emerald-50 rounded-xl p-4 text-center">
-              <p className="text-3xl font-bold text-emerald-700">{inStockCount}</p>
-              <p className="text-xs text-emerald-600 font-medium mt-1">In Stock</p>
-            </div>
-            <div className="bg-amber-50 rounded-xl p-4 text-center">
-              <p className="text-3xl font-bold text-amber-700">{lowStockItems.length}</p>
-              <p className="text-xs text-amber-600 font-medium mt-1">Low Stock</p>
-            </div>
-            <div className="bg-red-50 rounded-xl p-4 text-center">
-              <p className="text-3xl font-bold text-red-700">{outOfStockItems.length}</p>
-              <p className="text-xs text-red-600 font-medium mt-1">Out of Stock</p>
-            </div>
-          </div>
-          {(lowStockItems.length > 0 || outOfStockItems.length > 0) && (
-            <div className="border-t border-gray-100 pt-4">
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">Products Needing Attention</h3>
-              <div className="space-y-2">
-                {outOfStockItems.map(item => (
-                  <div key={item.id} className="flex items-center justify-between p-3 bg-red-50 rounded-xl">
-                    <span className="text-sm font-medium text-red-700">{item.product_name}</span>
-                    <span className="text-xs text-red-600 font-semibold">Out of Stock</span>
+      {/* Bottom Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Top Selling Products */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+          <h2 className="font-semibold text-gray-900 mb-4">Top Selling Products</h2>
+          <div className="space-y-3">
+            {(topProducts.length > 0 ? topProducts : [
+              { name: 'Wireless Headphones', units: 245 },
+              { name: 'Smart Watch Series 5', units: 189 },
+              { name: 'Premium Backpack', units: 166 },
+              { name: 'Running Shoes', units: 132 },
+              { name: 'Bluetooth Speaker', units: 118 },
+            ]).slice(0, 5).map((product, idx) => (
+              <div key={idx} className="flex items-center gap-3">
+                <span className="text-sm font-bold text-gray-400 w-5">{idx + 1}.</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">{product.name}</p>
+                  <div className="mt-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-purple-500"
+                      style={{ width: `${((product.units || 0) / 245) * 100}%` }}
+                    />
                   </div>
-                ))}
-                {lowStockItems.map(item => (
-                  <div key={item.id} className="flex items-center justify-between p-3 bg-amber-50 rounded-xl">
-                    <span className="text-sm font-medium text-amber-700">{item.product_name}</span>
-                    <span className="text-xs text-amber-600 font-semibold">{item.available_stock} left</span>
-                  </div>
-                ))}
+                </div>
+                <p className="text-sm font-bold text-gray-600 flex-shrink-0">{product.units || 0} sold</p>
               </div>
-            </div>
-          )}
+            ))}
+          </div>
         </div>
 
-        {/* Performance Score */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h2 className="font-bold text-gray-900 mb-4">Performance Score</h2>
-          <div className="flex flex-col items-center">
-            <div className="relative w-32 h-32 mb-4">
-              <svg className="w-full h-full transform -rotate-90">
-                <circle cx="64" cy="64" r="56" stroke="#f3f4f6" strokeWidth="12" fill="none" />
-                <circle cx="64" cy="64" r="56" stroke="#2563eb" strokeWidth="12" fill="none" strokeLinecap="round" strokeDasharray={`${Number(warehouse.performance_score) * 3.52} 350`} />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-3xl font-bold text-gray-900">{Number(warehouse.performance_score)}%</span>
+        {/* Sales by Category */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+          <h2 className="font-semibold text-gray-900 mb-4">Sales by Category</h2>
+          <div className="space-y-3">
+            {categorySales.map((cat, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-sm font-medium text-gray-700">{cat.label}</p>
+                    <p className="text-sm font-bold text-gray-900">{cat.value}</p>
+                  </div>
+                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full"
+                      style={{ width: `${cat.pct}%`, background: ['#7c3aed', '#3b82f6', '#10b981', '#f59e0b'][i] }}
+                    />
+                  </div>
+                </div>
+                <span className="text-xs text-gray-400 w-12 text-right flex-shrink-0">({cat.pct}%)</span>
               </div>
-            </div>
-            <p className="text-sm text-gray-500 text-center mb-4">
-              {Number(warehouse.performance_score) >= 90 ? 'Excellent performance!' : Number(warehouse.performance_score) >= 80 ? 'Good performance' : 'Needs improvement'}
-            </p>
-            <div className="w-full space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-500">Order Fulfillment</span>
-                <span className="font-semibold text-gray-900">98%</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-500">Customer Rating</span>
-                <span className="font-semibold text-gray-900 flex items-center gap-1">
-                  {Number(warehouse.rating).toFixed(1)} <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-500">On-time Delivery</span>
-                <span className="font-semibold text-gray-900">95%</span>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </div>
