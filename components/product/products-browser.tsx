@@ -78,42 +78,43 @@ export default function ProductsBrowser({ products, categories, initialCategoryI
   }, [products, selectedCategory, selectedBrand, sortBy, priceRange, selectedRating]);
 
   const FilterPanel = () => (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div>
         <h3 className="font-semibold text-gray-900 text-sm mb-3">Categories</h3>
         <div className="space-y-1">
-          {allCategories.map((cat) => (
+          {allCategories.slice(0, 10).map((cat) => (
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
-              className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-colors flex items-center justify-between ${
+              className={`w-full text-left px-2.5 py-1.5 rounded-lg text-sm transition-colors flex items-center gap-2 ${
                 selectedCategory === cat.id ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-50'
               }`}
             >
+              <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${selectedCategory === cat.id ? 'bg-blue-600' : 'bg-gray-300'}`} />
               {cat.name}
-              {selectedCategory === cat.id && <ChevronRight className="w-3 h-3" />}
             </button>
           ))}
         </div>
       </div>
-      <div>
+      <div className="border-t border-gray-100 pt-4">
         <h3 className="font-semibold text-gray-900 text-sm mb-3">Brand</h3>
-        <div className="space-y-1">
-          {brandOptions.map((brand) => (
-            <button
-              key={brand}
-              onClick={() => setSelectedBrand(brand)}
-              className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-colors flex items-center justify-between ${
-                selectedBrand === brand ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              {brand}
-              {selectedBrand === brand && <ChevronRight className="w-3 h-3" />}
-            </button>
+        <div className="space-y-2">
+          {brandOptions.filter(b => b !== 'All Brands').map((brand) => (
+            <label key={brand} className="flex items-center gap-2 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={selectedBrand === brand}
+                onChange={() => setSelectedBrand(selectedBrand === brand ? 'All Brands' : brand)}
+                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+              />
+              <span className={`text-sm transition-colors ${selectedBrand === brand ? 'text-blue-700 font-medium' : 'text-gray-600 group-hover:text-gray-800'}`}>
+                {brand}
+              </span>
+            </label>
           ))}
         </div>
       </div>
-      <div>
+      <div className="border-t border-gray-100 pt-4">
         <h3 className="font-semibold text-gray-900 text-sm mb-3">Price Range</h3>
         <div className="space-y-3">
           <input
@@ -130,7 +131,7 @@ export default function ProductsBrowser({ products, categories, initialCategoryI
           </div>
         </div>
       </div>
-      <div>
+      <div className="border-t border-gray-100 pt-4">
         <h3 className="font-semibold text-gray-900 text-sm mb-3">Rating</h3>
         <div className="space-y-1">
           {[5, 4, 3, 2].map((r) => (
@@ -141,9 +142,9 @@ export default function ProductsBrowser({ products, categories, initialCategoryI
                 selectedRating === r ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'
               }`}
             >
-              <span className="flex text-yellow-400">
+              <span className="flex">
                 {[...Array(5)].map((_, i) => (
-                  <span key={i} className={`w-4 h-4 ${i < r ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
+                  <span key={i} className={`text-base ${i < r ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
                 ))}
               </span>
               <span className="text-xs text-gray-500">& up</span>

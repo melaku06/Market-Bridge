@@ -29,12 +29,12 @@ export default async function HomePage() {
         {/* Hero Section */}
         <section className="bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div className="rounded-2xl overflow-hidden flex min-h-[300px] bg-white border border-gray-100 shadow-sm">
+            <div className="rounded-2xl overflow-hidden flex min-h-[320px] bg-gradient-to-br from-slate-50 to-blue-50/30 border border-gray-100 shadow-sm">
               {/* Left: text content */}
-              <div className="flex-1 flex items-center px-8 md:px-14 py-12 bg-white">
+              <div className="flex-1 flex items-center px-8 md:px-14 py-12">
                 <div className="max-w-lg">
                   <div className="flex items-center gap-2 mb-4">
-                    <span className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full border border-blue-100">
+                    <span className="inline-flex items-center gap-1.5 bg-blue-600 text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-sm">
                       <Tag className="w-3 h-3" />
                       Best Deals 2024
                     </span>
@@ -42,16 +42,11 @@ export default async function HomePage() {
                   <h1 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-4">
                     Discover Quality<br />
                     Products from<br />
-                    <span className="text-blue-600 relative">
-                      Trusted Warehouses
-                      <svg className="absolute -bottom-1 left-0 w-full" height="4" viewBox="0 0 300 4" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M0 2 Q150 0 300 2" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" opacity="0.4"/>
-                      </svg>
-                    </span>
+                    <span className="text-blue-600">Trusted Warehouses</span>
                   </h1>
                   <p className="text-gray-500 text-base mb-8 leading-relaxed">
                     Shop the best products at great prices.<br />
-                    Website first, delivered to your door.
+                    Curated selection, delivered to your door.
                   </p>
                   <div className="flex gap-3 flex-wrap">
                     <Link href="/products">
@@ -59,33 +54,45 @@ export default async function HomePage() {
                         Shop Now <ArrowRight className="w-4 h-4" />
                       </button>
                     </Link>
-                    <Link href="/register">
-                      <button className="border-2 border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 px-7 py-3 rounded-xl font-semibold text-sm transition-colors">
-                        How It Works
+                    <Link href="/product-request">
+                      <button className="border border-gray-300 text-gray-700 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 px-7 py-3 rounded-xl font-semibold text-sm transition-colors">
+                        Request Product
                       </button>
                     </Link>
                   </div>
-                  {/* Price badge */}
-                  <div className="inline-flex items-center gap-2 mt-8 bg-white border border-gray-100 rounded-xl px-4 py-2.5 shadow-sm">
-                    <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
-                      <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                  {/* Stats row */}
+                  <div className="flex items-center gap-6 mt-8">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-yellow-50 rounded-lg flex items-center justify-center">
+                        <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-gray-900">4.8 Rating</p>
+                        <p className="text-[10px] text-gray-500">12K+ reviews</p>
+                      </div>
                     </div>
+                    <div className="w-px h-8 bg-gray-200" />
                     <div>
-                      <p className="text-xs font-bold text-gray-900">From $9.99</p>
-                      <p className="text-[10px] text-gray-500">10,000+ products</p>
+                      <p className="text-xs font-bold text-gray-900">10,000+</p>
+                      <p className="text-[10px] text-gray-500">Products available</p>
+                    </div>
+                    <div className="w-px h-8 bg-gray-200" />
+                    <div>
+                      <p className="text-xs font-bold text-gray-900">50+ Warehouses</p>
+                      <p className="text-[10px] text-gray-500">Verified sellers</p>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Right: lifestyle image */}
-              <div className="hidden lg:block w-[420px] xl:w-[500px] flex-shrink-0 relative">
+              <div className="hidden lg:block w-[420px] xl:w-[480px] flex-shrink-0 relative">
                 <img
                   src="https://images.pexels.com/photos/1350789/pexels-photo-1350789.jpeg?auto=compress&cs=tinysrgb&w=800"
                   alt="Quality Products"
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-r from-white/30 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-r from-slate-50/60 via-transparent to-transparent" />
               </div>
             </div>
           </div>
@@ -97,9 +104,9 @@ export default async function HomePage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {[
                 { icon: Star, title: 'Quality Products', desc: 'Carefully selected', color: 'text-blue-600', bg: 'bg-blue-50' },
-                { icon: Tag, title: 'Best Prices', desc: 'Fair pricing always', color: 'text-green-600', bg: 'bg-green-50' },
+                { icon: Tag, title: 'Best Prices', desc: 'Fair pricing always', color: 'text-emerald-600', bg: 'bg-emerald-50' },
                 { icon: Truck, title: 'Fast Delivery', desc: 'Quick & reliable', color: 'text-orange-600', bg: 'bg-orange-50' },
-                { icon: Shield, title: 'Secure Payments', desc: '100% secure', color: 'text-purple-600', bg: 'bg-purple-50' },
+                { icon: Shield, title: 'Secure Payments', desc: '100% secure', color: 'text-blue-600', bg: 'bg-blue-50' },
               ].map((item) => {
                 const Icon = item.icon;
                 return (
@@ -127,17 +134,17 @@ export default async function HomePage() {
                 View All <ChevronRight className="w-4 h-4" />
               </Link>
             </div>
-            <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
+            <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
               {topCategories.map((cat, i) => (
                 <Link
                   key={cat.id}
                   href={`/categories/${cat.slug}`}
-                  className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-blue-50 hover:border-blue-200 border border-gray-100 bg-white transition-all group"
+                  className="flex flex-col items-center gap-2.5 group"
                 >
-                  <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-2xl group-hover:bg-blue-100 transition-colors">
+                  <div className="w-14 h-14 bg-blue-50 rounded-full flex items-center justify-center text-2xl group-hover:bg-blue-100 transition-colors shadow-sm border border-blue-100">
                     {categoryIcons[i % categoryIcons.length]}
                   </div>
-                  <span className="text-xs font-medium text-gray-700 text-center leading-tight group-hover:text-blue-700 line-clamp-2">
+                  <span className="text-xs font-medium text-gray-700 text-center leading-tight group-hover:text-blue-600 line-clamp-2 transition-colors">
                     {cat.name}
                   </span>
                 </Link>
@@ -200,9 +207,9 @@ export default async function HomePage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
               {[
                 { icon: Truck, title: 'Free Shipping', desc: 'On orders over 500 Br', color: 'text-blue-600', bg: 'bg-blue-50' },
-                { icon: RotateCcw, title: '30-Day Returns', desc: 'Easy returns policy', color: 'text-green-600', bg: 'bg-green-50' },
+                { icon: RotateCcw, title: '30-Day Returns', desc: 'Easy returns policy', color: 'text-emerald-600', bg: 'bg-emerald-50' },
                 { icon: Headphones, title: '24/7 Support', desc: 'We are here to help', color: 'text-orange-600', bg: 'bg-orange-50' },
-                { icon: Shield, title: 'Secure Checkout', desc: '100% secure payments', color: 'text-purple-600', bg: 'bg-purple-50' },
+                { icon: Shield, title: 'Secure Checkout', desc: '100% secure payments', color: 'text-blue-600', bg: 'bg-blue-50' },
               ].map((item) => {
                 const Icon = item.icon;
                 return (
