@@ -1,31 +1,31 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-// Log for debugging (remove in production)
-if (typeof window !== 'undefined') {
-  console.log('Supabase URL:', supabaseUrl ? 'Set' : 'Missing');
-  console.log('Supabase Key:', supabaseAnonKey ? 'Set' : 'Missing');
-}
+// Check if Supabase is configured
+const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey &&
+  supabaseUrl !== 'your-supabase-project-url' &&
+  supabaseAnonKey !== 'your-supabase-anon-key');
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing Supabase environment variables:', {
-    url: supabaseUrl ? 'Set' : 'Missing',
-    key: supabaseAnonKey ? 'Set' : 'Missing'
-  });
-  throw new Error(
-    'Missing Supabase environment variables. Please ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your .env file.'
-  );
-}
+// Create Supabase client only if configured, otherwise return null
+export const supabase: SupabaseClient | null = isSupabaseConfigured
+  ? createClient(supabaseUrl!, supabaseAnonKey!, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    })
+  : null;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-  },
-});
+// Export whether realtime is available
+export const isRealtimeEnabled = isSupabaseConfigured;
+
+// Log status in development
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+  console.log('Supabase Realtime:', isSupabaseConfigured ? 'Enabled' : 'Disabled (using local PostgreSQL)');
+}
 
 export type Database = {
   public: {

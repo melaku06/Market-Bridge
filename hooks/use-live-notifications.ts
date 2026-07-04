@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/components/auth/auth-provider';
-import { supabase } from '@/lib/supabase/client';
+import { supabase, isRealtimeEnabled } from '@/lib/supabase/client';
 import { useNotificationsStore } from '@/stores/notifications-store';
 import { toast } from 'sonner';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 
 export interface LiveNotification {
   id: string;
@@ -26,6 +27,9 @@ export interface LiveNotification {
  * via WebSocket for live updates.
  *
  * Shows a toast notification when a new notification arrives.
+ *
+ * Note: If using local PostgreSQL without Supabase, realtime is disabled
+ * and notifications are fetched via polling instead.
  */
 export function useLiveNotifications() {
   const { user, isAuthenticated } = useAuth();
@@ -33,7 +37,7 @@ export function useLiveNotifications() {
   const addLiveNotification = useNotificationsStore((s) => s.addLiveNotification);
   const updateLiveNotification = useNotificationsStore((s) => s.updateLiveNotification);
   const removeLiveNotification = useNotificationsStore((s) => s.removeLiveNotification);
-  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const channelRef = useRef<RealtimeChannel | null>(null);
 
   const handleNewNotification = useCallback(
     (notification: LiveNotification) => {
@@ -65,6 +69,18 @@ export function useLiveNotifications() {
 
     // Fetch initial notifications
     fetchNotifications({ user_id: user.id, limit: 20 });
+
+    // If Supabase realtime is not configured, set up polling instead
+    if (!isRealtimeEnabled || !supabase) {
+      // Poll for notifications every 30 seconds as fallback
+      const pollInterval = setInterval(() => {
+        fetchNotifications({ user_id: user.id, limit: 20 });
+      }, 30000);
+
+      return () => {
+        clearInterval(pollInterval);
+      };
+    }
 
     // Subscribe to realtime changes filtered by user_id
     const channel = supabase
@@ -110,12 +126,15 @@ export function useLiveNotifications() {
     channelRef.current = channel;
 
     return () => {
-      supabase.removeChannel(channel);
+      if (supabase) {
+        supabase.removeChannel(channel);
+      }
       channelRef.current = null;
     };
   }, [isAuthenticated, user?.id, fetchNotifications, handleNewNotification, updateLiveNotification, removeLiveNotification]);
 
   return {
     isConnected: channelRef.current !== null,
+    isRealtimeEnabled,
   };
 }

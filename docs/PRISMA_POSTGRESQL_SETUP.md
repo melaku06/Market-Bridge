@@ -1,100 +1,20 @@
 # Prisma & PostgreSQL Local Setup Guide
 
-This guide covers setting up Prisma ORM with PostgreSQL for local development.
+This guide covers setting up Prisma ORM with local PostgreSQL for development.
 
-## The Error You Encountered
+## The Error You May Encounter
 
 ```
 Error: Cannot find module '.prisma/client/default'
 ```
 
-This error occurs when the Prisma Client hasn't been generated. Run this command to fix it:
-
-```bash
-npx prisma generate
-```
+**Fix:** Run `npx prisma generate` to generate the Prisma Client.
 
 ---
 
-## Quick Fix (If You Got the Error)
+## Quick Start
 
-```bash
-# 1. Generate Prisma Client
-npx prisma generate
-
-# 2. Clear Next.js cache and restart
-rm -rf .next
-npm run dev
-```
-
----
-
-## Complete Local Setup
-
-### Prerequisites
-
-- Node.js 18+ installed
-- PostgreSQL database (local or Supabase)
-- npm or yarn
-
-### Step 1: Clone and Install
-
-```bash
-# Clone the repository
-git clone <repository-url>
-cd Market-Bridge
-
-# Install dependencies
-npm install
-```
-
-### Step 2: Configure Environment
-
-Copy the example environment file:
-
-```bash
-cp .env.example .env
-```
-
-Edit `.env` with your database credentials:
-
-#### Option A: Local PostgreSQL
-
-```env
-# Local PostgreSQL
-DATABASE_URL="postgresql://postgres:your_password@localhost:5432/marketbridge"
-DIRECT_URL="postgresql://postgres:your_password@localhost:5432/marketbridge"
-
-# JWT Secret (generate with: openssl rand -base64 32)
-JWT_SECRET=your-super-secret-jwt-key-minimum-32-characters
-
-# Application
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-NODE_ENV=development
-```
-
-#### Option B: Supabase PostgreSQL
-
-```env
-# Supabase PostgreSQL (Connection Pooling - for app)
-DATABASE_URL="postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres?pgbouncer=true"
-
-# Supabase PostgreSQL (Direct - for migrations)
-DIRECT_URL="postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:5432/postgres"
-
-# Supabase Client (for real-time features)
-NEXT_PUBLIC_SUPABASE_URL="https://[project-ref].supabase.co"
-NEXT_PUBLIC_SUPABASE_ANON_KEY="your-anon-key"
-
-# JWT Secret
-JWT_SECRET=your-super-secret-jwt-key-minimum-32-characters
-
-# Application
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-NODE_ENV=development
-```
-
-### Step 3: Create Database (Local PostgreSQL Only)
+### 1. Create PostgreSQL Database
 
 ```bash
 # Connect to PostgreSQL
@@ -107,36 +27,30 @@ CREATE DATABASE marketbridge;
 \q
 ```
 
-### Step 4: Generate Prisma Client
+### 2. Configure Environment
+
+Your `.env` is already configured for local PostgreSQL:
+
+```env
+DATABASE_URL="postgresql://postgres:2134@localhost:5432/marketbridge"
+DIRECT_URL="postgresql://postgres:2134@localhost:5432/marketbridge"
+JWT_SECRET=marketbridge-super-secret-jwt-key-2024-production
+```
+
+### 3. Initialize Database
 
 ```bash
+# Generate Prisma Client
 npx prisma generate
-```
 
-This creates the Prisma Client in `node_modules/@prisma/client` based on your schema.
-
-### Step 5: Push Schema to Database
-
-```bash
-# Sync Prisma schema to database (development)
+# Push schema to database (creates all tables)
 npx prisma db push
-```
 
-### Step 6: Seed Demo Data (Optional)
-
-```bash
+# (Optional) Seed demo data
 npm run prisma:db:seed
 ```
 
-This creates demo accounts:
-
-| Email | Password | Role |
-|-------|----------|------|
-| admin@demo.com | demo123 | Admin |
-| customer@demo.com | demo123 | Customer |
-| warehouse@demo.com | demo123 | Warehouse |
-
-### Step 7: Start Development Server
+### 4. Start Development Server
 
 ```bash
 npm run dev
@@ -146,14 +60,24 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## NPM Scripts Reference
+## Demo Accounts (After Seeding)
+
+| Email | Password | Role |
+|-------|----------|------|
+| admin@demo.com | demo123 | Admin |
+| customer@demo.com | demo123 | Customer |
+| warehouse@demo.com | demo123 | Warehouse |
+
+---
+
+## NPM Scripts
 
 ```bash
 # Development
 npm run dev              # Start development server
-npm run build            # Build for production (includes prisma generate)
+npm run build            # Build for production
 
-# Prisma Commands
+# Prisma
 npm run prisma:generate  # Generate Prisma Client
 npm run prisma:push      # Push schema to database
 npm run prisma:studio    # Open Prisma Studio GUI
@@ -164,18 +88,48 @@ npm run prisma:db:seed   # Seed demo data
 
 ## Why Prisma Generate is Required
 
-Prisma uses a **code-generation** approach:
+Prisma uses code-generation:
 
-1. You define your schema in `prisma/schema.prisma`
-2. `prisma generate` reads the schema and generates TypeScript types and query methods
-3. The generated client is stored in `node_modules/@prisma/client`
-4. Your application imports from `@prisma/client`
+1. You define schema in `prisma/schema.prisma`
+2. `prisma generate` creates TypeScript types and query methods
+3. Generated client is stored in `node_modules/@prisma/client`
 
-**You must run `prisma generate`:**
-- After `npm install` (first time setup)
+**Run `prisma generate`:**
+- After `npm install`
 - After changing `prisma/schema.prisma`
 - After cloning the repository
-- Before building for production
+
+---
+
+## Database Schema
+
+### Core Tables
+
+| Table | Description |
+|-------|-------------|
+| `profiles` | User accounts with roles |
+| `user_credentials` | Password hashes |
+| `warehouses` | Seller accounts |
+| `products` | Product listings |
+| `categories` | Product categories |
+| `orders` | Customer orders |
+| `order_items` | Order line items |
+| `reviews` | Product reviews |
+| `notifications` | User notifications |
+
+### Entity Relationships
+
+```
+profiles ─┬─< orders ────< order_items
+          ├─< reviews
+          ├─< wishlist_items
+          └─< notifications
+
+warehouses ─┬─< products
+            └─< orders
+
+categories ────< products
+```
 
 ---
 
@@ -183,9 +137,6 @@ Prisma uses a **code-generation** approach:
 
 ### Error: "Cannot find module '.prisma/client/default'"
 
-**Cause:** Prisma Client wasn't generated.
-
-**Fix:**
 ```bash
 npx prisma generate
 rm -rf .next
@@ -194,129 +145,56 @@ npm run dev
 
 ### Error: "Can't reach database server"
 
-**Cause:** PostgreSQL isn't running or connection string is wrong.
+Check PostgreSQL is running:
 
-**Fix (Local):**
 ```bash
-# Check if PostgreSQL is running
-sudo systemctl status postgresql  # Linux
-brew services list                 # macOS
+# Linux
+sudo systemctl status postgresql
+sudo systemctl start postgresql
 
-# Start if stopped
-sudo systemctl start postgresql   # Linux
-brew services start postgresql@15 # macOS
+# macOS
+brew services list
+brew services start postgresql@15
+
+# Windows - check Services app
 ```
 
-**Fix (Supabase):**
-- Check if your project is paused (free tier pauses after inactivity)
-- Verify DATABASE_URL and DIRECT_URL in `.env`
-- Check if IP restrictions are enabled in Supabase
+### Error: "password authentication failed"
+
+Update your `.env` with correct password:
+
+```env
+DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@localhost:5432/marketbridge"
+```
+
+### Error: "database 'marketbridge' does not exist"
+
+```bash
+psql -U postgres -c "CREATE DATABASE marketbridge;"
+```
 
 ### Error: "P2021: The table does not exist"
 
-**Cause:** Database schema not pushed.
-
-**Fix:**
 ```bash
 npx prisma db push
 ```
 
-### Error: "PrismaClient is unable to be run in the browser"
-
-**Cause:** Prisma Client can only run on the server side.
-
-**Fix:** Use `"use server"` or ensure code runs in:
-- API routes (`app/api/*`)
-- Server Components
-- Server Actions
-
-### Build Errors After Schema Changes
-
-```bash
-# Clear caches and regenerate
-rm -rf node_modules/.prisma
-rm -rf .next
-npx prisma generate
-npm run build
-```
-
-### Authentication Not Working
-
-1. Check user exists in database:
-```bash
-npx prisma studio
-# Open 'profiles' table
-```
-
-2. Check password hash exists:
-```bash
-# Open 'user_credentials' table in Prisma Studio
-```
-
-3. Clear browser cookies and try again
-
 ---
 
-## Database Schema Overview
-
-The schema is defined in `prisma/schema.prisma`:
-
-### Core Tables
-
-| Table | Description |
-|-------|-------------|
-| `profiles` | User accounts with roles (customer, warehouse, admin) |
-| `user_credentials` | Password hashes for authentication |
-| `warehouses` | Seller/warehouse accounts |
-| `products` | Product listings |
-| `categories` | Product categories |
-| `orders` | Customer orders |
-| `order_items` | Order line items |
-| `reviews` | Product reviews |
-| `wishlist_items` | User wishlists |
-| `notifications` | User notifications |
-
-### ERD (Entity Relationship)
-
-```
-profiles ─┬─< orders ────< order_items
-          │
-          ├─< reviews
-          ├─< wishlist_items
-          ├─< notifications
-          └─< addresses
-
-warehouses ─┬─< products ────< reviews
-            │               ────< wishlist_items
-            │               ────< inventory
-            └─< orders
-
-categories ────< products
-```
-
----
-
-## Using Prisma in Your Code
-
-### Import
+## Using Prisma in Code
 
 ```typescript
 import prisma from '@/lib/prisma';
-```
 
-### Common Operations
-
-```typescript
-// Find all
+// Find all products
 const products = await prisma.product.findMany();
 
-// Find with filter
+// Find user by email
 const user = await prisma.profile.findUnique({
   where: { email: 'user@example.com' },
-  include: { warehouse: true },
 });
 
-// Create
+// Create product
 const product = await prisma.product.create({
   data: {
     name: 'New Product',
@@ -324,17 +202,6 @@ const product = await prisma.product.create({
     base_price: 99.99,
     warehouse_id: 'uuid',
   },
-});
-
-// Update
-const updated = await prisma.product.update({
-  where: { id: 'uuid' },
-  data: { status: 'published' },
-});
-
-// Delete
-await prisma.product.delete({
-  where: { id: 'uuid' },
 });
 
 // Transaction
@@ -346,38 +213,32 @@ const result = await prisma.$transaction([
 
 ---
 
-## Production Checklist
+## Realtime Notifications (Optional)
 
-Before deploying:
+By default, the app uses local PostgreSQL without realtime features. Notifications work via polling (every 30 seconds).
 
-1. **Regenerate Prisma Client:**
-   ```bash
-   npx prisma generate
-   ```
+To enable realtime notifications with Supabase:
 
-2. **Run migrations:**
-   ```bash
-   npx prisma migrate deploy
-   ```
+1. Add to `.env`:
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
 
-3. **Set production environment variables:**
-   ```env
-   NODE_ENV=production
-   JWT_SECRET=<strong-random-secret>
-   NEXT_PUBLIC_APP_URL=https://your-domain.com
-   ```
+2. Enable realtime in Supabase dashboard for the `notifications` table
 
-4. **Build:**
-   ```bash
-   npm run build
-   ```
+---
+
+## Production Deployment
+
+1. Set production environment variables
+2. Run migrations: `npx prisma migrate deploy`
+3. Build: `npm run build`
 
 ---
 
 ## Additional Resources
 
 - [Prisma Documentation](https://www.prisma.io/docs)
-- [Prisma Client API](https://www.prisma.io/docs/reference/api-reference/prisma-client-reference)
-- [Next.js with Prisma](https://nextjs.org/docs/app/building-your-application/data-fetching/server-actions-and-mutations)
-
-For complete local setup with Cloudinary and troubleshooting, see `docs/LOCAL_DEVELOPMENT_SETUP.md`.
+- [Prisma Client API Reference](https://www.prisma.io/docs/reference/api-reference/prisma-client-reference)
+- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
