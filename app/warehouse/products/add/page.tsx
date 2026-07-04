@@ -48,20 +48,20 @@ export default function AddProductPage() {
     if (!wid) return;
     setSubmitting(true);
     try {
-      const product = await productsApi.create(({
-        name: form.name, sku: form.sku, barcode: form.barcode as any,
+      const product = await productsApi.create({
+        name: form.name, sku: form.sku, barcode: form.barcode,
         category_id: form.category_id, brand: form.brand,
-        short_description: form.short_description as any, description: form.description,
+        short_description: form.short_description, description: form.description,
         base_price: parseFloat(form.base_price),
         margin_percent: parseFloat(form.margin_percent),
         discount_percent: parseFloat(form.discount_percent),
         final_price: finalPrice, original_price: originalPrice,
-        weight: form.weight ? parseFloat(form.weight) : undefined as any,
+        weight: form.weight ? parseFloat(form.weight) : undefined,
         tags, colors: form.colors ? form.colors.split(',').map(s => s.trim()) : [],
         images: [imageUrl],
         warehouse_id: wid,
         status: 'pending',
-      } as any));
+      });
       await inventoryApi.create({
         product_id: (product as any).id,
         warehouse_id: wid,

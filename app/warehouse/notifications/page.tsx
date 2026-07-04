@@ -71,7 +71,7 @@ export default function NotificationsPage() {
     if (user?.id) fetchNotifications({ user_id: user.id, limit: 50 });
   }, [user?.id]);
 
-  const getTab = (n: any): Tab => {
+  const getTab = (n: Notification): Tab => {
     const t = n.type?.toLowerCase() || '';
     for (const [key, tab] of Object.entries(TYPE_MAP)) {
       if (t.includes(key)) return tab;
@@ -81,18 +81,18 @@ export default function NotificationsPage() {
 
   const filtered = notifications.filter(n => {
     if (activeTab === 'All') return true;
-    if (activeTab === 'Unread') return !(n as any).read && !(n as any).is_read;
-    return getTab(n as any) === activeTab;
+    if (activeTab === 'Unread') return !n.read && !(n as any).is_read;
+    return getTab(n) === activeTab;
   });
 
   const tabCount = (tab: Tab) => {
     if (tab === 'All') return notifications.length;
-    if (tab === 'Unread') return notifications.filter(n => !(n as any).read && !(n as any).is_read).length;
-    return notifications.filter(n => getTab(n as any) === tab).length;
+    if (tab === 'Unread') return notifications.filter(n => !n.read && !(n as any).is_read).length;
+    return notifications.filter(n => getTab(n) === tab).length;
   };
 
-  const handleNotifClick = async (n: any) => {
-    if (!(n as any).read && !(n as any).is_read) await markAsRead(n.id);
+  const handleNotifClick = async (n: Notification) => {
+    if (!n.read && !(n as any).is_read) await markAsRead(n.id);
     if ((n as any).action_url) router.push((n as any).action_url);
   };
 
@@ -106,7 +106,7 @@ export default function NotificationsPage() {
             {unreadCount > 0 ? `${unreadCount} unread notification${unreadCount !== 1 ? 's' : ''}` : 'All caught up'}
           </p>
         </div>
-        <button onClick={() => markAllAsRead(user?.id || '')}
+        <button onClick={markAllAsRead}
           className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors">
           <Check style={{ width: 13, height: 13 }} /> Mark all as read
         </button>
@@ -141,8 +141,8 @@ export default function NotificationsPage() {
                 <Bell style={{ width: 36, height: 36 }} />
                 <p className="text-sm mt-2 text-gray-400">No notifications</p>
               </div>
-            ) : (filtered as any[]).map((n: any) => {
-              const isUnread = !(n as any).read && !(n as any).is_read;
+            ) : filtered.map(n => {
+              const isUnread = !n.read && !(n as any).is_read;
               const typeKey = n.type?.toLowerCase() || 'default';
               const iconConfig = TYPE_ICON[typeKey] || TYPE_ICON.default;
               const Icon = iconConfig.icon;

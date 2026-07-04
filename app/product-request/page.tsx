@@ -1,265 +1,402 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { ChevronRight, Upload, CheckCircle, Eye, Trash2, Search, Bell } from 'lucide-react';
 import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
-import { ChevronRight, Upload, CheckCircle2, Clock, X, Search as SearchIcon, HelpCircle } from 'lucide-react';
 import { productRequestsApi } from '@/lib/api';
-import { useAuth } from '@/components/auth/auth-provider';
+import type { ProductRequest } from '@/lib/types';
 
-const CATEGORIES = ['Electronics', 'Fashion', 'Home & Living', 'Beauty', 'Sports', 'Books', 'Toys', 'Food & Beverages', 'Other'];
-const HOW_IT_WORKS = [
-  { step: '01', title: 'Submit Request', desc: 'Fill out the product request form with details.' },
-  { step: '02', title: 'We Search', desc: 'Our team searches our warehouse network.' },
-  { step: '03', title: 'You Get Notified', desc: 'We notify you when the product is available.' },
-];
+const CATEGORIES = ['Electronics', 'Fashion', 'Home & Living', 'Beauty', 'Sports', 'Toys & Baby', 'Automotive', 'Books', 'Other'];
 
-const STATUS_BADGE: Record<string, string> = {
-  pending: 'bg-amber-50 text-amber-700 border border-amber-100',
-  approved: 'bg-emerald-50 text-emerald-700 border border-emerald-100',
-  fulfilled: 'bg-blue-50 text-blue-700 border border-blue-100',
-  rejected: 'bg-red-50 text-red-700 border border-red-100',
+const STATUS_COLORS: Record<string, string> = {
+  pending: 'bg-yellow-100 text-yellow-700',
+  in_review: 'bg-blue-100 text-blue-700',
+  found: 'bg-green-100 text-green-700',
+  not_available: 'bg-red-100 text-red-700',
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  pending: 'Pending',
+  in_review: 'In Review',
+  found: 'Found',
+  not_available: 'Not Found',
 };
 
 export default function ProductRequestPage() {
-  const { user } = useAuth();
-  const [requests, setRequests] = useState<any[]>([]);
-  const [form, setForm] = useState({ name: '', category: '', brand: '', description: '', price_min: '', price_max: '', email: '', notes: '' });
-  const [submitting, setSubmitting] = useState(false);
+  const [form, setForm] = useState({
+    product_name: '',
+    category: '',
+    description: '',
+    brand: '',
+    min_price: '',
+    max_price: '',
+    notes: '',
+  });
+  const [requests, setRequests] = useState<ProductRequest[]>([]);
   const [submitted, setSubmitted] = useState(false);
-
-  const customerId = user?.id || 'usr-001';
+  const [loading, setLoading] = useState(false);
+  const [fetchingRequests, setFetchingRequests] = useState(true);
 
   useEffect(() => {
-    productRequestsApi.list({ customer_id: customerId }).then((res: any) => {
-      setRequests(Array.isArray(res) ? res : res.data || []);
-    }).catch(() => {});
-  }, [customerId]);
+    fetchRequests();
+  }, []);
 
-  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
-    setForm(f => ({ ...f, [k]: e.target.value }));
+  async function fetchRequests() {
+    setFetchingRequests(true);
+    try {
+      const res = await productRequestsApi.list({ customer_id: 'usr-001' });
+      const data = Array.isArray(res) ? res : (res as { data?: ProductRequest[] }).data || [];
+      setRequests(data);
+    } catch (error) {
+      console.error('Failed to fetch requests:', error);
+    } finally {
+      setFetchingRequests(false);
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitting(true);
+    setLoading(true);
     try {
-      const newReq = await productRequestsApi.create({
-        customer_id: customerId,
-        product_name: form.name,
+      await productRequestsApi.create({
+        customer_id: 'usr-001',
+        customer_email: 'customer@demo.com',
+        product_name: form.product_name,
         category: form.category,
-        brand: form.brand,
         description: form.description,
-        customer_email: form.email || user?.email || '',
-        status: 'pending',
-      } as any);
-      setRequests(r => [newReq, ...r]);
+        brand: form.brand,
+      });
       setSubmitted(true);
-      setForm({ name: '', category: '', brand: '', description: '', price_min: '', price_max: '', email: '', notes: '' });
-      setTimeout(() => setSubmitted(false), 4000);
-    } catch (e) { console.error(e); }
-    finally { setSubmitting(false); }
+      await fetchRequests();
+    } catch (error) {
+      console.error('Failed to submit request:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await productRequestsApi.delete(id);
+      setRequests((prev) => prev.filter((r) => r.id !== id));
+    } catch (error) {
+      console.error('Failed to delete request:', error);
+    }
   };
 
   return (
-    <>
+    <div className="min-h-screen flex flex-col bg-gray-50">
       <Header />
-      <main className="bg-gray-50 min-h-screen">
-        {/* Breadcrumb */}
+
+      <main className="flex-1">
         <div className="bg-white border-b border-gray-100">
-          <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-2 text-xs text-gray-500">
-            <Link href="/" className="hover:text-blue-600">Home</Link>
-            <ChevronRight style={{ width: 12, height: 12 }} />
-            <span className="text-gray-900 font-medium">Request a Product</span>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <Link href="/" className="hover:text-blue-600">Home</Link>
+              <ChevronRight className="w-4 h-4" />
+              <span className="text-gray-900 font-medium">Product Request</span>
+            </div>
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <SearchIcon className="text-blue-600" style={{ width: 24, height: 24 }} />
-            </div>
-            <h1 className="text-2xl font-extrabold text-gray-900 mb-2">Can't Find What You're Looking For?</h1>
-            <p className="text-sm text-gray-500 max-w-lg mx-auto">
-              Submit a product request and our team will source it from our warehouse network.
-            </p>
-          </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-            {/* Form */}
-            <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm">
-              <div className="px-6 py-5 border-b border-gray-50">
-                <h2 className="text-base font-bold text-gray-900">Product Request Form</h2>
-                <p className="text-xs text-gray-400 mt-0.5">Fields marked * are required</p>
+            {/* Left: Illustration */}
+            <div className="hidden lg:flex flex-col items-center justify-center bg-blue-600 rounded-2xl p-8 text-center relative overflow-hidden">
+              <div className="absolute inset-0 opacity-10">
+                <div className="absolute top-4 left-4 w-20 h-20 bg-white rounded-full" />
+                <div className="absolute bottom-8 right-8 w-32 h-32 bg-white rounded-full" />
               </div>
-
-              {submitted && (
-                <div className="mx-6 mt-5 bg-emerald-50 border border-emerald-100 rounded-2xl p-4 flex items-center gap-3">
-                  <CheckCircle2 className="text-emerald-500 flex-shrink-0" style={{ width: 20, height: 20 }} />
-                  <p className="text-sm font-medium text-emerald-700">Request submitted! We'll get back to you within 24 hours.</p>
+              <div className="relative z-10">
+                <div className="w-32 h-32 mx-auto mb-6 flex items-center justify-center">
+                  <svg viewBox="0 0 160 160" className="w-full h-full">
+                    <rect x="20" y="100" width="120" height="50" rx="8" fill="white" opacity="0.2"/>
+                    <rect x="10" y="80" width="140" height="60" rx="8" fill="white" opacity="0.3"/>
+                    <rect x="30" y="50" width="100" height="80" rx="8" fill="white" opacity="0.9"/>
+                    <text x="80" y="90" textAnchor="middle" fontSize="28" fontWeight="bold" fill="#2563EB">REQ</text>
+                    <circle cx="50" cy="70" r="8" fill="#3B82F6"/>
+                    <circle cx="80" cy="70" r="8" fill="#3B82F6"/>
+                    <circle cx="110" cy="70" r="8" fill="#3B82F6"/>
+                    <path d="M55 120 L80 140 L105 120" fill="#60A5FA" opacity="0.6"/>
+                  </svg>
                 </div>
-              )}
-
-              <form onSubmit={handleSubmit} className="p-6 space-y-5">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <Field label="Product Name *">
-                    <Input value={form.name} onChange={set('name')} placeholder="e.g. iPhone 15 Pro Max" required />
-                  </Field>
-                  <Field label="Category *">
-                    <select value={form.category} onChange={set('category')} required
-                      className="w-full px-3 h-10 border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 bg-white transition-all cursor-pointer">
-                      <option value="">Select category</option>
-                      {CATEGORIES.map(c => <option key={c}>{c}</option>)}
-                    </select>
-                  </Field>
-                  <Field label="Preferred Brand">
-                    <Input value={form.brand} onChange={set('brand')} placeholder="e.g. Apple, Samsung" />
-                  </Field>
-                  <Field label="Contact Email">
-                    <Input type="email" value={form.email} onChange={set('email')} placeholder={user?.email || 'your@email.com'} />
-                  </Field>
-                </div>
-
-                <Field label="Description *">
-                  <textarea value={form.description} onChange={set('description')} required rows={4}
-                    placeholder="Describe the product, any specific features, model numbers, etc."
-                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 resize-none transition-all" />
-                </Field>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <Field label="Min Price (Br)">
-                    <Input type="number" value={form.price_min} onChange={set('price_min')} placeholder="0" />
-                  </Field>
-                  <Field label="Max Price (Br)">
-                    <Input type="number" value={form.price_max} onChange={set('price_max')} placeholder="Any" />
-                  </Field>
-                </div>
-
-                {/* Image upload */}
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">Reference Image (optional)</label>
-                  <div className="border-2 border-dashed border-gray-200 rounded-2xl p-6 text-center hover:border-blue-300 transition-colors cursor-pointer">
-                    <Upload className="text-gray-300 mx-auto mb-2" style={{ width: 24, height: 24 }} />
-                    <p className="text-xs text-gray-400">Click or drag & drop image here</p>
-                    <p className="text-[11px] text-gray-300 mt-1">PNG, JPG up to 5MB</p>
-                  </div>
-                </div>
-
-                <Field label="Additional Notes">
-                  <textarea value={form.notes} onChange={set('notes')} rows={3}
-                    placeholder="Any other details that might help us find your product"
-                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 resize-none transition-all" />
-                </Field>
-
-                <button type="submit" disabled={submitting}
-                  className="w-full h-11 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 disabled:opacity-60 shadow-lg shadow-blue-100"
-                  style={{ background: 'linear-gradient(135deg,#1d4ed8,#3b82f6)' }}>
-                  {submitting ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Submit Request'}
-                </button>
-              </form>
+                <h3 className="text-xl font-bold text-white mb-3">Can&apos;t find what you&apos;re looking for?</h3>
+                <p className="text-blue-100 text-sm leading-relaxed">
+                  Tell us what product you need, and we&apos;ll try to get it for you.
+                </p>
+              </div>
             </div>
 
-            {/* Right panel */}
-            <div className="space-y-5">
-              {/* How it works */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                <h3 className="text-sm font-bold text-gray-900 mb-4">How It Works</h3>
-                <div className="space-y-4">
-                  {HOW_IT_WORKS.map(s => (
-                    <div key={s.step} className="flex gap-3">
-                      <div className="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-extrabold text-white flex-shrink-0"
-                        style={{ background: 'linear-gradient(135deg,#1d4ed8,#3b82f6)' }}>
-                        {s.step}
+            {/* Middle: Form */}
+            <div className="bg-white rounded-xl border border-gray-100 p-6">
+              {submitted ? (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CheckCircle className="w-8 h-8 text-green-600" />
+                  </div>
+                  <h3 className="font-bold text-gray-900 mb-2">Request Submitted!</h3>
+                  <p className="text-gray-500 text-sm mb-6">Our team will review your request and get back to you soon.</p>
+                  <button
+                    onClick={() => { setSubmitted(false); setForm({ product_name: '', category: '', description: '', brand: '', min_price: '', max_price: '', notes: '' }); }}
+                    className="w-full py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors"
+                  >
+                    Submit Another Request
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <h2 className="text-lg font-bold text-gray-900 mb-0.5">Request a Product</h2>
+                  <p className="text-gray-500 text-sm mb-5">Can&apos;t find what you&apos;re looking for? Let us know!</p>
+
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1.5">Product Name *</label>
+                        <input
+                          type="text"
+                          placeholder="Enter product name"
+                          value={form.product_name}
+                          onChange={(e) => setForm({ ...form, product_name: e.target.value })}
+                          className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                          required
+                        />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-gray-800">{s.title}</p>
-                        <p className="text-xs text-gray-400 mt-0.5">{s.desc}</p>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1.5">Category *</label>
+                        <select
+                          value={form.category}
+                          onChange={(e) => setForm({ ...form, category: e.target.value })}
+                          className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:outline-none bg-white focus:ring-2 focus:ring-blue-500/20 transition-all"
+                          required
+                        >
+                          <option value="">Select a category</option>
+                          {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+                        </select>
                       </div>
                     </div>
-                  ))}
+
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">Brand (Optional)</label>
+                      <input
+                        type="text"
+                        placeholder="Enter brand name"
+                        value={form.brand}
+                        onChange={(e) => setForm({ ...form, brand: e.target.value })}
+                        className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">Detailed Description *</label>
+                      <textarea
+                        placeholder="Describe the product you are looking for, features, specifications, etc."
+                        value={form.description}
+                        onChange={(e) => setForm({ ...form, description: e.target.value })}
+                        rows={4}
+                        className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:outline-none resize-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">Preferred Price Range (USD)</label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <input
+                          type="number"
+                          placeholder="Min Price"
+                          value={form.min_price}
+                          onChange={(e) => setForm({ ...form, min_price: e.target.value })}
+                          className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                          min="0"
+                        />
+                        <input
+                          type="number"
+                          placeholder="Max Price"
+                          value={form.max_price}
+                          onChange={(e) => setForm({ ...form, max_price: e.target.value })}
+                          className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                          min="0"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">Reference Image (Optional)</label>
+                      <label className="border-2 border-dashed border-gray-200 rounded-xl p-5 text-center hover:border-blue-300 transition-colors cursor-pointer flex flex-col items-center gap-2 bg-gray-50 hover:bg-blue-50/30">
+                        <Upload className="w-6 h-6 text-gray-400" />
+                        <div>
+                          <span className="text-sm text-blue-600 font-medium cursor-pointer hover:underline">Click to upload</span>
+                          <span className="text-xs text-gray-500"> or drag and drop</span>
+                        </div>
+                        <p className="text-xs text-gray-400">PNG, JPG up to 5MB</p>
+                        <input type="file" className="hidden" accept="image/*" />
+                      </label>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">Additional Notes (Optional)</label>
+                      <textarea
+                        placeholder="Any other information that might help us find this product."
+                        value={form.notes}
+                        onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                        rows={3}
+                        className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:outline-none resize-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-xl font-semibold text-sm transition-colors flex items-center justify-center gap-2 shadow-sm"
+                    >
+                      {loading
+                        ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Submitting...</>
+                        : 'Submit Request'
+                      }
+                    </button>
+                  </form>
+                </>
+              )}
+            </div>
+
+            {/* Right: How it works + Need Help */}
+            <div className="space-y-4">
+              <div className="bg-white rounded-xl border border-gray-100 p-5">
+                <h3 className="font-bold text-gray-900 mb-4">How It Works</h3>
+                <div className="space-y-4">
+                  {[
+                    { step: 1, icon: CheckCircle, title: 'Submit Request', desc: 'Fill in the details of the product you need.', color: 'text-blue-600 bg-blue-50' },
+                    { step: 2, icon: Search, title: 'We Search', desc: 'Our team will look for the best options for you.', color: 'text-green-600 bg-green-50' },
+                    { step: 3, icon: Bell, title: 'Get Notified', desc: 'We\'ll notify you when the product is available.', color: 'text-orange-600 bg-orange-50' },
+                  ].map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <div key={item.step} className="flex items-start gap-3">
+                        <div className="flex-shrink-0">
+                          <div className={`w-8 h-8 rounded-lg ${item.color} flex items-center justify-center`}>
+                            <span className="text-xs font-bold">{item.step}</span>
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900">{item.title}</p>
+                          <p className="text-xs text-gray-500 mt-0.5">{item.desc}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
-              {/* Support */}
-              <div className="rounded-2xl p-5 text-white relative overflow-hidden" style={{ background: 'linear-gradient(135deg,#1e3a8a,#1d4ed8)' }}>
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center">
-                    <HelpCircle style={{ width: 18, height: 18 }} />
-                  </div>
-                  <h3 className="text-sm font-bold">Need Help?</h3>
-                </div>
-                <p className="text-xs text-blue-200 mb-4">Our team responds within 24 hours to all product requests.</p>
-                <a href="mailto:support@marketbridge.com"
-                  className="block w-full py-2 bg-white/20 hover:bg-white/30 rounded-xl text-xs font-semibold text-center transition-colors">
-                  Contact Support
+              <div className="bg-white rounded-xl border border-gray-100 p-5">
+                <h3 className="font-semibold text-gray-900 mb-2">Need Help?</h3>
+                <p className="text-sm text-gray-500 mb-3">Contact our support team</p>
+                <a href="mailto:support@marketbridge.com" className="text-sm text-blue-600 hover:underline block">
+                  support@marketbridge.com
+                </a>
+                <a href="tel:+15551234567" className="text-sm text-blue-600 hover:underline block mt-1">
+                  +1 (555) 123-4567
                 </a>
               </div>
             </div>
           </div>
 
-          {/* Request History */}
-          {requests.length > 0 && (
-            <div className="mt-8 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
-                <h3 className="text-sm font-bold text-gray-900">Your Requests</h3>
-                <span className="text-xs text-gray-400">{requests.length} requests</span>
+          {/* Request History Table */}
+          <div className="mt-6 bg-white rounded-xl border border-gray-100 overflow-hidden">
+            <div className="p-5 border-b border-gray-100">
+              <h3 className="font-bold text-gray-900">Your Request History</h3>
+            </div>
+            {fetchingRequests ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
               </div>
+            ) : requests.length === 0 ? (
+              <div className="text-center py-10">
+                <p className="text-sm text-gray-500">No requests yet. Submit your first request above!</p>
+              </div>
+            ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="bg-gray-50/70">
-                      {['Request ID', 'Product', 'Category', 'Date', 'Status', ''].map(h => (
-                        <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
-                      ))}
+                    <tr className="bg-gray-50 border-b border-gray-100">
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Request ID</th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Product Name</th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Category</th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Requested On</th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
-                    {requests.map(r => (
-                      <tr key={r.id} className="hover:bg-gray-50/50 transition-colors">
-                        <td className="px-4 py-3.5 text-xs font-mono text-gray-500">#{(r.id || '').slice(0, 8).toUpperCase()}</td>
-                        <td className="px-4 py-3.5 text-sm font-medium text-gray-800 max-w-[160px]">
-                          <p className="truncate">{r.product_name}</p>
+                    {requests.map((req) => (
+                      <tr key={req.id} className="hover:bg-gray-50/50 transition-colors">
+                        <td className="px-5 py-3.5">
+                          <span className="text-xs font-mono text-gray-600">{req.id.slice(0, 12).toUpperCase()}</span>
                         </td>
-                        <td className="px-4 py-3.5 text-xs text-gray-500">{r.category || '—'}</td>
-                        <td className="px-4 py-3.5 text-xs text-gray-400">
-                          {r.created_at ? new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+                        <td className="px-5 py-3.5">
+                          <span className="text-sm font-medium text-gray-900">{req.product_name}</span>
                         </td>
-                        <td className="px-4 py-3.5">
-                          <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full capitalize ${STATUS_BADGE[r.status] || 'bg-gray-100 text-gray-500'}`}>
-                            {r.status || 'pending'}
+                        <td className="px-5 py-3.5">
+                          <span className="text-sm text-gray-600">{req.category || '—'}</span>
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <span className="text-sm text-gray-600">
+                            {new Date(req.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                           </span>
                         </td>
-                        <td className="px-4 py-3.5">
-                          <button className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
-                            <X style={{ width: 13, height: 13 }} />
-                          </button>
+                        <td className="px-5 py-3.5">
+                          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${STATUS_COLORS[req.status] || 'bg-gray-100 text-gray-600'}`}>
+                            {STATUS_LABELS[req.status] || req.status}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <div className="flex items-center gap-2">
+                            <button className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+                              <Eye className="w-4 h-4" />
+                            </button>
+                            {req.status === 'pending' && (
+                              <button
+                                onClick={() => handleDelete(req.id)}
+                                className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
+            )}
+          </div>
+
+          {/* How it works - bottom */}
+          <div className="mt-6 bg-white rounded-xl border border-gray-100 p-6">
+            <h3 className="font-bold text-gray-900 mb-6 text-center">How it works?</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[
+                { step: 1, icon: '📋', title: 'Submit Request', desc: 'Fill out the form with details of the product you need.' },
+                { step: 2, icon: '🔍', title: 'We Search', desc: 'Our team searches for the best options for you.' },
+                { step: 3, icon: '🔔', title: 'Get Updates', desc: 'We notify you when the product is available.' },
+              ].map((item) => (
+                <div key={item.step} className="flex flex-col items-center text-center">
+                  <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-2xl mb-3">
+                    {item.icon}
+                  </div>
+                  <p className="text-sm font-bold text-gray-900 mb-1">{item.step}. {item.title}</p>
+                  <p className="text-xs text-gray-500">{item.desc}</p>
+                </div>
+              ))}
             </div>
-          )}
+          </div>
         </div>
       </main>
-      <Footer />
-    </>
-  );
-}
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-1.5">
-      <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">{label}</label>
-      {children}
+      <Footer />
     </div>
-  );
-}
-function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <input {...props}
-      className={`w-full px-3 h-10 border border-gray-200 rounded-xl text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all ${props.className || ''}`} />
   );
 }

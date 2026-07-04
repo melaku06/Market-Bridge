@@ -103,11 +103,11 @@ export default function OrderDetailsPage() {
               <h2 className="text-sm font-bold text-gray-900">Ordered Items ({order.items?.length || 0})</h2>
             </div>
             <div className="divide-y divide-gray-50">
-              {((order.items || []) as any[]).map((item: any, i: number) => (
+              {(order.items || []).map((item, i) => (
                 <div key={i} className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50/50 transition-colors">
                   <div className="w-12 h-12 rounded-xl bg-gray-100 border border-gray-100 overflow-hidden flex-shrink-0">
-                    {(item as any).product_image
-                      ? <img src={(item as any).product_image} alt={(item as any).product_name} className="w-full h-full object-cover" />
+                    {item.product_image
+                      ? <img src={item.product_image} alt={item.product_name} className="w-full h-full object-cover" />
                       : <div className="w-full h-full flex items-center justify-center"><Package className="text-gray-300" style={{ width: 20, height: 20 }} /></div>}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -219,14 +219,14 @@ export default function OrderDetailsPage() {
               <MapPin className="text-purple-500" style={{ width: 15, height: 15 }} />
               Shipping Address
             </h3>
-            {order.shipping_address as any ? (
+            {order.shipping_address ? (
               <div className="text-xs text-gray-600 space-y-1 leading-relaxed">
-                <p className="font-medium text-gray-800">{(order.shipping_address as any).full_name}</p>
-                <p>{(order.shipping_address as any).address_line1}</p>
-                {(order.shipping_address as any).address_line2 && <p>{(order.shipping_address as any).address_line2}</p>}
-                <p>{(order.shipping_address as any).city}, {(order.shipping_address as any).state}</p>
-                <p>{(order.shipping_address as any).country}</p>
-                {(order.shipping_address as any).phone && <p className="text-gray-400">{(order.shipping_address as any).phone}</p>}
+                <p className="font-medium text-gray-800">{order.shipping_address.full_name}</p>
+                <p>{order.shipping_address.address_line1}</p>
+                {order.shipping_address.address_line2 && <p>{order.shipping_address.address_line2}</p>}
+                <p>{order.shipping_address.city}, {order.shipping_address.state}</p>
+                <p>{order.shipping_address.country}</p>
+                {order.shipping_address.phone && <p className="text-gray-400">{order.shipping_address.phone}</p>}
               </div>
             ) : (
               <p className="text-xs text-gray-400">No address provided</p>
