@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ChevronRight, Search, CheckCircle, Package, Truck, MapPin, XCircle, Clock } from 'lucide-react';
+import { ChevronRight, Search, CheckCircle, Package, Truck, MapPin, XCircle, Clock, ArrowRight } from 'lucide-react';
 import { ordersApi } from '@/lib/api';
 import type { Order, OrderStatus } from '@/lib/types';
 
@@ -30,12 +30,12 @@ const STATUS_DESCRIPTIONS: Record<string, string> = {
 };
 
 const statusColors: Record<string, string> = {
-  pending: 'bg-yellow-100 text-yellow-700',
-  confirmed: 'bg-blue-100 text-blue-700',
-  processing: 'bg-orange-100 text-orange-700',
-  shipped: 'bg-blue-100 text-blue-700',
-  delivered: 'bg-green-100 text-green-700',
-  cancelled: 'bg-red-100 text-red-700',
+  pending: 'bg-amber-50 text-amber-700 ring-amber-200',
+  confirmed: 'bg-violet-50 text-violet-700 ring-violet-200',
+  processing: 'bg-orange-50 text-orange-700 ring-orange-200',
+  shipped: 'bg-blue-50 text-blue-700 ring-blue-200',
+  delivered: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
+  cancelled: 'bg-red-50 text-red-700 ring-red-200',
 };
 
 export default function OrderTrackingPage() {
@@ -73,17 +73,17 @@ export default function OrderTrackingPage() {
   return (
     <div className="space-y-5">
       <div>
-        <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
-          <Link href="/dashboard" className="hover:text-blue-600">Dashboard</Link>
-          <ChevronRight className="w-4 h-4" />
-          <span className="text-gray-900 font-medium">Order Tracking</span>
+        <div className="flex items-center gap-2 text-sm text-gray-400 mb-1">
+          <Link href="/dashboard" className="hover:text-blue-600 transition-colors">Dashboard</Link>
+          <ChevronRight className="w-3.5 h-3.5" />
+          <span className="text-gray-700 font-medium">Order Tracking</span>
         </div>
-        <h1 className="text-xl font-bold text-gray-900">Track Your Order</h1>
-        <p className="text-sm text-gray-500">Enter your order number to track your order status.</p>
+        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Track Your Order</h1>
+        <p className="text-sm text-gray-500 mt-1">Enter your order number to track your order status.</p>
       </div>
 
       {/* Tracking Input */}
-      <div className="bg-white rounded-xl border border-gray-100 p-5">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
         <p className="text-sm font-semibold text-gray-700 mb-3">Order Number</p>
         <div className="flex gap-3">
           <input
@@ -92,12 +92,12 @@ export default function OrderTrackingPage() {
             onChange={(e) => setTrackingId(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleTrack()}
             placeholder="Enter order number (e.g. MB123456789)"
-            className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+            className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all bg-gray-50 focus:bg-white"
           />
           <button
             onClick={handleTrack}
             disabled={loading}
-            className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-xl font-semibold text-sm transition-colors flex items-center gap-2 shadow-sm"
+            className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-xl font-semibold text-sm transition-colors flex items-center gap-2 shadow-sm shadow-blue-600/20"
           >
             {loading
               ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -112,12 +112,12 @@ export default function OrderTrackingPage() {
       {trackedOrder && (
         <>
           {/* Order Header + Progress */}
-          <div className="bg-white rounded-xl border border-gray-100 p-6">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
             <div className="flex items-start justify-between mb-6">
               <div>
                 <div className="flex items-center gap-2 mb-0.5">
-                  <h2 className="font-bold text-gray-900 text-lg">Order #{trackedOrder.id}</h2>
-                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full capitalize ${statusColors[trackedOrder.status] || 'bg-gray-100 text-gray-600'}`}>
+                  <h2 className="font-bold text-gray-900 text-lg">Order #{trackedOrder.id.slice(-6).toUpperCase()}</h2>
+                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ring-1 capitalize ${statusColors[trackedOrder.status] || 'bg-gray-50 text-gray-600 ring-gray-200'}`}>
                     {trackedOrder.status === 'delivered' ? 'Delivered' : trackedOrder.status}
                   </span>
                 </div>
@@ -131,7 +131,6 @@ export default function OrderTrackingPage() {
             {trackedOrder.status !== 'cancelled' ? (
               <div className="relative">
                 <div className="flex items-start justify-between relative">
-                  {/* Connecting line */}
                   <div className="absolute top-5 left-0 right-0 h-0.5 bg-gray-200">
                     <div
                       className="h-full bg-blue-500 transition-all duration-500"
@@ -147,8 +146,8 @@ export default function OrderTrackingPage() {
                       <div key={step.key} className="flex flex-col items-center flex-1 relative z-10">
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${
                           done
-                            ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
-                            : 'bg-white border-gray-300 text-gray-400'
+                            ? 'bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-600/30'
+                            : 'bg-white border-gray-200 text-gray-400'
                         }`}>
                           <StepIcon className="w-4 h-4" />
                         </div>
@@ -176,7 +175,7 @@ export default function OrderTrackingPage() {
           </div>
 
           {/* Tracking Details */}
-          <div className="bg-white rounded-xl border border-gray-100 p-6">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
             <h3 className="font-bold text-gray-900 mb-5">Tracking Details</h3>
             <div className="relative pl-7">
               <div className="absolute left-3.5 top-2 bottom-2 w-0.5 bg-gray-200" />
@@ -213,7 +212,7 @@ export default function OrderTrackingPage() {
 
           {/* Shipping + Warehouse Info */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="bg-white rounded-xl border border-gray-100 p-5">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
               <h3 className="font-bold text-gray-900 mb-4">Shipping Information</h3>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
@@ -233,7 +232,7 @@ export default function OrderTrackingPage() {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-100 p-5">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
               <h3 className="font-bold text-gray-900 mb-4">Warehouse Information</h3>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
@@ -257,7 +256,7 @@ export default function OrderTrackingPage() {
           </div>
 
           {/* Order Summary */}
-          <div className="bg-white rounded-xl border border-gray-100 p-6">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
             <h3 className="font-bold text-gray-900 mb-4">Order Summary</h3>
             <div className="space-y-3 mb-4">
               {trackedOrder.items.map((item, i) => (
@@ -274,7 +273,7 @@ export default function OrderTrackingPage() {
                     <p className="text-xs text-gray-500">Qty: {item.qty}</p>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="text-sm font-bold text-gray-900">${(item.price * item.qty).toFixed(2)}</p>
+                    <p className="text-sm font-bold text-gray-900">{(item.price * item.qty).toLocaleString()} Br</p>
                   </div>
                 </div>
               ))}
@@ -283,31 +282,31 @@ export default function OrderTrackingPage() {
             <div className="border-t border-gray-100 pt-4 space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Subtotal</span>
-                <span className="text-gray-900">${trackedOrder.subtotal.toFixed(2)}</span>
+                <span className="text-gray-900">{trackedOrder.subtotal.toLocaleString()} Br</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Shipping</span>
-                <span className="text-gray-900">{trackedOrder.shipping_fee === 0 ? '$0.00' : `$${trackedOrder.shipping_fee.toFixed(2)}`}</span>
+                <span className="text-gray-900">{trackedOrder.shipping_fee === 0 ? 'Free' : `${trackedOrder.shipping_fee.toLocaleString()} Br`}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Tax</span>
-                <span className="text-gray-900">${((trackedOrder.total - trackedOrder.subtotal - trackedOrder.shipping_fee) || 0).toFixed(2)}</span>
+                <span className="text-gray-900">{((trackedOrder.total - trackedOrder.subtotal - trackedOrder.shipping_fee) || 0).toLocaleString()} Br</span>
               </div>
               <div className="flex justify-between font-bold border-t border-gray-100 pt-2 mt-2">
                 <span className="text-gray-900">Total</span>
-                <span className="text-gray-900 text-lg">${trackedOrder.total.toFixed(2)}</span>
+                <span className="text-gray-900 text-lg">{trackedOrder.total.toLocaleString()} Br</span>
               </div>
             </div>
 
             <Link href={`/dashboard/orders/${trackedOrder.id}`}>
-              <button className="mt-4 w-full py-2.5 border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors text-gray-700">
-                View Full Order Details
+              <button className="mt-4 w-full py-2.5 border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors text-gray-700 flex items-center justify-center gap-2">
+                View Full Order Details <ArrowRight className="w-4 h-4" />
               </button>
             </Link>
           </div>
 
           {/* Need Help */}
-          <div className="bg-white rounded-xl border border-gray-100 p-5">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <h3 className="font-bold text-gray-900 mb-1">Need Help?</h3>
             <p className="text-sm text-gray-500 mb-3">Contact our support team for any assistance.</p>
             <a
@@ -321,7 +320,7 @@ export default function OrderTrackingPage() {
       )}
 
       {!trackedOrder && !notFound && !loading && (
-        <div className="bg-white rounded-xl border border-gray-100 p-16 text-center">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-16 text-center">
           <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Package className="w-8 h-8 text-blue-400" />
           </div>

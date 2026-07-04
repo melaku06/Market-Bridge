@@ -2,17 +2,16 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Search, Filter, Package, ChevronRight, ArrowRight } from 'lucide-react';
+import { Search, Filter, Package, ChevronRight, ArrowRight, Download } from 'lucide-react';
 import { useOrdersStore } from '@/stores';
-import { useAuthStore } from '@/stores';
 
 const statusColor: Record<string, string> = {
-  delivered: 'bg-emerald-100 text-emerald-700',
-  shipped: 'bg-blue-100 text-blue-700',
-  processing: 'bg-orange-100 text-orange-700',
-  pending: 'bg-yellow-100 text-yellow-700',
-  cancelled: 'bg-red-100 text-red-700',
-  confirmed: 'bg-violet-100 text-violet-700',
+  delivered: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
+  shipped: 'bg-blue-50 text-blue-700 ring-blue-200',
+  processing: 'bg-orange-50 text-orange-700 ring-orange-200',
+  pending: 'bg-amber-50 text-amber-700 ring-amber-200',
+  cancelled: 'bg-red-50 text-red-700 ring-red-200',
+  confirmed: 'bg-violet-50 text-violet-700 ring-violet-200',
 };
 
 const statusLabels: Record<string, string> = {
@@ -57,15 +56,15 @@ export default function OrdersPage() {
   return (
     <div className="space-y-5">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-sm text-gray-400 mb-1">
             <Link href="/dashboard" className="hover:text-blue-600 transition-colors">Dashboard</Link>
             <ChevronRight className="w-3.5 h-3.5" />
             <span className="text-gray-700 font-medium">My Orders</span>
           </div>
-          <h1 className="text-xl font-bold text-gray-900">My Orders</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Track and manage all your orders</p>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">My Orders</h1>
+          <p className="text-sm text-gray-500 mt-1">Track and manage all your orders in one place.</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="relative">
@@ -75,14 +74,36 @@ export default function OrdersPage() {
               placeholder="Search orders..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 pr-3 py-2 border border-gray-200 rounded-xl text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 w-48 bg-gray-50 focus:bg-white transition-all"
+              className="pl-9 pr-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 w-full sm:w-56 bg-gray-50 focus:bg-white transition-all"
             />
           </div>
-          <button className="flex items-center gap-1.5 px-3 py-2 border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50 text-gray-600 transition-colors">
+          <button className="flex items-center gap-1.5 px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50 text-gray-600 transition-colors bg-white">
             <Filter className="w-4 h-4" />
-            Filter
+            <span className="hidden sm:inline">Filter</span>
+          </button>
+          <button className="flex items-center gap-1.5 px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50 text-gray-600 transition-colors bg-white">
+            <Download className="w-4 h-4" />
+            <span className="hidden sm:inline">Export</span>
           </button>
         </div>
+      </div>
+
+      {/* Stats summary */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: 'Total Orders', value: orders.length, color: 'text-blue-600', bg: 'bg-blue-50' },
+          { label: 'Pending', value: orders.filter(o => o.status === 'pending').length, color: 'text-amber-600', bg: 'bg-amber-50' },
+          { label: 'Processing', value: orders.filter(o => o.status === 'processing').length, color: 'text-orange-600', bg: 'bg-orange-50' },
+          { label: 'Delivered', value: orders.filter(o => o.status === 'delivered').length, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+        ].map(s => (
+          <div key={s.label} className="bg-white rounded-2xl border border-gray-100 p-4">
+            <div className={`w-9 h-9 ${s.bg} rounded-lg flex items-center justify-center mb-2`}>
+              <Package className={`w-4 h-4 ${s.color}`} />
+            </div>
+            <p className="text-xl font-bold text-gray-900">{s.value}</p>
+            <p className="text-xs text-gray-500 font-medium">{s.label}</p>
+          </div>
+        ))}
       </div>
 
       {orders.length === 0 ? (
@@ -176,7 +197,7 @@ export default function OrdersPage() {
                         <span className="text-sm font-bold text-gray-900">{order.total.toLocaleString()} Br</span>
                       </td>
                       <td className="px-5 py-4">
-                        <span className={`inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full ${statusColor[order.status] || 'bg-gray-100 text-gray-600'}`}>
+                        <span className={`inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full ring-1 ${statusColor[order.status] || 'bg-gray-50 text-gray-600 ring-gray-200'}`}>
                           {statusLabels[order.status] || order.status}
                         </span>
                       </td>

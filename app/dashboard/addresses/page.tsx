@@ -2,17 +2,24 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ChevronRight, Plus, Edit2, Trash2, MapPin, CheckCircle, X, Save, Info } from 'lucide-react';
+import { ChevronRight, Plus, Edit2, Trash2, MapPin, CheckCircle, X, Save, Info, Home, Briefcase, MapPinned } from 'lucide-react';
 import { useAddressesStore } from '@/stores';
 import type { Address } from '@/lib/types';
 
 const ADDRESS_IMAGES = [
-  'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=200',
-  'https://images.pexels.com/photos/280221/pexels-photo-280221.jpeg?auto=compress&cs=tinysrgb&w=200',
-  'https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=200',
-  'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=200',
-  'https://images.pexels.com/photos/208736/pexels-photo-208736.jpeg?auto=compress&cs=tinysrgb&w=200',
+  'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=400',
+  'https://images.pexels.com/photos/280221/pexels-photo-280221.jpeg?auto=compress&cs=tinysrgb&w=400',
+  'https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=400',
+  'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=400',
+  'https://images.pexels.com/photos/208736/pexels-photo-208736.jpeg?auto=compress&cs=tinysrgb&w=400',
 ];
+
+const labelIcon = (label: string) => {
+  const l = label.toLowerCase();
+  if (l.includes('home')) return <Home className="w-4 h-4" />;
+  if (l.includes('office') || l.includes('work')) return <Briefcase className="w-4 h-4" />;
+  return <MapPinned className="w-4 h-4" />;
+};
 
 const CUSTOMER_ID = 'usr-001';
 const EMPTY_FORM = { label: '', name: '', phone: '', address: '', city: '', country: 'Ethiopia' };
@@ -89,32 +96,33 @@ export default function AddressesPage() {
   return (
     <div className="space-y-5">
       <div>
-        <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
-          <Link href="/dashboard" className="hover:text-blue-600">Dashboard</Link>
-          <ChevronRight className="w-4 h-4" />
-          <span className="text-gray-900 font-medium">Saved Addresses</span>
+        <div className="flex items-center gap-2 text-sm text-gray-400 mb-1">
+          <Link href="/dashboard" className="hover:text-blue-600 transition-colors">Dashboard</Link>
+          <ChevronRight className="w-3.5 h-3.5" />
+          <span className="text-gray-700 font-medium">Saved Addresses</span>
         </div>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Saved Addresses</h1>
-            <p className="text-sm text-gray-500">Manage your delivery addresses</p>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Saved Addresses</h1>
+            <p className="text-sm text-gray-500 mt-1">Manage your delivery addresses for faster checkout.</p>
           </div>
           <button
             onClick={openAdd}
-            className="flex items-center gap-1.5 px-4 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm"
+            className="flex items-center gap-1.5 px-4 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm shadow-blue-600/20"
           >
             <Plus className="w-4 h-4" />
-            + Add New Address
+            <span className="hidden sm:inline">Add New Address</span>
+            <span className="sm:hidden">Add</span>
           </button>
         </div>
       </div>
 
       {/* Add / Edit Form */}
       {showForm && (
-        <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-bold text-gray-900">{editingId ? 'Edit Address' : 'Add New Address'}</h2>
-            <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition-colors">
+            <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -134,7 +142,7 @@ export default function AddressesPage() {
                   placeholder={field.placeholder}
                   value={(form as Record<string, string>)[field.key]}
                   onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
-                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all bg-gray-50 focus:bg-white"
                 />
               </div>
             ))}
@@ -143,7 +151,7 @@ export default function AddressesPage() {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 disabled:bg-blue-400 transition-colors shadow-sm"
+              className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 disabled:bg-blue-400 transition-colors shadow-sm shadow-blue-600/20"
             >
               {saving
                 ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -160,50 +168,53 @@ export default function AddressesPage() {
 
       {/* Address List */}
       {addresses.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-100 p-12 text-center">
-          <MapPin className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500 mb-2">No saved addresses yet.</p>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
+          <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <MapPin className="w-8 h-8 text-gray-300" />
+          </div>
+          <p className="text-gray-500 mb-2 font-medium">No saved addresses yet.</p>
+          <p className="text-sm text-gray-400 mb-4">Add an address to speed up your checkout.</p>
           <button onClick={openAdd} className="text-blue-600 hover:underline text-sm font-semibold">
             Add your first address
           </button>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {addresses.map((address, idx) => (
             <div
               key={address.id}
-              className={`bg-white rounded-xl border overflow-hidden transition-colors ${
-                address.is_default ? 'border-blue-200' : 'border-gray-100'
+              className={`bg-white rounded-2xl border-2 overflow-hidden transition-all hover:shadow-md ${
+                address.is_default ? 'border-blue-500' : 'border-gray-100 hover:border-gray-200'
               }`}
             >
               <div className="flex items-stretch">
-                {/* Content */}
                 <div className="flex-1 p-5">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      {address.is_default && (
-                        <span className="text-xs font-semibold px-2.5 py-1 bg-blue-600 text-white rounded-full">
-                          Default
-                        </span>
-                      )}
-                      <h3 className="font-bold text-gray-900">{address.label || 'Address'}</h3>
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${address.is_default ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'}`}>
+                        {labelIcon(address.label || 'Address')}
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-gray-900">{address.label || 'Address'}</h3>
+                        {address.is_default && (
+                          <span className="text-[10px] font-semibold text-blue-600 uppercase tracking-wide">Default</span>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
                       <button
                         onClick={() => openEdit(address)}
-                        className="flex items-center gap-1 p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                         title="Edit"
                       >
                         <Edit2 className="w-4 h-4" />
-                        <span className="text-xs font-medium hidden sm:block">Edit</span>
                       </button>
                       <button
                         onClick={() => handleDelete(address.id)}
-                        className="flex items-center gap-1 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                         title="Delete"
                       >
                         <Trash2 className="w-4 h-4" />
-                        <span className="text-xs font-medium hidden sm:block">Delete</span>
                       </button>
                     </div>
                   </div>
@@ -212,11 +223,11 @@ export default function AddressesPage() {
                     <p className="text-sm font-semibold text-gray-900">{address.name}</p>
                     <p className="text-sm text-gray-600">{address.address}</p>
                     <p className="text-sm text-gray-600">{address.city}, {address.country}</p>
-                    <p className="text-sm text-gray-500">Phone: {address.phone}</p>
+                    <p className="text-sm text-gray-500 mt-1">Phone: {address.phone}</p>
                   </div>
 
                   {address.is_default ? (
-                    <div className="flex items-center gap-1.5 mt-3 text-green-600">
+                    <div className="flex items-center gap-1.5 mt-3 text-emerald-600">
                       <CheckCircle className="w-4 h-4" />
                       <span className="text-xs font-semibold">Default Address</span>
                     </div>
@@ -230,8 +241,7 @@ export default function AddressesPage() {
                   )}
                 </div>
 
-                {/* Illustration */}
-                <div className="hidden sm:block w-28 flex-shrink-0 relative overflow-hidden bg-gray-50">
+                <div className="hidden sm:block w-24 flex-shrink-0 relative overflow-hidden bg-gray-50">
                   <img
                     src={ADDRESS_IMAGES[idx % ADDRESS_IMAGES.length]}
                     alt={address.label}
@@ -246,10 +256,10 @@ export default function AddressesPage() {
       )}
 
       {/* Tips */}
-      <div className="bg-white rounded-xl border border-gray-100 p-5">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
         <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
           <Info className="w-4 h-4 text-blue-500" />
-          Add New Address Tips
+          Address Tips
         </h3>
         <div className="space-y-2">
           {[
@@ -258,7 +268,7 @@ export default function AddressesPage() {
             'Provide a valid phone number for delivery updates',
           ].map((tip) => (
             <div key={tip} className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+              <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
               <p className="text-sm text-gray-600">{tip}</p>
             </div>
           ))}

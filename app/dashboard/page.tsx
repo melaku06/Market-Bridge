@@ -2,15 +2,16 @@
 
 import { useEffect } from 'react';
 import Link from 'next/link';
-import { Package, Clock, CheckCircle, DollarSign, ChevronRight, Star, Heart, ShoppingBag, ArrowRight } from 'lucide-react';
-import { useOrdersStore, useProductsStore, useWishlistStore, useAuthStore, useNotificationsStore } from '@/stores';
+import { Package, Clock, CheckCircle, DollarSign, ChevronRight, Star, Heart, ShoppingBag, ArrowRight, TrendingUp, Truck } from 'lucide-react';
+import { useOrdersStore, useProductsStore, useWishlistStore, useNotificationsStore } from '@/stores';
+import { useAuth } from '@/components/auth/auth-provider';
 
 const statusColor: Record<string, string> = {
-  delivered: 'bg-emerald-100 text-emerald-700',
-  shipped: 'bg-blue-100 text-blue-700',
-  processing: 'bg-orange-100 text-orange-700',
-  pending: 'bg-yellow-100 text-yellow-700',
-  cancelled: 'bg-red-100 text-red-700',
+  delivered: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
+  shipped: 'bg-blue-50 text-blue-700 ring-blue-200',
+  processing: 'bg-orange-50 text-orange-700 ring-orange-200',
+  pending: 'bg-amber-50 text-amber-700 ring-amber-200',
+  cancelled: 'bg-red-50 text-red-700 ring-red-200',
 };
 
 const statusLabels: Record<string, string> = {
@@ -24,7 +25,7 @@ const statusLabels: Record<string, string> = {
 export default function DashboardPage() {
   const customerId = 'usr-001';
 
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const { orders, fetchOrders, isLoading: ordersLoading } = useOrdersStore();
   const { products, fetchProducts, isLoading: productsLoading } = useProductsStore();
   const { items: wishlistItems, fetchWishlist, totalItems: wishlistTotal } = useWishlistStore();
@@ -42,7 +43,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
       </div>
     );
   }
@@ -56,15 +57,15 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Welcome */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Hello, {user?.name?.split(' ')[0] || 'Sarah'}! 👋
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+            Hello, {user?.name?.split(' ')[0] || 'Sarah'}!
           </h1>
-          <p className="text-gray-500 text-sm mt-0.5">Welcome back to MarketBridge. Here's what's happening.</p>
+          <p className="text-gray-500 text-sm mt-1">Welcome back to MarketBridge. Here's what's happening.</p>
         </div>
         <Link href="/products">
-          <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium transition-colors">
+          <button className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm shadow-blue-600/20">
             <ShoppingBag className="w-4 h-4" />
             Shop Now
           </button>
@@ -110,15 +111,15 @@ export default function DashboardPage() {
             sub: 'This year',
             href: '#',
             icon: DollarSign,
-            iconColor: 'text-purple-600',
-            bgColor: 'bg-purple-50',
-            borderColor: 'border-t-purple-500',
+            iconColor: 'text-blue-600',
+            bgColor: 'bg-blue-50',
+            borderColor: 'border-t-blue-500',
           },
         ].map((stat) => {
           const Icon = stat.icon;
           return (
             <Link key={stat.label} href={stat.href}>
-              <div className={`bg-white rounded-xl border border-gray-100 border-t-4 ${stat.borderColor} p-4 hover:shadow-md transition-all cursor-pointer`}>
+              <div className={`bg-white rounded-2xl border border-gray-100 border-t-4 ${stat.borderColor} p-5 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer`}>
                 <div className={`w-10 h-10 ${stat.bgColor} rounded-xl flex items-center justify-center mb-3`}>
                   <Icon className={`w-5 h-5 ${stat.iconColor}`} />
                 </div>
@@ -153,10 +154,9 @@ export default function DashboardPage() {
             <div className="divide-y divide-gray-50">
               {recentOrders.map((order) => (
                 <div key={order.id} className="flex items-center gap-4 px-5 py-3.5 hover:bg-gray-50/50 transition-colors">
-                  {/* Product thumbnails */}
                   <div className="flex -space-x-2 flex-shrink-0">
                     {order.items.slice(0, 2).map((item, i) => (
-                      <div key={i} className="w-10 h-10 rounded-lg overflow-hidden border-2 border-white bg-gray-100 flex-shrink-0">
+                      <div key={i} className="w-10 h-10 rounded-lg overflow-hidden border-2 border-white bg-gray-100 flex-shrink-0 shadow-sm">
                         <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                       </div>
                     ))}
@@ -168,7 +168,7 @@ export default function DashboardPage() {
                   <div className="hidden sm:block">
                     <p className="text-xs text-gray-500 mb-0.5">{order.items.length} item{order.items.length !== 1 ? 's' : ''}</p>
                   </div>
-                  <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${statusColor[order.status] || 'bg-gray-100 text-gray-600'}`}>
+                  <span className={`text-xs font-medium px-2.5 py-1 rounded-full ring-1 ${statusColor[order.status] || 'bg-gray-50 text-gray-600 ring-gray-200'}`}>
                     {statusLabels[order.status] || order.status}
                   </span>
                   <p className="text-sm font-bold text-gray-900 flex-shrink-0">{order.total.toLocaleString()} Br</p>
@@ -184,13 +184,13 @@ export default function DashboardPage() {
         {/* Right Column */}
         <div className="space-y-4">
           {/* Exclusive Deals Banner */}
-          <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 rounded-2xl p-5 text-white relative overflow-hidden">
+          <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-blue-900 rounded-2xl p-5 text-white relative overflow-hidden">
             <div className="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full" />
             <div className="absolute -right-2 -bottom-6 w-32 h-32 bg-white/5 rounded-full" />
             <div className="relative">
               <span className="inline-block text-xs bg-white/20 text-white px-2 py-0.5 rounded-full mb-2 font-medium">Limited Time</span>
               <h3 className="font-bold text-lg mb-1 leading-tight">Exclusive Deals<br />Just for You!</h3>
-              <p className="text-xs text-blue-200 mb-4">Get up to 30% off on selected items.</p>
+              <p className="text-xs text-blue-100 mb-4">Get up to 30% off on selected items.</p>
               <div className="flex -space-x-2 mb-4">
                 {recommended.slice(0, 3).map((p, i) => (
                   <div key={i} className="w-11 h-11 rounded-lg overflow-hidden border-2 border-white/40 bg-white/10">
@@ -223,6 +223,27 @@ export default function DashboardPage() {
                 View Wishlist
               </button>
             </Link>
+          </div>
+
+          {/* Shipping Status Mini */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+                <Truck className="w-4 h-4 text-blue-600" />
+              </div>
+              <h3 className="font-bold text-gray-900 text-sm">Shipping</h3>
+            </div>
+            <div className="space-y-2">
+              {orders.filter(o => o.status === 'shipped' || o.status === 'processing').slice(0, 2).map(o => (
+                <Link key={o.id} href={`/dashboard/order-tracking`} className="flex items-center justify-between text-xs hover:bg-gray-50 -mx-2 px-2 py-1.5 rounded-lg transition-colors">
+                  <span className="font-medium text-gray-700">#{o.id.slice(-6).toUpperCase()}</span>
+                  <span className={`px-2 py-0.5 rounded-full font-medium ${statusColor[o.status]}`}>{statusLabels[o.status]}</span>
+                </Link>
+              ))}
+              {orders.filter(o => o.status === 'shipped' || o.status === 'processing').length === 0 && (
+                <p className="text-xs text-gray-400">No active shipments.</p>
+              )}
+            </div>
           </div>
         </div>
       </div>
