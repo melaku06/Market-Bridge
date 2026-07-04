@@ -3,7 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState } from 'react';
-import { Package, ShoppingCart, DollarSign, TrendingUp, AlertTriangle, Clock, Warehouse as WarehouseIcon, Star } from 'lucide-react';
+import { Package, ShoppingCart, DollarSign, TrendingUp, AlertTriangle, Clock, Warehouse as WarehouseIcon, Star, Plus, ArrowUpRight, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { warehousesApi, ordersApi, inventoryApi, analyticsApi } from '@/lib/api';
 import { useAuth } from '@/components/auth/auth-provider';
@@ -47,16 +47,16 @@ export default function WarehouseDashboard() {
   if (loading || !warehouse) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
       </div>
     );
   }
 
   const stats = [
-    { name: 'Total Products', value: warehouse.total_products, icon: Package, change: '+12 this month', color: 'blue' },
-    { name: 'Total Orders', value: warehouse.total_orders, icon: ShoppingCart, change: '+45 today', color: 'green' },
+    { name: 'Total Products', value: warehouse.total_products, icon: Package, change: '+12 this month', color: 'indigo' },
+    { name: 'Total Orders', value: warehouse.total_orders, icon: ShoppingCart, change: '+45 today', color: 'emerald' },
     { name: 'Total Revenue', value: `${warehouse.total_sales.toLocaleString()} Br`, icon: DollarSign, change: '+8.2%', color: 'purple' },
-    { name: 'Performance Score', value: `${warehouse.performance_score}%`, icon: TrendingUp, change: 'Excellent', color: 'orange' },
+    { name: 'Performance Score', value: `${warehouse.performance_score}%`, icon: TrendingUp, change: 'Excellent', color: 'amber' },
   ];
 
   const pendingOrders = orders.filter(o => ['pending', 'processing'].includes(o.status));
@@ -69,54 +69,56 @@ export default function WarehouseDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-500">Welcome back, {warehouse.owner_name}</p>
+          <p className="text-gray-500 mt-0.5">Welcome back, {warehouse.owner_name}</p>
         </div>
         <Link
           href="/warehouse/products/add"
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+          className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-xl font-medium hover:from-indigo-600 hover:to-indigo-700 transition-all shadow-sm hover:shadow-md"
         >
+          <Plus className="w-4 h-4" />
           Add New Product
         </Link>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
         {stats.map((stat) => (
-          <div key={stat.name} className="bg-white rounded-xl border border-gray-100 p-6 hover:shadow-md transition-shadow">
+          <div key={stat.name} className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-lg transition-all duration-300 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                stat.color === 'blue' ? 'bg-blue-50 text-blue-600' :
-                stat.color === 'green' ? 'bg-green-50 text-green-600' :
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                stat.color === 'indigo' ? 'bg-indigo-50 text-indigo-600' :
+                stat.color === 'emerald' ? 'bg-emerald-50 text-emerald-600' :
                 stat.color === 'purple' ? 'bg-purple-50 text-purple-600' :
-                'bg-orange-50 text-orange-600'
+                'bg-amber-50 text-amber-600'
               }`}>
                 <stat.icon className="w-6 h-6" />
               </div>
+              <ArrowUpRight className="w-5 h-5 text-gray-300" />
             </div>
-            <p className="text-sm text-gray-500">{stat.name}</p>
-            <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-            <p className="text-xs text-green-600 mt-1">{stat.change}</p>
+            <p className="text-sm text-gray-500 font-medium">{stat.name}</p>
+            <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
+            <p className="text-xs text-emerald-600 mt-1.5 font-medium">{stat.change}</p>
           </div>
         ))}
       </div>
 
       {/* Alerts */}
       {(lowStockItems.length > 0 || outOfStockItems.length > 0) && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-          <div className="flex items-center gap-2 text-amber-800 mb-3">
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-5">
+          <div className="flex items-center gap-2 text-amber-800 mb-4">
             <AlertTriangle className="w-5 h-5" />
             <h3 className="font-semibold">Inventory Alerts</h3>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {outOfStockItems.length > 0 && (
-              <div className="bg-white rounded-lg p-3 border border-red-200">
-                <p className="text-sm font-medium text-red-600">{outOfStockItems.length} products out of stock</p>
+              <div className="bg-white rounded-xl p-4 border border-red-200 shadow-sm">
+                <p className="text-sm font-semibold text-red-600">{outOfStockItems.length} products out of stock</p>
                 <p className="text-xs text-gray-500 mt-1">Restock immediately to avoid lost sales</p>
               </div>
             )}
             {lowStockItems.length > 0 && (
-              <div className="bg-white rounded-lg p-3 border border-amber-200">
-                <p className="text-sm font-medium text-amber-600">{lowStockItems.length} products running low</p>
+              <div className="bg-white rounded-xl p-4 border border-amber-200 shadow-sm">
+                <p className="text-sm font-semibold text-amber-600">{lowStockItems.length} products running low</p>
                 <p className="text-xs text-gray-500 mt-1">Consider restocking soon</p>
               </div>
             )}
@@ -127,17 +129,19 @@ export default function WarehouseDashboard() {
       {/* Recent Orders & Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Orders */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-gray-100 overflow-hidden">
-          <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+          <div className="p-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
             <h2 className="font-semibold text-gray-900">Recent Orders</h2>
-            <Link href="/warehouse/orders" className="text-sm text-blue-600 hover:underline">View All</Link>
+            <Link href="/warehouse/orders" className="text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1">
+              View All <ChevronRight className="w-4 h-4" />
+            </Link>
           </div>
           <div className="divide-y divide-gray-100">
             {pendingOrders.slice(0, 5).map((order) => (
-              <div key={order.id} className="p-4 flex items-center justify-between hover:bg-gray-50">
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    order.status === 'pending' ? 'bg-yellow-100 text-yellow-600' : 'bg-blue-100 text-blue-600'
+              <div key={order.id} className="p-5 flex items-center justify-between hover:bg-gray-50/50 transition-colors">
+                <div className="flex items-center gap-4">
+                  <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${
+                    order.status === 'pending' ? 'bg-amber-100 text-amber-600' : 'bg-indigo-100 text-indigo-600'
                   }`}>
                     <Clock className="w-5 h-5" />
                   </div>
@@ -147,9 +151,9 @@ export default function WarehouseDashboard() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-medium text-gray-900">{order.total.toLocaleString()} Br</p>
-                  <span className={`text-xs px-2 py-1 rounded-full ${
-                    order.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'
+                  <p className="font-semibold text-gray-900">{order.total.toLocaleString()} Br</p>
+                  <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium mt-1 ${
+                    order.status === 'pending' ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-100' : 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-100'
                   }`}>
                     {order.status}
                   </span>
@@ -157,85 +161,101 @@ export default function WarehouseDashboard() {
               </div>
             ))}
             {pendingOrders.length === 0 && (
-              <div className="p-8 text-center text-gray-500">
-                No pending orders
+              <div className="p-10 text-center text-gray-500">
+                <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                  <ShoppingCart className="w-8 h-8 text-gray-400" />
+                </div>
+                <p className="font-medium">No pending orders</p>
+                <p className="text-sm text-gray-400 mt-1">All caught up!</p>
               </div>
             )}
           </div>
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-white rounded-xl border border-gray-100 p-4">
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
           <h2 className="font-semibold text-gray-900 mb-4">Quick Actions</h2>
           <div className="space-y-2">
             <Link
               href="/warehouse/products/add"
-              className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors"
+              className="flex items-center gap-3 p-3.5 rounded-xl hover:bg-indigo-50 text-gray-700 transition-all group"
             >
-              <Package className="w-5 h-5 text-blue-600" />
-              Add New Product
+              <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
+                <Package className="w-5 h-5 text-indigo-600" />
+              </div>
+              <span className="font-medium">Add New Product</span>
+              <ChevronRight className="w-4 h-4 ml-auto text-gray-400 group-hover:text-indigo-600" />
             </Link>
             <Link
               href="/warehouse/inventory"
-              className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors"
+              className="flex items-center gap-3 p-3.5 rounded-xl hover:bg-emerald-50 text-gray-700 transition-all group"
             >
-              <WarehouseIcon className="w-5 h-5 text-green-600" />
-              Manage Inventory
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center group-hover:bg-emerald-100 transition-colors">
+                <WarehouseIcon className="w-5 h-5 text-emerald-600" />
+              </div>
+              <span className="font-medium">Manage Inventory</span>
+              <ChevronRight className="w-4 h-4 ml-auto text-gray-400 group-hover:text-emerald-600" />
             </Link>
             <Link
               href="/warehouse/orders"
-              className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors"
+              className="flex items-center gap-3 p-3.5 rounded-xl hover:bg-purple-50 text-gray-700 transition-all group"
             >
-              <ShoppingCart className="w-5 h-5 text-purple-600" />
-              View Orders
+              <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center group-hover:bg-purple-100 transition-colors">
+                <ShoppingCart className="w-5 h-5 text-purple-600" />
+              </div>
+              <span className="font-medium">View Orders</span>
+              <ChevronRight className="w-4 h-4 ml-auto text-gray-400 group-hover:text-purple-600" />
             </Link>
             <Link
               href="/warehouse/analytics"
-              className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors"
+              className="flex items-center gap-3 p-3.5 rounded-xl hover:bg-amber-50 text-gray-700 transition-all group"
             >
-              <TrendingUp className="w-5 h-5 text-orange-600" />
-              View Analytics
+              <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center group-hover:bg-amber-100 transition-colors">
+                <TrendingUp className="w-5 h-5 text-amber-600" />
+              </div>
+              <span className="font-medium">View Analytics</span>
+              <ChevronRight className="w-4 h-4 ml-auto text-gray-400 group-hover:text-amber-600" />
             </Link>
           </div>
         </div>
       </div>
 
       {/* Warehouse Info Card */}
-      <div className="bg-white rounded-xl border border-gray-100 p-6">
-        <h2 className="font-semibold text-gray-900 mb-4">Warehouse Information</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+        <h2 className="font-semibold text-gray-900 mb-5">Warehouse Information</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6">
           <div>
-            <p className="text-sm text-gray-500">Warehouse Name</p>
-            <p className="font-medium text-gray-900">{warehouse.name}</p>
+            <p className="text-sm text-gray-500 font-medium">Warehouse Name</p>
+            <p className="font-semibold text-gray-900 mt-1">{warehouse.name}</p>
           </div>
           <div>
-            <p className="text-sm text-gray-500">Business Type</p>
-            <p className="font-medium text-gray-900">{warehouse.business_type}</p>
+            <p className="text-sm text-gray-500 font-medium">Business Type</p>
+            <p className="font-semibold text-gray-900 mt-1">{warehouse.business_type}</p>
           </div>
           <div>
-            <p className="text-sm text-gray-500">Rating</p>
-            <div className="flex items-center gap-1">
-              <span className="font-medium text-gray-900">{warehouse.rating}</span>
-              <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+            <p className="text-sm text-gray-500 font-medium">Rating</p>
+            <div className="flex items-center gap-1.5 mt-1">
+              <span className="font-semibold text-gray-900">{warehouse.rating.toFixed(1)}</span>
+              <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
             </div>
           </div>
           <div>
-            <p className="text-sm text-gray-500">Member Since</p>
-            <p className="font-medium text-gray-900">{new Date(warehouse.member_since).toLocaleDateString()}</p>
+            <p className="text-sm text-gray-500 font-medium">Member Since</p>
+            <p className="font-semibold text-gray-900 mt-1">{new Date(warehouse.member_since).toLocaleDateString()}</p>
           </div>
           <div>
-            <p className="text-sm text-gray-500">Status</p>
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-              warehouse.status === 'active' ? 'bg-green-100 text-green-700' :
-              warehouse.status === 'pending_approval' ? 'bg-yellow-100 text-yellow-700' :
-              'bg-red-100 text-red-700'
+            <p className="text-sm text-gray-500 font-medium">Status</p>
+            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold mt-1 ${
+              warehouse.status === 'active' ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' :
+              warehouse.status === 'pending_approval' ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' :
+              'bg-red-50 text-red-700 ring-1 ring-red-200'
             }`}>
-              {warehouse.status}
+              {warehouse.status.replace('_', ' ')}
             </span>
           </div>
           <div>
-            <p className="text-sm text-gray-500">Location</p>
-            <p className="font-medium text-gray-900">{warehouse.city}</p>
+            <p className="text-sm text-gray-500 font-medium">Location</p>
+            <p className="font-semibold text-gray-900 mt-1">{warehouse.city}</p>
           </div>
         </div>
       </div>
