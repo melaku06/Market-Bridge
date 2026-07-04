@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { Bell, Check, Trash2, X, Truck, Tag, AlertCircle, User, Package, ChevronRight } from 'lucide-react';
-import { useNotificationsStore } from '@/stores/notifications-store';
+import { useNotificationsStore } from '@/stores/notifications/notifications-store';
 import { useAuth } from '@/components/auth/auth-provider';
 import { cn } from '@/lib/utils';
 

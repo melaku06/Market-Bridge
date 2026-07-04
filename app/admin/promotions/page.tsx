@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Plus, Edit, Trash2, Play, Pause, Eye, ExternalLink, Image, BarChart2, Download } from 'lucide-react';
-import { adminApi } from '@/lib/api';
+import { useAdminStore } from '@/stores/admin/admin-store';
 import type { Promotion, BannerStatus } from '@/lib/types';
 
 const statusBadge: Record<string, string> = {
@@ -34,28 +34,23 @@ const promoRows = [
 ];
 
 export default function AdminPromotions() {
-  const [promotions, setPromotions] = useState<Promotion[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { promotions, isLoading, fetchPromotions, updatePromotion } = useAdminStore();
   const [activeTab, setActiveTab] = useState<'banners' | 'promotions' | 'flash' | 'coupons'>('banners');
 
   useEffect(() => {
-    adminApi.promotions.list()
-      .then(res => setPromotions(res))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
+    fetchPromotions();
+  }, [fetchPromotions]);
 
   const toggleStatus = async (promoId: string) => {
     const promo = promotions.find(p => p.id === promoId);
     if (!promo) return;
     const newStatus = promo.status === 'active' ? 'paused' : 'active';
     try {
-      await adminApi.promotions.update(promoId, { status: newStatus });
-      setPromotions(prev => prev.map(p => p.id === promoId ? { ...p, status: newStatus as BannerStatus } : p));
+      await updatePromotion(promoId, { status: newStatus });
     } catch (e) { console.error(e); }
   };
 
-  if (loading) return <div className="flex items-center justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>;
+  if (isLoading) return <div className="flex items-center justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>;
 
   return (
     <div className="space-y-5">

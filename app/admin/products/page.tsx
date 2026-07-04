@@ -5,7 +5,8 @@ export const dynamic = 'force-dynamic';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Search, Eye, Check, X, Package, ChevronRight, Filter, Download, Star } from 'lucide-react';
-import { productsApi, warehousesApi } from '@/lib/api';
+import { useProductsStore } from '@/stores/products/products-store';
+import { useWarehouseStore } from '@/stores/warehouse/warehouse-store';
 import type { Product, ProductStatus, Warehouse } from '@/lib/types';
 
 const statusBadge: Record<string, string> = {
@@ -18,27 +19,16 @@ const statusBadge: Record<string, string> = {
 const tabs = ['pending', 'published', 'rejected', 'all'] as const;
 
 export default function AdminProducts() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { products, isLoading: loading, fetchProducts, updateProduct } = useProductsStore();
+  const { warehouses, fetchWarehouses } = useWarehouseStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<ProductStatus | 'all'>('pending');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        const [productsRes, warehousesRes] = await Promise.all([
-          productsApi.list({}),
-          warehousesApi.list({}),
-        ]);
-        setProducts(Array.isArray(productsRes) ? productsRes : (productsRes as any).data || []);
-        setWarehouses(Array.isArray(warehousesRes) ? warehousesRes : (warehousesRes as any).data || []);
-      } catch (e) { console.error(e); }
-      finally { setLoading(false); }
-    }
-    fetchData();
-  }, []);
+    fetchProducts({});
+    fetchWarehouses({});
+  }, [fetchProducts, fetchWarehouses]);
 
   const getWarehouse = (id: string) => warehouses.find(w => w.id === id);
 
@@ -56,14 +46,12 @@ export default function AdminProducts() {
   };
 
   const handleApprove = async (productId: string) => {
-    await productsApi.update(productId, { status: 'published' });
-    setProducts(prev => prev.map(p => p.id === productId ? { ...p, status: 'published' as const } : p));
+    await updateProduct(productId, { status: 'published' });
     setSelectedProduct(null);
   };
 
   const handleReject = async (productId: string) => {
-    await productsApi.update(productId, { status: 'rejected' });
-    setProducts(prev => prev.map(p => p.id === productId ? { ...p, status: 'rejected' as const } : p));
+    await updateProduct(productId, { status: 'rejected' });
     setSelectedProduct(null);
   };
 

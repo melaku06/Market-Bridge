@@ -8,7 +8,6 @@ interface AddressesState {
   isLoading: boolean;
   error: string | null;
 
-  // Actions
   fetchAddresses: (customerId: string) => Promise<void>;
   addAddress: (data: Partial<Address>) => Promise<Address | null>;
   updateAddress: (id: string, data: Partial<Address>) => Promise<boolean>;
@@ -17,7 +16,7 @@ interface AddressesState {
   clearError: () => void;
 }
 
-export const useAddressesStore = create<AddressesState>()((set, get) => ({
+export const useAddressesStore = create<AddressesState>()((set) => ({
   addresses: [],
   defaultAddress: null,
   isLoading: false,
@@ -53,7 +52,6 @@ export const useAddressesStore = create<AddressesState>()((set, get) => ({
           ? address
           : state.defaultAddress;
 
-        // If this is set as default, update other addresses
         if (address.is_default) {
           newAddresses.forEach((a) => {
             if (a.id !== address.id) a.is_default = false;
@@ -85,7 +83,6 @@ export const useAddressesStore = create<AddressesState>()((set, get) => ({
           a.id === id ? address : a
         );
 
-        // If this is set as default, update other addresses
         if (address.is_default) {
           newAddresses.forEach((a) => {
             if (a.id !== id) a.is_default = false;

@@ -2,15 +2,18 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import Link from 'next/link';
 import {
   DollarSign, ShoppingCart, Warehouse, Package, TrendingUp, TrendingDown,
   ArrowUp, BarChart2, Bell, ChevronRight, Plus, Activity, CheckCircle,
   Clock, XCircle, Users
 } from 'lucide-react';
-import { analyticsApi, ordersApi, productsApi, warehousesApi } from '@/lib/api';
 import { useAuth } from '@/components/auth/auth-provider';
+import { useAnalyticsStore } from '@/stores/analytics/analytics-store';
+import { useOrdersStore } from '@/stores/orders/orders-store';
+import { useProductsStore } from '@/stores/products/products-store';
+import { useWarehouseStore } from '@/stores/warehouse/warehouse-store';
 
 const statusColors: Record<string, string> = {
   pending:    'bg-amber-50 text-amber-700',
@@ -31,34 +34,19 @@ const recentActivities = [
 
 export default function AdminDashboard() {
   const { user } = useAuth();
-  const [analytics, setAnalytics] = useState<any>(null);
-  const [orders, setOrders] = useState<any[]>([]);
-  const [pendingProducts, setPendingProducts] = useState<any[]>([]);
-  const [warehouses, setWarehouses] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data, isLoading: analyticsLoading, fetchAnalytics } = useAnalyticsStore();
+  const analytics = data as any;
+  const { orders, isLoading: ordersLoading, fetchOrders } = useOrdersStore();
+  const { products: pendingProducts, isLoading: productsLoading, fetchProducts } = useProductsStore();
+  const { warehouses, isLoading: warehousesLoading, fetchWarehouses } = useWarehouseStore();
+  const loading = analyticsLoading || ordersLoading || productsLoading || warehousesLoading;
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        const [analyticsRes, ordersRes, productsRes, warehousesRes] = await Promise.all([
-          analyticsApi.get({}),
-          ordersApi.list({ limit: 5 }),
-          productsApi.list({ status: 'pending', limit: 5 }),
-          warehousesApi.list({}),
-        ]);
-        setAnalytics(analyticsRes);
-        setOrders(Array.isArray(ordersRes) ? ordersRes.slice(0, 5) : (ordersRes as any).data?.slice(0, 5) || []);
-        setPendingProducts(Array.isArray(productsRes) ? productsRes.slice(0, 5) : (productsRes as any).data?.slice(0, 5) || []);
-        const whList = Array.isArray(warehousesRes) ? warehousesRes : (warehousesRes as any).data || [];
-        setWarehouses(whList);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchData();
-  }, []);
+    fetchAnalytics({});
+    fetchOrders({ limit: 5 });
+    fetchProducts({ status: 'pending', limit: 5 });
+    fetchWarehouses({});
+  }, [fetchAnalytics, fetchOrders, fetchProducts, fetchWarehouses]);
 
   if (loading) return (
     <div className="flex items-center justify-center py-20">
@@ -66,6 +54,8 @@ export default function AdminDashboard() {
     </div>
   );
 
+  const ordersList = Array.isArray(orders) ? orders.slice(0, 5) : (orders as any).data?.slice(0, 5) || [];
+  const pendingList = Array.isArray(pendingProducts) ? pendingProducts.slice(0, 5) : (pendingProducts as any).data?.slice(0, 5) || [];
   const activeWarehouses = warehouses.filter(w => w.status === 'active').length;
   const totalProducts = analytics?.total_products || 12458;
 
@@ -108,7 +98,7 @@ export default function AdminDashboard() {
     },
     {
       label: 'Pending Approvals',
-      value: (pendingProducts.length || 87).toLocaleString(),
+      value: (pendingList.length || 87).toLocaleString(),
       sub: '-5.3% vs Apr',
       isUp: false,
       icon: Clock,
@@ -287,11 +277,11 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-bold text-gray-900">Pending Approvals</h2>
             <span className="text-[11px] bg-amber-50 text-amber-600 font-semibold px-2 py-0.5 rounded-full">
-              {pendingProducts.length || 87}
+              {pendingList.length || 87}
             </span>
           </div>
           <div className="space-y-2.5 mb-4">
-            {(pendingProducts.length > 0 ? pendingProducts : [
+            {(pendingList.length > 0 ? pendingList : [
               { name: 'Products', count: 66 },
               { name: 'Warehouses', count: 12 },
               { name: 'Margin Updates', count: 8 },

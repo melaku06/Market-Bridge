@@ -6,8 +6,8 @@ import {
   ShoppingCart, Heart, User, Search, Menu, X, ChevronDown, LogOut, Settings, Package, ShoppingBag,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/auth-provider';
-import { useCartStore } from '@/stores/cart-store';
-import { useWishlistStore } from '@/stores/wishlist-store';
+import { useCartStore } from '@/stores/cart/cart-store';
+import { useWishlistStore } from '@/stores/wishlist/wishlist-store';
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);

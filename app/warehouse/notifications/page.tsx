@@ -7,7 +7,7 @@ import {
   Bell, Truck, Tag, Package, AlertCircle, User, Trash2, Loader2, Settings2, CheckSquare,
   ShoppingCart, ToggleLeft, ToggleRight, Phone, Mail, MessageSquare, Megaphone
 } from 'lucide-react';
-import { useNotificationsStore } from '@/stores/notifications-store';
+import { useNotificationsStore } from '@/stores/notifications/notifications-store';
 import { useAuth } from '@/components/auth/auth-provider';
 
 const tabs = ['All', 'Unread', 'Orders', 'Inventory', 'System', 'Promotions'] as const;

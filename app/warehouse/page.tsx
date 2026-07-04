@@ -2,15 +2,17 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import {
   ShoppingCart, DollarSign, Package, AlertTriangle, ChevronRight, Plus,
   TrendingUp, TrendingDown, Eye, ArrowUpRight
 } from 'lucide-react';
 import Link from 'next/link';
-import { warehousesApi, ordersApi, inventoryApi, analyticsApi } from '@/lib/api';
 import { useAuth } from '@/components/auth/auth-provider';
-import type { Warehouse, Order, Inventory } from '@/lib/types';
+import { useWarehouseStore } from '@/stores/warehouse/warehouse-store';
+import { useOrdersStore } from '@/stores/orders/orders-store';
+import { useInventoryStore } from '@/stores/inventory/inventory-store';
+import { useAnalyticsStore } from '@/stores/analytics/analytics-store';
 
 const statusColor: Record<string, string> = {
   pending: 'bg-amber-100 text-amber-700',
@@ -67,35 +69,22 @@ function DonutChart({ data }: { data: { label: string; value: number; color: str
 
 export default function WarehouseDashboard() {
   const { user } = useAuth();
-  const [warehouse, setWarehouse] = useState<Warehouse | null>(null);
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [inventory, setInventory] = useState<Inventory[]>([]);
-  const [analytics, setAnalytics] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const { warehouse, fetchWarehouse, isLoading: warehouseLoading } = useWarehouseStore();
+  const { orders, fetchOrders, isLoading: ordersLoading } = useOrdersStore();
+  const { inventory, fetchInventory, isLoading: inventoryLoading } = useInventoryStore();
+  const { warehouseData, fetchWarehouseAnalytics, isLoading: analyticsLoading } = useAnalyticsStore();
+  const analytics = warehouseData as any;
 
   useEffect(() => {
-    async function fetchData() {
-      const warehouseId = user?.warehouse_id;
-      if (!warehouseId) return;
-      try {
-        const [warehouseRes, ordersRes, inventoryRes, analyticsRes] = await Promise.all([
-          warehousesApi.get(warehouseId),
-          ordersApi.list({ warehouse_id: warehouseId, limit: 10 }),
-          inventoryApi.list({ warehouse_id: warehouseId }),
-          analyticsApi.get({ warehouse_id: warehouseId }),
-        ]);
-        setWarehouse(warehouseRes);
-        setOrders(Array.isArray(ordersRes) ? ordersRes : (ordersRes as any).data || []);
-        setInventory(Array.isArray(inventoryRes) ? inventoryRes : (inventoryRes as any).data || []);
-        setAnalytics(analyticsRes);
-      } catch (error) {
-        console.error('Failed to fetch warehouse data:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    if (user?.warehouse_id) fetchData();
-  }, [user?.warehouse_id]);
+    const warehouseId = user?.warehouse_id;
+    if (!warehouseId) return;
+    fetchWarehouse(warehouseId);
+    fetchOrders({ warehouse_id: warehouseId, limit: 10 });
+    fetchInventory({ warehouse_id: warehouseId });
+    fetchWarehouseAnalytics(warehouseId);
+  }, [user?.warehouse_id, fetchWarehouse, fetchOrders, fetchInventory, fetchWarehouseAnalytics]);
+
+  const loading = warehouseLoading || ordersLoading || inventoryLoading || analyticsLoading;
 
   if (loading || !warehouse) {
     return (

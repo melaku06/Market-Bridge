@@ -6,9 +6,10 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Upload, X, Save, CheckCircle, ChevronRight, Bold, Italic, Underline, List, Link as LinkIcon, Image as ImageIcon } from 'lucide-react';
 import Link from 'next/link';
-import { productsApi, categoriesApi, inventoryApi } from '@/lib/api';
 import { useAuth } from '@/components/auth/auth-provider';
-import type { Category } from '@/lib/types';
+import { useCategoriesStore } from '@/stores/categories/categories-store';
+import { useProductsStore } from '@/stores/products/products-store';
+import { useInventoryStore } from '@/stores/inventory/inventory-store';
 
 const steps = [
   { id: 'info', label: 'Product Information' },
@@ -22,8 +23,9 @@ const steps = [
 export default function AddProduct() {
   const router = useRouter();
   const { user } = useAuth();
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { categories, fetchCategories, isLoading: categoriesLoading } = useCategoriesStore();
+  const { createProduct } = useProductsStore();
+  const { createInventory } = useInventoryStore();
   const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState({
     name: '',
@@ -45,18 +47,10 @@ export default function AddProduct() {
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    async function fetchCategories() {
-      try {
-        const res = await categoriesApi.list();
-        setCategories(res);
-      } catch (error) {
-        console.error('Failed to fetch categories:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
     fetchCategories();
-  }, []);
+  }, [fetchCategories]);
+
+  const loading = categoriesLoading;
 
   const basePrice = parseFloat(formData.base_price) || 0;
   const margin = parseFloat(formData.margin_percent) || 18;
@@ -91,12 +85,14 @@ export default function AddProduct() {
       colors: formData.colors.split(',').map(c => c.trim()).filter(Boolean),
     };
     try {
-      const created = await productsApi.create(newProduct);
-      await inventoryApi.create({
-        product_id: created.id, product_name: created.name, warehouse_id: user.warehouse_id,
-        sku: created.sku || '', total_stock: 0, reserved_stock: 0, available_stock: 0,
-        low_stock_threshold: 10, status: 'out_of_stock' as const,
-      });
+      const created = await createProduct(newProduct);
+      if (created) {
+        await createInventory({
+          product_id: created.id, product_name: created.name, warehouse_id: user.warehouse_id,
+          sku: created.sku || '', total_stock: 0, reserved_stock: 0, available_stock: 0,
+          low_stock_threshold: 10, status: 'out_of_stock' as const,
+        });
+      }
       setSubmitted(true);
       setTimeout(() => router.push('/warehouse/products'), 1200);
     } catch (error) {

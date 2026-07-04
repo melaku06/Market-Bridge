@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Search, CheckCircle, Package, Truck, MapPin, XCircle, Clock, ArrowRight } from 'lucide-react';
-import { ordersApi } from '@/lib/api';
-import type { Order, OrderStatus } from '@/lib/types';
+import { useOrdersStore } from '@/stores/orders/orders-store';
+import type { OrderStatus } from '@/lib/types';
 
 const STATUS_STEPS: { key: OrderStatus | 'confirmed'; label: string; icon: typeof Package }[] = [
   { key: 'pending', label: 'Order Placed', icon: Package },
@@ -40,27 +40,21 @@ const statusColors: Record<string, string> = {
 
 export default function OrderTrackingPage() {
   const [trackingId, setTrackingId] = useState('');
-  const [trackedOrder, setTrackedOrder] = useState<Order | null>(null);
-  const [loading, setLoading] = useState(false);
   const [notFound, setNotFound] = useState(false);
+  const { currentOrder: trackedOrder, isLoading: loading, fetchOrder } = useOrdersStore();
 
   const handleTrack = async () => {
     const id = trackingId.replace('#', '').trim();
     if (!id) return;
-    setLoading(true);
     setNotFound(false);
     try {
-      const order = await ordersApi.get(id);
-      setTrackedOrder(order);
+      await fetchOrder(id);
     } catch {
-      setTrackedOrder(null);
       setNotFound(true);
-    } finally {
-      setLoading(false);
     }
   };
 
-  const doneIdx = trackedOrder ? getStepDoneIndex(trackedOrder.status) : -1;
+  const doneIdx = trackedOrder ? getStepDoneIndex(trackedOrder.status as OrderStatus) : -1;
 
   const formatDate = (date: string | Date, includeTime = false) => {
     const d = new Date(date);

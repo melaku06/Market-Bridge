@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Search, Bell, MessageSquare, ChevronDown, Settings, LogOut, User } from 'lucide-react';
 import { useAuth } from '@/components/auth/auth-provider';
-import { useNotificationsStore } from '@/stores/notifications-store';
+import { useNotificationsStore } from '@/stores/notifications/notifications-store';
 import Link from 'next/link';
 
 export default function WarehouseHeader() {

@@ -1,28 +1,20 @@
 'use client';
 
 import { Bell, Search, MessageSquare, ChevronDown, LogOut, Settings } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/components/auth/auth-provider';
-import { notificationsApi } from '@/lib/api';
+import { useNotificationsStore } from '@/stores/notifications/notifications-store';
 
 export default function AdminHeader() {
   const { user } = useAuth();
-  const [unreadCount, setUnreadCount] = useState(0);
+  const unreadCount = useNotificationsStore((s) => s.unreadCount);
+  const fetchNotifications = useNotificationsStore((s) => s.fetchNotifications);
 
   useEffect(() => {
-    async function fetchUnread() {
-      if (!user?.id) return;
-      try {
-        const res = await notificationsApi.list({ user_id: user.id });
-        const list = Array.isArray(res) ? res : (res as any).data || [];
-        setUnreadCount(list.filter((n: { read: boolean }) => !n.read).length);
-      } catch {
-        // ignore
-      }
-    }
-    fetchUnread();
-  }, [user?.id]);
+    if (!user?.id) return;
+    fetchNotifications({ user_id: user.id });
+  }, [user?.id, fetchNotifications]);
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });

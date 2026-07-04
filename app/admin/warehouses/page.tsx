@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Search, Eye, Check, X, Building2, Star, ChevronRight, Download, Filter, TrendingUp, Users, Package, DollarSign } from 'lucide-react';
-import { warehousesApi } from '@/lib/api';
+import { useWarehouseStore } from '@/stores/warehouse/warehouse-store';
 import type { WarehouseStatus, Warehouse } from '@/lib/types';
 
 const statusBadge: Record<string, string> = {
@@ -22,22 +22,14 @@ const statusLabels: Record<string, string> = {
 const tabs = ['all', 'active', 'pending_approval', 'suspended'] as const;
 
 export default function AdminWarehouses() {
-  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { warehouses, isLoading: loading, fetchWarehouses, updateWarehouse } = useWarehouseStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<WarehouseStatus | 'all'>('all');
   const [selectedWarehouse, setSelectedWarehouse] = useState<Warehouse | null>(null);
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        const res = await warehousesApi.list({});
-        setWarehouses(Array.isArray(res) ? res : (res as any).data || []);
-      } catch (e) { console.error(e); }
-      finally { setLoading(false); }
-    }
-    fetchData();
-  }, []);
+    fetchWarehouses({});
+  }, [fetchWarehouses]);
 
   const filtered = warehouses.filter(w => {
     if (statusFilter !== 'all' && w.status !== statusFilter) return false;
@@ -54,14 +46,12 @@ export default function AdminWarehouses() {
   };
 
   const handleApprove = async (id: string) => {
-    await warehousesApi.update(id, { status: 'active' });
-    setWarehouses(prev => prev.map(w => w.id === id ? { ...w, status: 'active' as const } : w));
+    await updateWarehouse(id, { status: 'active' });
     setSelectedWarehouse(null);
   };
 
   const handleSuspend = async (id: string) => {
-    await warehousesApi.update(id, { status: 'suspended' });
-    setWarehouses(prev => prev.map(w => w.id === id ? { ...w, status: 'suspended' as const } : w));
+    await updateWarehouse(id, { status: 'suspended' });
     setSelectedWarehouse(null);
   };
 

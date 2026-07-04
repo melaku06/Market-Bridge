@@ -5,9 +5,10 @@ export const dynamic = 'force-dynamic';
 import { useEffect, useState } from 'react';
 import { Search, Package, AlertTriangle, Boxes, TrendingDown, ChevronRight, Plus } from 'lucide-react';
 import Link from 'next/link';
-import { inventoryApi, productsApi } from '@/lib/api';
 import { useAuth } from '@/components/auth/auth-provider';
-import type { Inventory, Product } from '@/lib/types';
+import { useInventoryStore } from '@/stores/inventory/inventory-store';
+import { useProductsStore } from '@/stores/products/products-store';
+import type { Inventory } from '@/lib/types';
 
 const statusBadge: Record<string, string> = {
   in_stock: 'bg-emerald-100 text-emerald-700',
@@ -25,33 +26,21 @@ const tabs = ['All Inventory', 'Low Stock', 'Out of Stock'] as const;
 
 export default function WarehouseInventory() {
   const { user } = useAuth();
-  const [inventory, setInventory] = useState<Inventory[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { inventory, fetchInventory, updateInventory, isLoading: inventoryLoading } = useInventoryStore();
+  const { products, fetchProducts, isLoading: productsLoading } = useProductsStore();
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<typeof tabs[number]>('All Inventory');
   const [adjustingId, setAdjustingId] = useState<string | null>(null);
   const [adjustQty, setAdjustQty] = useState('');
 
   useEffect(() => {
-    async function fetchData() {
-      const warehouseId = user?.warehouse_id;
-      if (!warehouseId) return;
-      try {
-        const [inventoryRes, productsRes] = await Promise.all([
-          inventoryApi.list({ warehouse_id: warehouseId }),
-          productsApi.list({ warehouse_id: warehouseId }),
-        ]);
-        setInventory(Array.isArray(inventoryRes) ? inventoryRes : (inventoryRes as any).data || []);
-        setProducts(Array.isArray(productsRes) ? productsRes : (productsRes as any).data || []);
-      } catch (error) {
-        console.error('Failed to fetch inventory:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    if (user?.warehouse_id) fetchData();
-  }, [user?.warehouse_id]);
+    const warehouseId = user?.warehouse_id;
+    if (!warehouseId) return;
+    fetchInventory({ warehouse_id: warehouseId });
+    fetchProducts({ warehouse_id: warehouseId });
+  }, [user?.warehouse_id, fetchInventory, fetchProducts]);
+
+  const loading = inventoryLoading || productsLoading;
 
   const getProduct = (productId: string) => products.find(p => p.id === productId);
 
@@ -62,8 +51,7 @@ export default function WarehouseInventory() {
     if (available === 0) status = 'out_of_stock';
     else if (available <= item.low_stock_threshold) status = 'low_stock';
     const updated = { ...item, total_stock: newTotal, available_stock: available, status };
-    setInventory(prev => prev.map(i => i.id === item.id ? updated : i));
-    await inventoryApi.update(item.id, updated);
+    await updateInventory(item.id, updated);
   };
 
   const tabMap: Record<string, string[]> = {

@@ -5,9 +5,9 @@ export const dynamic = 'force-dynamic';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Plus, Search, Eye, Edit, Trash2, Package, ChevronRight, Download, Filter, SlidersHorizontal } from 'lucide-react';
-import { productsApi, inventoryApi } from '@/lib/api';
 import { useAuth } from '@/components/auth/auth-provider';
-import type { Product, Inventory } from '@/lib/types';
+import { useProductsStore } from '@/stores/products/products-store';
+import { useInventoryStore } from '@/stores/inventory/inventory-store';
 
 const statusBadge: Record<string, string> = {
   published: 'bg-emerald-100 text-emerald-700',
@@ -34,32 +34,20 @@ const tabs = ['All', 'Published', 'Pending', 'Draft'] as const;
 
 export default function WarehouseProducts() {
   const { user } = useAuth();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [inventory, setInventory] = useState<Inventory[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { products, fetchProducts, isLoading: productsLoading } = useProductsStore();
+  const { inventory, fetchInventory, isLoading: inventoryLoading } = useInventoryStore();
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<typeof tabs[number]>('All');
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    async function fetchData() {
-      const warehouseId = user?.warehouse_id;
-      if (!warehouseId) return;
-      try {
-        const [productsRes, inventoryRes] = await Promise.all([
-          productsApi.list({ warehouse_id: warehouseId }),
-          inventoryApi.list({ warehouse_id: warehouseId }),
-        ]);
-        setProducts(Array.isArray(productsRes) ? productsRes : (productsRes as any).data || []);
-        setInventory(Array.isArray(inventoryRes) ? inventoryRes : (inventoryRes as any).data || []);
-      } catch (error) {
-        console.error('Failed to fetch products:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    if (user?.warehouse_id) fetchData();
-  }, [user?.warehouse_id]);
+    const warehouseId = user?.warehouse_id;
+    if (!warehouseId) return;
+    fetchProducts({ warehouse_id: warehouseId });
+    fetchInventory({ warehouse_id: warehouseId });
+  }, [user?.warehouse_id, fetchProducts, fetchInventory]);
+
+  const loading = productsLoading || inventoryLoading;
 
   const getInv = (productId: string) => inventory.find(i => i.product_id === productId);
 

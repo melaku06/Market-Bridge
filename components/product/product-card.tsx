@@ -5,6 +5,8 @@ import { Heart } from 'lucide-react';
 import { useState } from 'react';
 import StarRating from '@/components/ui/star-rating';
 import { cn } from '@/lib/utils';
+import { useWishlistStore } from '@/stores/wishlist/wishlist-store';
+import { useCartStore } from '@/stores/cart/cart-store';
 
 interface ProductCardProps {
   product: {
@@ -28,8 +30,11 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, className }: ProductCardProps) {
-  const [wishlisted, setWishlisted] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
+
+  const toggleWishlist = useWishlistStore((s) => s.toggleWishlist);
+  const isInWishlist = useWishlistStore((s) => s.isInWishlist);
+  const addItem = useCartStore((s) => s.addItem);
 
   // Normalize data from API or legacy format
   const price = product.final_price ?? product.price ?? 0;
@@ -39,8 +44,18 @@ export default function ProductCard({ product, className }: ProductCardProps) {
   const reviewCount = product.review_count ?? product.reviews ?? 0;
   const category = product.category_name ?? product.category ?? '';
 
+  const wishlisted = isInWishlist(product.id);
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
+    addItem({
+      id: product.id,
+      name: product.name,
+      image,
+      basePrice: price,
+      marginPercent: 0,
+      discountPercent: discount,
+    });
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 1500);
   };
@@ -63,7 +78,14 @@ export default function ProductCard({ product, className }: ProductCardProps) {
           <button
             onClick={(e) => {
               e.preventDefault();
-              setWishlisted(!wishlisted);
+              toggleWishlist({
+                productId: product.id,
+                name: product.name,
+                image,
+                basePrice: price,
+                marginPercent: 0,
+                discountPercent: discount,
+              });
             }}
             className="absolute top-2 right-2 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm hover:scale-110 transition-transform"
           >

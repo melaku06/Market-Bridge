@@ -3,28 +3,15 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Star, Edit2, MessageSquare, ArrowRight, Filter, Search } from 'lucide-react';
-import { reviewsApi } from '@/lib/api';
-import type { Review } from '@/lib/types';
+import { useReviewsStore } from '@/stores/reviews/reviews-store';
 
 export default function ReviewHistoryPage() {
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const { reviews, isLoading: loading, fetchCustomerReviews } = useReviewsStore();
 
   useEffect(() => {
-    async function fetchReviews() {
-      try {
-        const res = await reviewsApi.list({ customer_id: 'usr-001' });
-        const reviewList = Array.isArray(res) ? res : (res as { data?: Review[] }).data || [];
-        setReviews(reviewList);
-      } catch (error) {
-        console.error('Failed to fetch reviews:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchReviews();
-  }, []);
+    fetchCustomerReviews('usr-001');
+  }, [fetchCustomerReviews]);
 
   if (loading) {
     return (

@@ -2,9 +2,10 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { DollarSign, ShoppingCart, Users, TrendingUp, ArrowUp, TrendingDown, BarChart2, ChevronRight } from 'lucide-react';
-import { analyticsApi, ordersApi } from '@/lib/api';
+import { useAnalyticsStore } from '@/stores/analytics/analytics-store';
+import { useOrdersStore } from '@/stores/orders/orders-store';
 
 const recentOrders = [
   { id: '#MB100251', customer: 'John Doe', amount: 125, status: 'delivered', date: 'May 31, 2024' },
@@ -22,19 +23,14 @@ const statusColors: Record<string, string> = {
 };
 
 export default function AdminAnalytics() {
-  const [analytics, setAnalytics] = useState<any>(null);
-  const [orders, setOrders] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data, isLoading: loading, fetchAnalytics } = useAnalyticsStore();
+  const analytics = data as any;
+  const { orders, fetchOrders } = useOrdersStore();
 
   useEffect(() => {
-    Promise.all([analyticsApi.get({}), ordersApi.list({ limit: 5 })])
-      .then(([analyticsRes, ordersRes]) => {
-        setAnalytics(analyticsRes);
-        setOrders(Array.isArray(ordersRes) ? ordersRes.slice(0, 5) : (ordersRes as any).data?.slice(0, 5) || []);
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
+    fetchAnalytics({});
+    fetchOrders({ limit: 5 });
+  }, [fetchAnalytics, fetchOrders]);
 
   if (loading) return <div className="flex items-center justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>;
 
@@ -204,7 +200,7 @@ export default function AdminAnalytics() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {(orders.length > 0 ? orders : recentOrders).map((order: any, i: number) => (
+              {(orders.length > 0 ? (Array.isArray(orders) ? orders.slice(0, 5) : (orders as any).data?.slice(0, 5) || []) : recentOrders).map((order: any, i: number) => (
                 <tr key={i} className="hover:bg-gray-50/60 transition-colors">
                   <td className="px-5 py-3 text-[13px] font-bold text-gray-900">{order.id?.startsWith('#') ? order.id : `#MB${order.id?.slice(-5).toUpperCase() || i}`}</td>
                   <td className="px-5 py-3 text-[13px] text-gray-700">{order.customer || order.customer_name}</td>

@@ -6,6 +6,25 @@ import { ChevronRight, Grid2x2, List, SlidersHorizontal, X, Package } from 'luci
 import ProductCardInteractive from '@/components/product/product-card-interactive';
 import type { ProductCardData } from '@/components/product/product-card-server';
 import { formatPrice } from '@/lib/price';
+import { useSearchFilterStore } from '@/stores/search/search-filter-store';
+
+type SortOption = 'newest' | 'price_asc' | 'price_desc' | 'rating' | 'popular';
+
+const sortOptionMap: Record<SortOption, string> = {
+  newest: 'Newest',
+  price_asc: 'Price: Low to High',
+  price_desc: 'Price: High to Low',
+  rating: 'Top Rated',
+  popular: 'Most Popular',
+};
+
+const sortOptionReverseMap: Record<string, SortOption> = {
+  'Newest': 'newest',
+  'Price: Low to High': 'price_asc',
+  'Price: High to Low': 'price_desc',
+  'Top Rated': 'rating',
+  'Most Popular': 'popular',
+};
 
 interface Category {
   id: string;
@@ -26,14 +45,37 @@ const brandOptions = ['Apple', 'Samsung', 'Nike', 'Adidas', 'Sony', 'LG', 'Phili
 const subCategories = ['Smartphones', 'Laptops', 'Tablets', 'Headphones', 'Cameras', 'Smartwatches', 'Accessories'] as const;
 
 export default function ProductsBrowser({ products, categories, initialCategoryId }: ProductsBrowserProps) {
-  const [selectedCategory, setSelectedCategory] = useState(initialCategoryId || 'all');
-  const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null);
-  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
-  const [sortBy, setSortBy] = useState<typeof sortOptions[number]>('Newest');
-  const [priceRange, setPriceRange] = useState(10000);
-  const [gridView, setGridView] = useState(true);
+  const selectedCategory = useSearchFilterStore((s) => s.selectedCategory);
+  const setSelectedCategory = useSearchFilterStore((s) => s.setSelectedCategory);
+  const selectedSubCategory = useSearchFilterStore((s) => s.selectedSubCategory);
+  const setSelectedSubCategory = useSearchFilterStore((s) => s.setSelectedSubCategory);
+  const selectedBrands = useSearchFilterStore((s) => s.selectedBrands);
+  const toggleBrand = useSearchFilterStore((s) => s.toggleBrand);
+  const sortBy = useSearchFilterStore((s) => s.sortBy);
+  const setSortBy = useSearchFilterStore((s) => s.setSortBy);
+  const priceRange = useSearchFilterStore((s) => s.priceRange);
+  const setPriceRange = useSearchFilterStore((s) => s.setPriceRange);
+  const viewMode = useSearchFilterStore((s) => s.viewMode);
+  const setViewMode = useSearchFilterStore((s) => s.setViewMode);
+  const selectedRating = useSearchFilterStore((s) => s.selectedRating);
+  const setSelectedRating = useSearchFilterStore((s) => s.setSelectedRating);
+  const resetFilters = useSearchFilterStore((s) => s.resetFilters);
+
   const [filterOpen, setFilterOpen] = useState(false);
-  const [selectedRating, setSelectedRating] = useState(0);
+
+  // Initialize category from prop on first render if store is at default
+  useState(() => {
+    if (initialCategoryId && !selectedCategory) {
+      setSelectedCategory(initialCategoryId);
+    }
+  });
+
+  // Map store state to component-local conventions
+  const categoryValue = selectedCategory ?? 'all';
+  const ratingValue = selectedRating ?? 0;
+  const priceMax = priceRange.max;
+  const gridView = viewMode === 'grid';
+  const sortByLabel = sortOptionMap[sortBy] ?? 'Newest';
 
   const allCategories = [{ id: 'all', name: 'All Categories', slug: '' }, ...categories];
 
@@ -41,15 +83,11 @@ export default function ProductsBrowser({ products, categories, initialCategoryI
     return products.filter((p) => p.brand?.toLowerCase().includes(brand.toLowerCase())).length;
   };
 
-  const toggleBrand = (brand: string) => {
-    setSelectedBrands((prev) => prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]);
-  };
-
   const filtered = useMemo(() => {
     let list = [...products];
 
-    if (selectedCategory !== 'all') {
-      list = list.filter((p) => p.category?.id === selectedCategory || p.warehouse?.name === selectedCategory);
+    if (categoryValue !== 'all') {
+      list = list.filter((p) => p.category?.id === categoryValue || p.warehouse?.name === categoryValue);
     }
 
     if (selectedBrands.length > 0) {
@@ -60,13 +98,13 @@ export default function ProductsBrowser({ products, categories, initialCategoryI
       const basePrice = typeof p.base_price === 'number' ? p.base_price : p.base_price.toNumber();
       const margin = typeof p.margin_percent === 'number' ? (p.margin_percent || 15) : (p.margin_percent?.toNumber() ?? 15);
       const finalPrice = basePrice * (1 + margin / 100);
-      return finalPrice <= priceRange;
+      return finalPrice <= priceMax;
     });
 
-    if (selectedRating > 0) {
+    if (ratingValue > 0) {
       list = list.filter((p) => {
         const rating = typeof p.rating === 'number' ? p.rating : p.rating.toNumber();
-        return rating >= selectedRating;
+        return rating >= ratingValue;
       });
     }
 
@@ -76,17 +114,17 @@ export default function ProductsBrowser({ products, categories, initialCategoryI
       return base * (1 + margin / 100);
     };
 
-    if (sortBy === 'Price: Low to High') list.sort((a, b) => getFinalPrice(a) - getFinalPrice(b));
-    else if (sortBy === 'Price: High to Low') list.sort((a, b) => getFinalPrice(b) - getFinalPrice(a));
-    else if (sortBy === 'Top Rated') list.sort((a, b) => {
+    if (sortBy === 'price_asc') list.sort((a, b) => getFinalPrice(a) - getFinalPrice(b));
+    else if (sortBy === 'price_desc') list.sort((a, b) => getFinalPrice(b) - getFinalPrice(a));
+    else if (sortBy === 'rating') list.sort((a, b) => {
       const ra = typeof a.rating === 'number' ? a.rating : a.rating.toNumber();
       const rb = typeof b.rating === 'number' ? b.rating : b.rating.toNumber();
       return rb - ra;
     });
-    else if (sortBy === 'Most Popular') list.sort((a, b) => (b.review_count || 0) - (a.review_count || 0));
+    else if (sortBy === 'popular') list.sort((a, b) => (b.review_count || 0) - (a.review_count || 0));
 
     return list;
-  }, [products, selectedCategory, selectedBrands, sortBy, priceRange, selectedRating]);
+  }, [products, categoryValue, selectedBrands, sortBy, priceMax, ratingValue]);
 
   const FilterPanel = () => (
     <div className="space-y-5">
@@ -96,9 +134,9 @@ export default function ProductsBrowser({ products, categories, initialCategoryI
           {allCategories.slice(0, 8).map((cat) => (
             <button
               key={cat.id}
-              onClick={() => setSelectedCategory(cat.id)}
+              onClick={() => setSelectedCategory(cat.id === 'all' ? null : cat.id)}
               className={`w-full text-left px-2.5 py-1.5 rounded-lg text-sm transition-colors flex items-center gap-2 ${
-                selectedCategory === cat.id ? 'bg-blue-600 text-white font-medium' : 'text-gray-600 hover:bg-gray-50'
+                categoryValue === cat.id ? 'bg-blue-600 text-white font-medium' : 'text-gray-600 hover:bg-gray-50'
               }`}
             >
               {cat.name}
@@ -155,13 +193,13 @@ export default function ProductsBrowser({ products, categories, initialCategoryI
             type="range"
             min={0}
             max={10000}
-            value={priceRange}
-            onChange={(e) => setPriceRange(Number(e.target.value))}
+            value={priceMax}
+            onChange={(e) => setPriceRange({ min: 0, max: Number(e.target.value) })}
             className="w-full accent-blue-600"
           />
           <div className="flex justify-between text-sm text-gray-500">
             <span>Br 0</span>
-            <span>Br {priceRange}+</span>
+            <span>Br {priceMax}+</span>
           </div>
         </div>
       </div>
@@ -171,9 +209,9 @@ export default function ProductsBrowser({ products, categories, initialCategoryI
           {[5, 4, 3, 2].map((r) => (
             <button
               key={r}
-              onClick={() => setSelectedRating(selectedRating === r ? 0 : r)}
+              onClick={() => setSelectedRating(ratingValue === r ? null : r)}
               className={`flex items-center gap-2 w-full px-2 py-1.5 rounded-lg text-sm transition-colors ${
-                selectedRating === r ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'
+                ratingValue === r ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'
               }`}
             >
               <span className="flex">
@@ -215,8 +253,8 @@ export default function ProductsBrowser({ products, categories, initialCategoryI
             <div className="flex items-center gap-1.5">
               <span className="text-sm text-gray-500">Sort by:</span>
               <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as typeof sortOptions[number])}
+                value={sortByLabel}
+                onChange={(e) => setSortBy(sortOptionReverseMap[e.target.value] ?? 'newest')}
                 className="text-sm border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:border-blue-500 focus:outline-none"
               >
                 {sortOptions.map((opt) => <option key={opt}>{opt}</option>)}
@@ -224,13 +262,13 @@ export default function ProductsBrowser({ products, categories, initialCategoryI
             </div>
             <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
               <button
-                onClick={() => setGridView(true)}
+                onClick={() => setViewMode('grid')}
                 className={`p-1.5 ${gridView ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-50'}`}
               >
                 <Grid2x2 className="w-4 h-4" />
               </button>
               <button
-                onClick={() => setGridView(false)}
+                onClick={() => setViewMode('list')}
                 className={`p-1.5 ${!gridView ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-50'}`}
               >
                 <List className="w-4 h-4" />
@@ -251,7 +289,7 @@ export default function ProductsBrowser({ products, categories, initialCategoryI
             <h3 className="text-lg font-medium text-gray-900 mb-2">No products found</h3>
             <p className="text-gray-500 mb-4">Try adjusting your filters.</p>
             <button
-              onClick={() => { setSelectedCategory('all'); setSelectedBrands([]); setPriceRange(10000); setSelectedRating(0); setSelectedSubCategory(null); }}
+              onClick={() => resetFilters()}
               className="text-blue-600 hover:underline font-medium"
             >
               Clear all filters

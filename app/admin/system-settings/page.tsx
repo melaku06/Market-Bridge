@@ -2,9 +2,9 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Save, Upload, Globe, CreditCard, Truck, Mail, Phone, Search, Database, Shield } from 'lucide-react';
-import { adminApi } from '@/lib/api';
+import { useAdminStore } from '@/stores/admin/admin-store';
 
 const sidebarTabs = [
   { key: 'general', label: 'General Settings', icon: Globe },
@@ -19,6 +19,7 @@ const sidebarTabs = [
 ];
 
 export default function AdminSystemSettings() {
+  const { systemSettings, isLoading, fetchSystemSettings, updateSystemSettings } = useAdminStore();
   const [activeTab, setActiveTab] = useState('general');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -39,10 +40,20 @@ export default function AdminSystemSettings() {
     maintenance_mode: false,
   });
 
+  useEffect(() => {
+    fetchSystemSettings();
+  }, [fetchSystemSettings]);
+
+  useEffect(() => {
+    if (systemSettings) {
+      setSettings(prev => ({ ...prev, ...systemSettings }));
+    }
+  }, [systemSettings]);
+
   const handleSave = async () => {
     setSaving(true);
     try {
-      await adminApi.systemSettings.update(settings);
+      await updateSystemSettings(settings);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (e) { console.error(e); }

@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import { useEffect, useState } from 'react';
 import { Download, Filter, Search, FileText, ChevronDown } from 'lucide-react';
-import { adminApi } from '@/lib/api';
+import { useAdminStore } from '@/stores/admin/admin-store';
 
 const actionColors: Record<string, string> = {
   'Logged in':         'bg-blue-50 text-blue-700',
@@ -33,31 +33,22 @@ const fallbackLogs = [
 ];
 
 export default function AdminAuditLogs() {
-  const [logs, setLogs] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { auditLogs, isLoading, fetchAuditLogs } = useAdminStore();
   const [search, setSearch] = useState('');
   const [actionFilter, setActionFilter] = useState('All Actions');
   const [userFilter, setUserFilter] = useState('All Users');
   const [moduleFilter, setModuleFilter] = useState('All Modules');
 
   useEffect(() => {
-    try {
-      (adminApi as any).auditLogs?.list()
-        .then((res: any) => setLogs(Array.isArray(res) ? res : (res?.data || [])))
-        .catch(() => setLogs([]))
-        .finally(() => setLoading(false));
-    } catch {
-      setLogs([]);
-      setLoading(false);
-    }
-  }, []);
+    fetchAuditLogs();
+  }, [fetchAuditLogs]);
 
-  const display = (logs.length > 0 ? logs : fallbackLogs).filter((log: any) => {
+  const display = (auditLogs.length > 0 ? auditLogs : fallbackLogs).filter((log: any) => {
     if (search && !log.actor_name?.toLowerCase().includes(search.toLowerCase()) && !log.action?.toLowerCase().includes(search.toLowerCase()) && !log.details?.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
 
-  if (loading) return <div className="flex items-center justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>;
+  if (isLoading) return <div className="flex items-center justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>;
 
   return (
     <div className="space-y-5">

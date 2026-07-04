@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { Search, Eye, ShoppingBag, Download, Filter, MoreVertical, CheckSquare } from 'lucide-react';
 import Link from 'next/link';
-import { ordersApi, warehousesApi } from '@/lib/api';
+import { useOrdersStore } from '@/stores/orders/orders-store';
+import { useWarehouseStore } from '@/stores/warehouse/warehouse-store';
 import type { Order, OrderStatus, Warehouse } from '@/lib/types';
 
 const statusColors: Record<string, string> = {
@@ -31,21 +32,15 @@ const fallbackOrders = [
 ];
 
 export default function AdminOrders() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { orders, isLoading: loading, fetchOrders } = useOrdersStore();
+  const { warehouses, fetchWarehouses } = useWarehouseStore();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'all'>('all');
 
   useEffect(() => {
-    Promise.all([ordersApi.list({}), warehousesApi.list({})])
-      .then(([ordersRes, warehousesRes]) => {
-        setOrders(Array.isArray(ordersRes) ? ordersRes : (ordersRes as any).data || []);
-        setWarehouses(Array.isArray(warehousesRes) ? warehousesRes : (warehousesRes as any).data || []);
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
+    fetchOrders({});
+    fetchWarehouses({});
+  }, [fetchOrders, fetchWarehouses]);
 
   const getWarehouse = (id: string) => warehouses.find(w => w.id === id);
 

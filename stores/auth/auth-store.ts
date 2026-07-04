@@ -6,23 +6,21 @@ import { getDashboardPath, hasRole } from '@/lib/auth/types';
 interface AuthState {
   user: AuthUser | null;
   isLoading: boolean;
-  error: string | null;
-  isAuthenticated: boolean;
   isInitialized: boolean;
+  error: string | null;
 
-  // Actions - these are now handled by API routes
   setUser: (user: AuthUser | null) => void;
   setLoading: (loading: boolean) => void;
+  setInitialized: (initialized: boolean) => void;
   setError: (error: string | null) => void;
   clearError: () => void;
+  reset: () => void;
 
-  // Role checks
+  isAuthenticated: () => boolean;
   isCustomer: () => boolean;
   isWarehouse: () => boolean;
   isAdmin: () => boolean;
   hasRole: (role: UserRole | UserRole[]) => boolean;
-
-  // Navigation
   getDashboardPath: () => string;
 }
 
@@ -30,21 +28,22 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
-      isLoading: false,
-      error: null,
-      isAuthenticated: false,
+      isLoading: true,
       isInitialized: false,
+      error: null,
 
-      setUser: (user) => set({ user, isAuthenticated: !!user }),
+      setUser: (user) => set({ user }),
       setLoading: (isLoading) => set({ isLoading }),
+      setInitialized: (isInitialized) => set({ isInitialized }),
       setError: (error) => set({ error }),
       clearError: () => set({ error: null }),
+      reset: () => set({ user: null, isLoading: false, isInitialized: true, error: null }),
 
+      isAuthenticated: () => get().user !== null,
       isCustomer: () => hasRole(get().user, 'customer'),
       isWarehouse: () => hasRole(get().user, 'warehouse'),
       isAdmin: () => hasRole(get().user, 'admin'),
       hasRole: (role) => hasRole(get().user, role),
-
       getDashboardPath: () => {
         const { user } = get();
         if (!user) return '/login';
@@ -54,10 +53,7 @@ export const useAuthStore = create<AuthState>()(
     {
       name: 'auth-storage',
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({
-        user: state.user,
-        isAuthenticated: state.isAuthenticated,
-      }),
+      partialize: (state) => ({ user: state.user }),
     }
   )
 );

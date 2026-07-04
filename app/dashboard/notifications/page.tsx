@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Bell, Truck, Tag, CheckCircle, Package, AlertCircle, Trash2, Settings2, ChevronRight } from 'lucide-react';
-import { useNotificationsStore } from '@/stores/notifications-store';
+import { useNotificationsStore } from '@/stores/notifications/notifications-store';
 import { useAuth } from '@/components/auth/auth-provider';
 
 const tabs = ['All', 'Orders', 'Promotions', 'Account', 'System', 'Inventory'] as const;

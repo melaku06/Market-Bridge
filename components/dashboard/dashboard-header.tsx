@@ -2,15 +2,16 @@
 
 import Link from 'next/link';
 import { Search, Bell, ShoppingCart, ShoppingBag, ChevronDown, Settings, LogOut, Package } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { notificationsApi } from '@/lib/api';
+import { useEffect } from 'react';
 import { useAuth } from '@/components/auth/auth-provider';
-import { useCartStore } from '@/stores/cart-store';
+import { useCartStore } from '@/stores/cart/cart-store';
+import { useNotificationsStore } from '@/stores/notifications/notifications-store';
 
 export default function DashboardHeader() {
-  const [unreadCount, setUnreadCount] = useState(0);
   const { user } = useAuth();
   const cartCount = useCartStore((s) => s.totalItems());
+  const unreadCount = useNotificationsStore((s) => s.unreadCount);
+  const fetchNotifications = useNotificationsStore((s) => s.fetchNotifications);
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
@@ -18,18 +19,9 @@ export default function DashboardHeader() {
   };
 
   useEffect(() => {
-    async function fetchUnreadCount() {
-      if (!user?.id) return;
-      try {
-        const res = await notificationsApi.list({ user_id: user.id });
-        const notifications = Array.isArray(res) ? res : (res as { data?: { read: boolean }[] }).data || [];
-        setUnreadCount(notifications.filter((n: { read: boolean }) => !n.read).length);
-      } catch {
-        // ignore
-      }
-    }
-    fetchUnreadCount();
-  }, [user?.id]);
+    if (!user?.id) return;
+    fetchNotifications({ user_id: user.id });
+  }, [user?.id, fetchNotifications]);
 
   return (
     <header className="sticky top-0 z-50 h-14 bg-white border-b border-gray-100 flex-shrink-0">

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useAuth } from '@/components/auth/auth-provider';
-import { useNotificationsStore } from '@/stores/notifications-store';
+import { useNotificationsStore } from '@/stores/notifications/notifications-store';
 
 export interface LiveNotification {
   id: string;

@@ -5,9 +5,9 @@ export const dynamic = 'force-dynamic';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Search, Eye, Truck, Clock, Package, Download, SlidersHorizontal, ChevronDown } from 'lucide-react';
-import { ordersApi } from '@/lib/api';
 import { useAuth } from '@/components/auth/auth-provider';
-import type { Order, OrderStatus } from '@/lib/types';
+import { useOrdersStore } from '@/stores/orders/orders-store';
+import type { OrderStatus } from '@/lib/types';
 
 const statusColors: Record<string, string> = {
   pending: 'bg-amber-100 text-amber-700',
@@ -25,26 +25,15 @@ const tabLabels: Record<string, string> = {
 
 export default function WarehouseOrders() {
   const { user } = useAuth();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { orders, fetchOrders, isLoading: loading } = useOrdersStore();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'all'>('all');
 
   useEffect(() => {
-    async function fetchOrders() {
-      const warehouseId = user?.warehouse_id;
-      if (!warehouseId) return;
-      try {
-        const res = await ordersApi.list({ warehouse_id: warehouseId });
-        setOrders(Array.isArray(res) ? res : (res as any).data || []);
-      } catch (error) {
-        console.error('Failed to fetch orders:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    if (user?.warehouse_id) fetchOrders();
-  }, [user?.warehouse_id]);
+    const warehouseId = user?.warehouse_id;
+    if (!warehouseId) return;
+    fetchOrders({ warehouse_id: warehouseId });
+  }, [user?.warehouse_id, fetchOrders]);
 
   const filtered = orders.filter(o => {
     if (statusFilter !== 'all' && o.status !== statusFilter) return false;

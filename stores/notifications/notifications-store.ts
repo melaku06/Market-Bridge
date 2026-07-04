@@ -20,7 +20,13 @@ interface NotificationsState {
   isLoading: boolean;
   error: string | null;
 
-  fetchNotifications: (params?: { user_id?: string; type?: string; is_read?: boolean; limit?: number; offset?: number }) => Promise<void>;
+  fetchNotifications: (params?: {
+    user_id?: string;
+    type?: string;
+    is_read?: boolean;
+    limit?: number;
+    offset?: number;
+  }) => Promise<void>;
   markAsRead: (id: string) => Promise<boolean>;
   markAllAsRead: (userId: string) => Promise<boolean>;
   deleteNotification: (id: string) => Promise<boolean>;

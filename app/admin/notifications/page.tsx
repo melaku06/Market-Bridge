@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Bell, Package, AlertTriangle, Tag, CheckCircle, Trash2, Plus, Search, Eye, Edit, MoreVertical } from 'lucide-react';
 import { notificationsApi, usersApi } from '@/lib/api';
 import { useAuth } from '@/components/auth/auth-provider';
+import { useNotificationsStore } from '@/stores/notifications/notifications-store';
 
 const statusBadge: Record<string, string> = {
   sent:      'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
@@ -31,24 +32,15 @@ const fallbackNotifications = [
 
 export default function AdminNotifications() {
   const { user } = useAuth();
-  const [notifications, setNotifications] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { notifications, isLoading, fetchNotifications } = useNotificationsStore();
   const [activeTab, setActiveTab] = useState('all');
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [form, setForm] = useState({ title: '', message: '', type: 'system' as 'order' | 'product' | 'system' | 'promotion' | 'account' | 'inventory', priority: 'medium' });
   const [sending, setSending] = useState(false);
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        const res = await notificationsApi.list(user?.id ? { user_id: user.id } : {});
-        const list = Array.isArray(res) ? res : (res as any).data || [];
-        setNotifications(list);
-      } catch (e) { console.error(e); }
-      finally { setLoading(false); }
-    }
-    fetchData();
-  }, [user?.id]);
+    fetchNotifications(user?.id ? { user_id: user.id } : {});
+  }, [user?.id, fetchNotifications]);
 
   const handleSend = async () => {
     if (!form.title || !form.message) return;
@@ -71,7 +63,7 @@ export default function AdminNotifications() {
     : activeTab === 'sent' ? displayNotifications.filter((n: any) => n.status === 'sent')
     : displayNotifications.filter((n: any) => n.status === 'draft');
 
-  if (loading) return <div className="flex items-center justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>;
+  if (isLoading) return <div className="flex items-center justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>;
 
   return (
     <div className="space-y-5">

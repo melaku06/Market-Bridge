@@ -1,31 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Heart, Trash2, Package, ArrowRight, Filter, Grid3x3, List } from 'lucide-react';
-import { productsApi } from '@/lib/api';
+import { useCustomerStore } from '@/stores/customer/customer-store';
 import StarRating from '@/components/ui/star-rating';
-import type { Product } from '@/lib/types';
 
 export default function RecentlyViewedPage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
   const [view, setView] = useState<'grid' | 'list'>('grid');
-
-  useEffect(() => {
-    async function fetchProducts() {
-      try {
-        const res = await productsApi.list({ limit: 20 });
-        const productList = Array.isArray(res) ? res : (res as { data?: Product[] }).data || [];
-        setProducts([...productList].reverse());
-      } catch (error) {
-        console.error('Failed to fetch products:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchProducts();
-  }, []);
+  const { recentlyViewed: products } = useCustomerStore();
+  const loading = false;
 
   if (loading) {
     return (

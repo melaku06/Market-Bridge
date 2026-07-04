@@ -1,11 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ChevronRight, Download, MapPin, CreditCard, Truck, CheckCircle, Loader2, Package, ArrowLeft, MessageSquare } from 'lucide-react';
-import { ordersApi } from '@/lib/api';
-import type { Order } from '@/lib/types';
+import { useOrdersStore } from '@/stores/orders/orders-store';
 
 const statusColor: Record<string, string> = {
   delivered: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
@@ -31,22 +30,11 @@ function formatStatus(status: string): string {
 
 export default function OrderDetailPage() {
   const params = useParams();
-  const [order, setOrder] = useState<Order | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { currentOrder: order, isLoading: loading, fetchOrder } = useOrdersStore();
 
   useEffect(() => {
-    async function fetchOrder() {
-      try {
-        const orderData = await ordersApi.get(params.id as string);
-        setOrder(orderData);
-      } catch (error) {
-        console.error('Failed to fetch order:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchOrder();
-  }, [params.id]);
+    fetchOrder(params.id as string);
+  }, [params.id, fetchOrder]);
 
   if (loading) {
     return (

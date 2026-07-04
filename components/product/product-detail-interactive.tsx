@@ -4,8 +4,8 @@ import { useState } from 'react';
 import { Heart, ShoppingCart, Star, Minus, Plus, Truck, RotateCcw, Shield, Headphones, Store, Send, Share2, Check } from 'lucide-react';
 import StarRating from '@/components/ui/star-rating';
 import { formatPrice } from '@/lib/price';
-import { useCartStore } from '@/stores/cart-store';
-import { useWishlistStore } from '@/stores/wishlist-store';
+import { useCartStore } from '@/stores/cart/cart-store';
+import { useWishlistStore } from '@/stores/wishlist/wishlist-store';
 
 interface ProductDetailInteractiveProps {
   product: {

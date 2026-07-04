@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Save, Edit, Percent, Plus, TrendingUp, Filter, Search, Trash2 } from 'lucide-react';
-import { adminApi } from '@/lib/api';
+import { useAdminStore } from '@/stores/admin/admin-store';
 import type { MarginRule } from '@/lib/types';
 
 const statusBadge: Record<string, string> = {
@@ -20,42 +20,43 @@ const fallback = [
 ];
 
 export default function AdminMargins() {
-  const [rules, setRules] = useState<MarginRule[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { marginRules, isLoading, fetchMarginRules, updateMarginRule } = useAdminStore();
+  const [localRules, setLocalRules] = useState<MarginRule[]>([]);
   const [editingRule, setEditingRule] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'category' | 'product'>('category');
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    adminApi.margins.list()
-      .then(res => setRules(res))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
+    fetchMarginRules();
+  }, [fetchMarginRules]);
+
+  useEffect(() => {
+    setLocalRules(marginRules);
+  }, [marginRules]);
 
   const handleSave = async (ruleId: string) => {
-    const rule = rules.find(r => r.id === ruleId);
+    const rule = localRules.find(r => r.id === ruleId);
     if (rule) {
       try {
-        await adminApi.margins.update(ruleId, { warehouse_margin: rule.warehouse_margin, platform_margin: rule.platform_margin });
+        await updateMarginRule(ruleId, { warehouse_margin: rule.warehouse_margin, platform_margin: rule.platform_margin });
       } catch (e) { console.error(e); }
     }
     setEditingRule(null);
   };
 
   const updateRule = (ruleId: string, field: 'warehouse_margin' | 'platform_margin', value: number) => {
-    setRules(prev => prev.map(r => r.id === ruleId ? { ...r, [field]: value } : r));
+    setLocalRules(prev => prev.map(r => r.id === ruleId ? { ...r, [field]: value } : r));
   };
 
-  const display = (rules.length > 0 ? rules : fallback as any[]).filter((r: any) =>
+  const display = (localRules.length > 0 ? localRules : fallback as any[]).filter((r: any) =>
     !search || r.category_name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const avgMargin = rules.length > 0
-    ? (rules.reduce((s, r) => s + r.warehouse_margin + r.platform_margin, 0) / rules.length).toFixed(2)
+  const avgMargin = localRules.length > 0
+    ? (localRules.reduce((s, r) => s + r.warehouse_margin + r.platform_margin, 0) / localRules.length).toFixed(2)
     : '22.45';
 
-  if (loading) return <div className="flex items-center justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>;
+  if (isLoading) return <div className="flex items-center justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>;
 
   return (
     <div className="space-y-5">
@@ -72,7 +73,7 @@ export default function AdminMargins() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: 'Average Margin', value: `${avgMargin}%`, sub: 'Active margin rules', icon: Percent, iconBg: 'bg-blue-50', iconColor: 'text-blue-600' },
-          { label: 'Total Categories', value: rules.length || 56, sub: 'Across all categories', icon: TrendingUp, iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600' },
+          { label: 'Total Categories', value: localRules.length || 56, sub: 'Across all categories', icon: TrendingUp, iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600' },
           { label: 'Products Affected', value: '12,458', sub: 'Active margin rules', icon: TrendingUp, iconBg: 'bg-violet-50', iconColor: 'text-violet-600' },
           { label: 'Revenue Impact', value: '+$24,580', sub: 'Est. this month', icon: TrendingUp, iconBg: 'bg-amber-50', iconColor: 'text-amber-600' },
         ].map((s, i) => { const Icon = s.icon; return (
@@ -165,7 +166,7 @@ export default function AdminMargins() {
           </table>
         </div>
         <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100 bg-gray-50/30">
-          <p className="text-[12px] text-gray-500">Showing 1 to 6 of {rules.length || 56} categories</p>
+          <p className="text-[12px] text-gray-500">Showing 1 to 6 of {localRules.length || 56} categories</p>
           <div className="flex items-center gap-1">
             {[1,2,3,4,5].map(p => <button key={p} className={`w-7 h-7 rounded-lg text-[12px] font-semibold ${p===1?'bg-blue-600 text-white':'border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>{p}</button>)}
             <span className="text-gray-400 text-[12px] mx-1">...</span>

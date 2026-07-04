@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { Star, Heart, ShoppingCart, Check } from 'lucide-react';
 import { useState } from 'react';
-import { useCartStore } from '@/stores/cart-store';
-import { useWishlistStore } from '@/stores/wishlist-store';
+import { useCartStore } from '@/stores/cart/cart-store';
+import { useWishlistStore } from '@/stores/wishlist/wishlist-store';
 import { formatPrice } from '@/lib/price';
 import { cn } from '@/lib/utils';
 import type { ProductCardData } from './product-card-server';

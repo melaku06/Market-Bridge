@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Plus, Edit, Trash2, Save, X, Search, Filter, FolderTree, LayoutGrid, Tag, AlertCircle } from 'lucide-react';
-import { categoriesApi } from '@/lib/api';
+import { useCategoriesStore } from '@/stores/categories/categories-store';
 import type { Category } from '@/lib/types';
 
 const statusBadge: Record<string, string> = {
@@ -22,47 +22,47 @@ const fallback = [
 ];
 
 export default function AdminCategories() {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { categories, isLoading, fetchCategories, createCategory, updateCategory: storeUpdateCategory } = useCategoriesStore();
+  const [localCats, setLocalCats] = useState<Category[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [search, setSearch] = useState('');
   const [newCategory, setNewCategory] = useState({ name: '', icon: '', description: '' });
 
   useEffect(() => {
-    categoriesApi.list()
-      .then(res => setCategories(res))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
+    fetchCategories();
+  }, [fetchCategories]);
+
+  useEffect(() => {
+    setLocalCats(categories);
+  }, [categories]);
 
   const handleSave = async (id: string) => {
-    const cat = categories.find(c => c.id === id);
-    if (cat) { try { await categoriesApi.update(id, cat); } catch (e) { console.error(e); } }
+    const cat = localCats.find(c => c.id === id);
+    if (cat) { try { await storeUpdateCategory(id, cat); } catch (e) { console.error(e); } }
     setEditingId(null);
   };
 
   const handleAdd = async () => {
     if (!newCategory.name) return;
     try {
-      const created = await categoriesApi.create({ name: newCategory.name, slug: newCategory.name.toLowerCase().replace(/\s+/g, '-'), description: newCategory.description, icon: newCategory.icon || '', status: 'active' });
-      setCategories([...categories, created]);
+      await createCategory({ name: newCategory.name, slug: newCategory.name.toLowerCase().replace(/\s+/g, '-'), description: newCategory.description, icon: newCategory.icon || '', status: 'active' });
       setNewCategory({ name: '', icon: '', description: '' });
       setShowAddForm(false);
     } catch (e) { console.error(e); }
   };
 
   const updateCategory = (id: string, field: string, value: string) => {
-    setCategories(prev => prev.map(c => c.id === id ? { ...c, [field]: value } : c));
+    setLocalCats(prev => prev.map(c => c.id === id ? { ...c, [field]: value } : c));
   };
 
-  const display = (categories.length > 0 ? categories : fallback as any[]).filter((c: any) =>
+  const display = (localCats.length > 0 ? localCats : fallback as any[]).filter((c: any) =>
     !search || c.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const activeCount = (categories.length > 0 ? categories : fallback as any[]).filter((c: any) => c.status === 'active').length;
+  const activeCount = (localCats.length > 0 ? localCats : fallback as any[]).filter((c: any) => c.status === 'active').length;
 
-  if (loading) return <div className="flex items-center justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>;
+  if (isLoading) return <div className="flex items-center justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>;
 
   return (
     <div className="space-y-5">
@@ -78,7 +78,7 @@ export default function AdminCategories() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Categories', value: categories.length || 56, sub: '4 this month', icon: FolderTree, iconBg: 'bg-blue-50', iconColor: 'text-blue-600' },
+          { label: 'Total Categories', value: localCats.length || 56, sub: '4 this month', icon: FolderTree, iconBg: 'bg-blue-50', iconColor: 'text-blue-600' },
           { label: 'Active Categories', value: activeCount || 48, sub: '85.7% of total', icon: LayoutGrid, iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600' },
           { label: 'Sub Categories', value: 189, sub: 'Across all categories', icon: Tag, iconBg: 'bg-violet-50', iconColor: 'text-violet-600' },
           { label: 'Unassigned Products', value: 23, sub: 'Need category', icon: AlertCircle, iconBg: 'bg-amber-50', iconColor: 'text-amber-600' },
@@ -180,7 +180,7 @@ export default function AdminCategories() {
           </table>
         </div>
         <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100 bg-gray-50/30">
-          <p className="text-[12px] text-gray-500">Showing 1 to 8 of {categories.length || 56} categories</p>
+          <p className="text-[12px] text-gray-500">Showing 1 to 8 of {localCats.length || 56} categories</p>
           <div className="flex items-center gap-1">
             {[1,2,3,4,5].map(p => <button key={p} className={`w-7 h-7 rounded-lg text-[12px] font-semibold ${p===1?'bg-blue-600 text-white':'border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>{p}</button>)}
             <span className="text-gray-400 text-[12px] mx-1">...</span>

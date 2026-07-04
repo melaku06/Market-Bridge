@@ -66,7 +66,6 @@ export const useWishlistStore = create<WishlistState>()(
       clearWishlist: () => set({ items: [] }),
 
       fetchWishlist: async () => {
-        // Items are already loaded from localStorage by persist middleware
         set({ isLoading: false });
       },
     }),
