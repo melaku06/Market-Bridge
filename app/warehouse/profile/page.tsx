@@ -38,7 +38,7 @@ export default function WarehouseProfile() {
           address: warehouseRes.address,
           city: warehouseRes.city,
           country: warehouseRes.country,
-          business_type: warehouseRes.business_type,
+          business_type: warehouseRes.business_type || '',
           bank_name: warehouseRes.bank_name || '',
           bank_account: warehouseRes.bank_account || '',
           tax_id: warehouseRes.tax_id || '',

@@ -50,7 +50,7 @@ export default function AdminWarehouses() {
     filteredWarehouses = filteredWarehouses.filter(w =>
       w.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       w.owner_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      w.business_type.toLowerCase().includes(searchQuery.toLowerCase())
+      (w.business_type?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false)
     );
   }
 

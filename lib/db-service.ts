@@ -244,11 +244,39 @@ export async function getWarehouses(params?: {
     prisma.warehouse.count({ where }),
   ]);
 
-  return { warehouses, total };
+  // Add computed fields for each warehouse
+  const warehousesWithStats = await Promise.all(
+    warehouses.map(async (w) => {
+      const [orderStats, productRatings] = await Promise.all([
+        prisma.order.aggregate({
+          where: { warehouse_id: w.id, payment_status: 'paid' },
+          _sum: { total: true },
+        }),
+        prisma.product.aggregate({
+          where: { warehouse_id: w.id, status: 'published' },
+          _avg: { rating: true },
+        }),
+      ]);
+
+      return {
+        ...w,
+        total_products: w._count.products,
+        total_orders: w._count.orders,
+        total_sales: Number(orderStats._sum.total || 0),
+        rating: Number(productRatings._avg.rating || 0),
+        performance_score: Math.min(100, Math.round(
+          (w._count.orders > 0 ? 80 : 50) +
+          (Number(productRatings._avg.rating || 0) * 10)
+        )),
+      };
+    })
+  );
+
+  return { warehouses: warehousesWithStats, total };
 }
 
 export async function getWarehouseById(id: string) {
-  return prisma.warehouse.findUnique({
+  const warehouse = await prisma.warehouse.findUnique({
     where: { id },
     include: {
       profiles: true,
@@ -256,6 +284,33 @@ export async function getWarehouseById(id: string) {
       _count: { select: { products: true, orders: true } },
     },
   });
+
+  if (!warehouse) return null;
+
+  // Calculate derived fields
+  const [orderStats, productRatings] = await Promise.all([
+    prisma.order.aggregate({
+      where: { warehouse_id: id, payment_status: 'paid' },
+      _sum: { total: true },
+      _count: true,
+    }),
+    prisma.product.aggregate({
+      where: { warehouse_id: id, status: 'published' },
+      _avg: { rating: true },
+    }),
+  ]);
+
+  return {
+    ...warehouse,
+    total_products: warehouse._count.products,
+    total_orders: warehouse._count.orders,
+    total_sales: Number(orderStats._sum.total || 0),
+    rating: Number(productRatings._avg.rating || 0).toFixed(1),
+    performance_score: Math.min(100, Math.round(
+      (orderStats._count > 0 ? 80 : 50) +
+      (Number(productRatings._avg.rating || 0) * 10)
+    )),
+  };
 }
 
 export async function createWarehouse(data: Prisma.WarehouseCreateInput) {
@@ -286,14 +341,29 @@ export async function getInventory(params?: {
   if (params?.status) where.status = params.status as any;
   if (params?.low_stock) where.quantity = { lte: prisma.inventory.fields.low_stock_threshold };
 
-  return prisma.inventory.findMany({
+  const items = await prisma.inventory.findMany({
     where,
     include: {
-      product: { select: { id: true, name: true, slug: true, images: true } },
+      product: { select: { id: true, name: true, slug: true, images: true, sku: true } },
       warehouse: { select: { id: true, name: true } },
     },
     orderBy: { updated_at: 'desc' },
   });
+
+  // Transform to expected format
+  return items.map(item => ({
+    id: item.id,
+    product_id: item.product_id,
+    product_name: item.product.name,
+    warehouse_id: item.warehouse_id,
+    sku: item.product.sku || '',
+    total_stock: item.quantity,
+    reserved_stock: item.reserved_quantity,
+    available_stock: item.quantity - item.reserved_quantity,
+    low_stock_threshold: item.low_stock_threshold,
+    status: item.status,
+    last_updated: item.updated_at.toISOString(),
+  }));
 }
 
 export async function getInventoryItem(id: string) {
@@ -752,6 +822,7 @@ export async function getAnalytics(warehouse_id?: string) {
     pendingOrders,
     recentOrders,
     topProducts,
+    ordersByStatus,
   ] = await Promise.all([
     prisma.order.count({ where }),
     prisma.order.aggregate({
@@ -772,9 +843,86 @@ export async function getAnalytics(warehouse_id?: string) {
       orderBy: { sold_count: 'desc' },
       take: 5,
     }),
+    prisma.order.groupBy({
+      by: ['status'],
+      _count: true,
+    }),
   ]);
 
+  // Calculate order status overview
+  const orderStatusOverview = ordersByStatus.map(item => ({
+    status: item.status,
+    count: item._count,
+    percentage: totalOrders > 0 ? Math.round((item._count / totalOrders) * 100) : 0,
+  }));
+
+  // Calculate weekly revenue (last 7 days)
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+  const weeklyOrders = await prisma.order.findMany({
+    where: {
+      ...where,
+      payment_status: 'paid',
+      created_at: { gte: sevenDaysAgo },
+    },
+    select: { created_at: true, total: true },
+  });
+
+  const weeklyRevenue = Array.from({ length: 7 }, (_, i) => {
+    const date = new Date();
+    date.setDate(date.getDate() - (6 - i));
+    const dateStr = date.toISOString().split('T')[0];
+    const dayRevenue = weeklyOrders
+      .filter(o => o.created_at.toISOString().split('T')[0] === dateStr)
+      .reduce((sum, o) => sum + Number(o.total), 0);
+    return {
+      date: date.toLocaleDateString('en-US', { weekday: 'short' }),
+      revenue: dayRevenue,
+    };
+  });
+
+  // Top products with revenue calculation
+  const topProductsWithRevenue = topProducts.map(p => ({
+    name: p.name,
+    revenue: Number(p.base_price) * p.sold_count,
+    units: p.sold_count,
+  }));
+
+  // Sales by category
+  const categories = await prisma.category.findMany({
+    where: { is_active: true },
+    include: { products: { where: { status: 'published' } } },
+  });
+
+  const totalCategoryRevenue = categories.reduce((sum, c) => {
+    return sum + c.products.reduce((pSum, p) => pSum + Number(p.base_price) * p.sold_count, 0);
+  }, 0);
+
+  const salesByCategory = categories
+    .map(c => ({
+      name: c.name,
+      revenue: c.products.reduce((sum, p) => sum + Number(p.base_price) * p.sold_count, 0),
+      percentage: totalCategoryRevenue > 0 ? Math.round((c.products.reduce((sum, p) => sum + Number(p.base_price) * p.sold_count, 0) / totalCategoryRevenue) * 100) : 0,
+    }))
+    .filter(c => c.revenue > 0)
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 5);
+
+  // Calculate new customers this month
+  const firstDayOfMonth = new Date();
+  firstDayOfMonth.setDate(1);
+  firstDayOfMonth.setHours(0, 0, 0, 0);
+
+  const newCustomersThisMonth = await prisma.profile.count({
+    where: {
+      role: 'customer',
+      created_at: { gte: firstDayOfMonth },
+    },
+  });
+
   return {
+    // Flat structure for backward compatibility
     totalOrders,
     totalRevenue: totalRevenue._sum.total || 0,
     totalProducts,
@@ -782,6 +930,14 @@ export async function getAnalytics(warehouse_id?: string) {
     pendingOrders,
     recentOrders,
     topProducts,
+    // Nested structure for admin dashboard
+    revenue: { total: Number(totalRevenue._sum.total || 0) },
+    orders: { total: totalOrders },
+    customers: { total: totalCustomers, new_this_month: newCustomersThisMonth },
+    weekly_revenue: weeklyRevenue,
+    order_status_overview: orderStatusOverview,
+    top_products: topProductsWithRevenue,
+    sales_by_category: salesByCategory,
   };
 }
 

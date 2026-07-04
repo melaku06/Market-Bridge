@@ -28,7 +28,6 @@ export interface User {
 
 export interface Warehouse {
   id: string;
-  user_id: string;
   name: string;
   owner_name: string;
   email: string;
@@ -36,7 +35,7 @@ export interface Warehouse {
   address: string;
   city: string;
   country: string;
-  business_type: string;
+  business_type?: string;
   status: WarehouseStatus;
   rating: number;
   total_products: number;
@@ -44,10 +43,11 @@ export interface Warehouse {
   total_sales: number;
   performance_score: number;
   member_since: string;
-  avatar?: string;
   bank_name?: string;
   bank_account?: string;
   tax_id?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Category {
