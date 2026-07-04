@@ -3,233 +3,209 @@
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { Bell, Truck, Tag, CheckCircle, Package, AlertCircle, User, Trash2, Loader2, ChevronRight, Settings2, ShoppingCart, TrendingUp } from 'lucide-react';
+import { Bell, Package, AlertTriangle, Tag, Info, CheckCircle2, Trash2, Check, HelpCircle } from 'lucide-react';
 import { useNotificationsStore } from '@/stores/notifications-store';
 import { useAuth } from '@/components/auth/auth-provider';
+import type { Notification } from '@/lib/types';
+import { useRouter } from 'next/navigation';
 
-const tabs = ['All', 'Unread', 'Orders', 'Inventory', 'System', 'Promotions'] as const;
+const TABS = ['All', 'Unread', 'Orders', 'Inventory', 'System', 'Promotions'] as const;
+type Tab = typeof TABS[number];
 
-const typeIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  order: ShoppingCart,
-  product: Package,
-  system: AlertCircle,
-  promotion: Tag,
-  account: User,
-  inventory: Package,
+const TYPE_MAP: Record<string, Tab> = {
+  order: 'Orders', orders: 'Orders',
+  inventory: 'Inventory', stock: 'Inventory',
+  system: 'System',
+  promotion: 'Promotions', promotional: 'Promotions',
 };
 
-const typeColorMap: Record<string, string> = {
-  order: 'bg-blue-50 text-blue-600',
-  promotion: 'bg-orange-50 text-orange-600',
-  system: 'bg-gray-100 text-gray-600',
-  account: 'bg-emerald-50 text-emerald-600',
-  product: 'bg-cyan-50 text-cyan-600',
-  inventory: 'bg-amber-50 text-amber-600',
+const TYPE_ICON: Record<string, { icon: any; bg: string; color: string }> = {
+  order: { icon: Package, bg: 'bg-blue-50', color: 'text-blue-500' },
+  orders: { icon: Package, bg: 'bg-blue-50', color: 'text-blue-500' },
+  inventory: { icon: AlertTriangle, bg: 'bg-amber-50', color: 'text-amber-500' },
+  stock: { icon: AlertTriangle, bg: 'bg-amber-50', color: 'text-amber-500' },
+  system: { icon: Info, bg: 'bg-purple-50', color: 'text-purple-500' },
+  promotion: { icon: Tag, bg: 'bg-emerald-50', color: 'text-emerald-500' },
+  promotional: { icon: Tag, bg: 'bg-emerald-50', color: 'text-emerald-500' },
+  default: { icon: Bell, bg: 'bg-gray-50', color: 'text-gray-500' },
 };
 
-const typeTabMap: Record<string, string> = {
-  order: 'Orders', product: 'Inventory', inventory: 'Inventory', system: 'System', promotion: 'Promotions',
-};
-
-function timeAgo(dateString: string): string {
-  const date = new Date(dateString);
-  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
-  if (seconds < 60) return 'Just now';
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes} minutes ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
-  const days = Math.floor(hours / 24);
-  return `${days} day${days > 1 ? 's' : ''} ago`;
-}
-
-const prefItems = [
-  { key: 'new_orders', label: 'New Orders' },
-  { key: 'order_updates', label: 'Order Updates' },
+const PREFS = [
+  { key: 'new_orders', label: 'New Order Received' },
   { key: 'low_stock', label: 'Low Stock Alerts' },
-  { key: 'payments', label: 'Payments' },
-  { key: 'system_updates', label: 'System Updates' },
-  { key: 'promotions', label: 'Promotions' },
+  { key: 'payment', label: 'Payment Received' },
+  { key: 'promotions', label: 'Promotional Offers' },
+  { key: 'system', label: 'System Updates' },
+  { key: 'weekly', label: 'Weekly Summary' },
 ];
 
-export default function WarehouseNotifications() {
+function timeAgo(date: string | undefined) {
+  if (!date) return '';
+  const diff = Date.now() - new Date(date).getTime();
+  const s = Math.floor(diff / 1000);
+  if (s < 60) return 'Just now';
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
+
+function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
+  return (
+    <button onClick={onToggle} type="button"
+      style={{ width: 40, height: 22, background: on ? '#7c3aed' : '#e5e7eb', borderRadius: 20, position: 'relative', transition: 'background 0.2s', border: 'none', cursor: 'pointer' }}>
+      <span style={{ position: 'absolute', top: 2, left: on ? 20 : 2, width: 18, height: 18, background: '#fff', borderRadius: '50%', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
+    </button>
+  );
+}
+
+export default function NotificationsPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const { notifications, unreadCount, isLoading, fetchNotifications, markAsRead, markAllAsRead, deleteNotification } = useNotificationsStore();
-  const [activeTab, setActiveTab] = useState<typeof tabs[number]>('All');
-  const [prefs, setPrefs] = useState<Record<string, boolean>>({
-    new_orders: true, order_updates: true, low_stock: true, payments: true, system_updates: true, promotions: false,
-  });
+  const [activeTab, setActiveTab] = useState<Tab>('All');
+  const [prefs, setPrefs] = useState<Record<string, boolean>>(Object.fromEntries(PREFS.map(p => [p.key, true])));
 
   useEffect(() => {
-    if (user?.id) {
-      fetchNotifications({ user_id: user.id, limit: 50 });
-    }
-  }, [user?.id, fetchNotifications]);
+    if (user?.id) fetchNotifications({ user_id: user.id, limit: 50 });
+  }, [user?.id]);
 
-  const filtered = notifications.filter((n) => {
+  const getTab = (n: Notification): Tab => {
+    const t = n.type?.toLowerCase() || '';
+    for (const [key, tab] of Object.entries(TYPE_MAP)) {
+      if (t.includes(key)) return tab;
+    }
+    return 'System';
+  };
+
+  const filtered = notifications.filter(n => {
     if (activeTab === 'All') return true;
-    if (activeTab === 'Unread') return !n.is_read;
-    return typeTabMap[n.type] === activeTab;
+    if (activeTab === 'Unread') return !n.read && !(n as any).is_read;
+    return getTab(n) === activeTab;
   });
 
-  const getTabCount = (tab: string) => {
+  const tabCount = (tab: Tab) => {
     if (tab === 'All') return notifications.length;
-    if (tab === 'Unread') return notifications.filter(n => !n.is_read).length;
-    return notifications.filter(n => typeTabMap[n.type] === tab).length;
+    if (tab === 'Unread') return notifications.filter(n => !n.read && !(n as any).is_read).length;
+    return notifications.filter(n => getTab(n) === tab).length;
+  };
+
+  const handleNotifClick = async (n: Notification) => {
+    if (!n.read && !(n as any).is_read) await markAsRead(n.id);
+    if ((n as any).action_url) router.push((n as any).action_url);
   };
 
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <div className="flex items-center gap-2 text-sm text-gray-400 mb-1">
-            <Link href="/warehouse" className="hover:text-blue-600">Dashboard</Link>
-            <ChevronRight className="w-3.5 h-3.5" />
-            <span className="text-gray-700 font-medium">Notifications</span>
-          </div>
           <h1 className="text-xl font-bold text-gray-900">Notifications</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Stay updated with your warehouse activities.</p>
+          <p className="text-sm text-gray-500 mt-0.5">
+            {unreadCount > 0 ? `${unreadCount} unread notification${unreadCount !== 1 ? 's' : ''}` : 'All caught up'}
+          </p>
         </div>
-        {unreadCount > 0 && (
-          <button
-            onClick={() => user?.id && markAllAsRead(user.id)}
-            className="text-sm text-blue-600 border border-blue-200 hover:bg-blue-50 font-medium px-4 py-2 rounded-lg transition-colors"
-          >
-            Mark all as read
-          </button>
-        )}
+        <button onClick={markAllAsRead}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+          <Check style={{ width: 13, height: 13 }} /> Mark all as read
+        </button>
       </div>
 
-      <div className="flex gap-5">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 items-start">
         {/* Notifications List */}
-        <div className="flex-1 bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="xl:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           {/* Tabs */}
-          <div className="flex border-b border-gray-100 overflow-x-auto">
-            {tabs.map((tab) => {
-              const count = getTabCount(tab);
-              return (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`px-4 py-3.5 text-sm font-medium border-b-2 transition-all whitespace-nowrap flex items-center gap-1.5 flex-shrink-0 ${
-                    activeTab === tab
-                      ? 'border-blue-600 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  {tab}
-                  {count > 0 && (
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
-                      activeTab === tab ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'
-                    }`}>
-                      {count}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+          <div className="flex border-b border-gray-100 px-4 overflow-x-auto">
+            {TABS.map(tab => (
+              <button key={tab} onClick={() => setActiveTab(tab)}
+                className={`flex items-center gap-1.5 px-3 py-4 text-[13px] font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === tab ? 'border-purple-600 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+                {tab}
+                {tabCount(tab) > 0 && (
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${activeTab === tab ? 'bg-purple-100 text-purple-600' : 'bg-gray-100 text-gray-500'}`}>
+                    {tabCount(tab)}
+                  </span>
+                )}
+              </button>
+            ))}
           </div>
 
           {/* List */}
-          {isLoading ? (
-            <div className="flex items-center justify-center py-16">
-              <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="text-center py-16">
-              <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Bell className="w-8 h-8 text-gray-300" />
+          <div className="divide-y divide-gray-50">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="w-7 h-7 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
               </div>
-              <p className="text-gray-500 text-sm font-medium">No notifications</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-gray-50">
-              {filtered.map((notif) => {
-                const IconComp = typeIconMap[notif.type] || Bell;
-                return (
-                  <div
-                    key={notif.id}
-                    className={`flex items-start gap-4 p-4 hover:bg-gray-50/50 transition-colors group ${!notif.is_read ? 'bg-blue-50/20' : ''}`}
-                  >
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${typeColorMap[notif.type] || 'bg-gray-100 text-gray-500'}`}>
-                      <IconComp className="w-4 h-4" />
-                    </div>
-                    <div
-                      className="flex-1 min-w-0 cursor-pointer"
-                      onClick={() => {
-                        if (!notif.is_read) markAsRead(notif.id);
-                        if (notif.action_url) window.location.assign(notif.action_url);
-                      }}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <p className={`text-sm ${!notif.is_read ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'}`}>
-                          {notif.title}
-                        </p>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <span className="text-xs text-gray-400 whitespace-nowrap">{timeAgo(notif.created_at)}</span>
-                          {!notif.is_read && <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0" />}
-                        </div>
-                      </div>
-                      <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{notif.message}</p>
-                    </div>
-                    <button
-                      onClick={() => deleteNotification(notif.id)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+            ) : filtered.length === 0 ? (
+              <div className="flex flex-col items-center py-16 text-gray-300">
+                <Bell style={{ width: 36, height: 36 }} />
+                <p className="text-sm mt-2 text-gray-400">No notifications</p>
+              </div>
+            ) : filtered.map(n => {
+              const isUnread = !n.read && !(n as any).is_read;
+              const typeKey = n.type?.toLowerCase() || 'default';
+              const iconConfig = TYPE_ICON[typeKey] || TYPE_ICON.default;
+              const Icon = iconConfig.icon;
+              return (
+                <div key={n.id}
+                  onClick={() => handleNotifClick(n)}
+                  className={`relative flex items-start gap-4 px-5 py-4 hover:bg-gray-50/70 transition-colors cursor-pointer group ${isUnread ? 'bg-purple-50/20' : ''}`}
+                >
+                  {isUnread && <span className="absolute left-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-purple-600" />}
+                  <div className={`w-9 h-9 rounded-xl ${iconConfig.bg} flex items-center justify-center flex-shrink-0`}>
+                    <Icon className={iconConfig.color} style={{ width: 16, height: 16 }} />
                   </div>
-                );
-              })}
-            </div>
-          )}
-
-          {filtered.length > 0 && (
-            <div className="px-4 py-3 border-t border-gray-100 text-center text-xs text-gray-500">
-              Showing 1 to {filtered.length} of {notifications.length} notifications
-              <button className="ml-2 text-blue-600 font-medium hover:underline">Load more</button>
-            </div>
-          )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm font-semibold truncate ${isUnread ? 'text-gray-900' : 'text-gray-700'}`}>{n.title}</p>
+                        <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{n.message}</p>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span className="text-[11px] text-gray-400 whitespace-nowrap">{timeAgo((n as any).created_at)}</span>
+                        <button
+                          onClick={e => { e.stopPropagation(); deleteNotification(n.id); }}
+                          className="opacity-0 group-hover:opacity-100 p-1 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all"
+                        >
+                          <Trash2 style={{ width: 13, height: 13 }} />
+                        </button>
+                      </div>
+                    </div>
+                    {isUnread && (
+                      <span className="text-[10px] font-semibold text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded-full mt-1 inline-block">New</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         {/* Right Panel */}
-        <div className="w-64 flex-shrink-0 space-y-4">
-          {/* Notification Preferences */}
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-bold text-gray-900 text-sm">Notification Preferences</h3>
-              <Settings2 className="w-4 h-4 text-gray-400" />
-            </div>
-            <p className="text-xs text-gray-500 mb-4">Choose what you want to be notified about.</p>
-            <div className="space-y-3">
-              {prefItems.map(item => (
-                <div key={item.key} className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700">{item.label}</span>
-                  <button
-                    onClick={() => setPrefs(p => ({ ...p, [item.key]: !p[item.key] }))}
-                    className={`w-10 h-5 rounded-full transition-colors relative flex-shrink-0 ${prefs[item.key] ? 'bg-blue-600' : 'bg-gray-200'}`}
-                  >
-                    <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${prefs[item.key] ? 'right-0.5' : 'left-0.5'}`} />
-                  </button>
+        <div className="space-y-5">
+          {/* Preferences */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <h3 className="text-sm font-bold text-gray-900 mb-4">Notification Preferences</h3>
+            <div className="space-y-3.5">
+              {PREFS.map(p => (
+                <div key={p.key} className="flex items-center justify-between">
+                  <span className="text-sm text-gray-700">{p.label}</span>
+                  <Toggle on={prefs[p.key]} onToggle={() => setPrefs(prev => ({ ...prev, [p.key]: !prev[p.key] }))} />
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Need Help */}
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-            <div className="flex items-start gap-3 mb-3">
-              <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                <Bell className="w-5 h-5 text-blue-600" />
+          {/* Support */}
+          <div className="bg-gradient-to-br from-purple-600 to-violet-700 rounded-2xl p-5 text-white">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center">
+                <HelpCircle className="text-white" style={{ width: 16, height: 16 }} />
               </div>
-              <div>
-                <h3 className="font-bold text-gray-900 text-sm">Need Help?</h3>
-                <p className="text-xs text-gray-500 mt-0.5">If you need any assistance, our support team is here to help you.</p>
-              </div>
+              <h3 className="text-sm font-bold">Need Help?</h3>
             </div>
-            <button className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-colors">
+            <p className="text-xs text-white/80 mb-4">Contact our support team for any questions or issues.</p>
+            <button className="w-full bg-white/20 hover:bg-white/30 transition-colors px-4 py-2 rounded-xl text-xs font-semibold">
               Contact Support
             </button>
           </div>

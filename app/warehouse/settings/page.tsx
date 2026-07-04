@@ -1,169 +1,124 @@
 'use client';
 
 import { useState } from 'react';
-import { Save, Bell, Lock, Globe, Shield } from 'lucide-react';
+import { Settings, Globe, Shield, Save } from 'lucide-react';
 
-export default function WarehouseSettings() {
-  const [settings, setSettings] = useState({
-    emailNotifications: true,
-    orderAlerts: true,
-    stockAlerts: true,
-    marketingEmails: false,
-    language: 'en',
-    timezone: 'Africa/Addis_Ababa',
-    twoFactorAuth: false,
-  });
+function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
+  return (
+    <button onClick={onToggle} type="button"
+      style={{ width: 40, height: 22, background: on ? '#7c3aed' : '#e5e7eb', borderRadius: 20, position: 'relative', transition: 'background 0.2s', border: 'none', cursor: 'pointer' }}>
+      <span style={{ position: 'absolute', top: 2, left: on ? 20 : 2, width: 18, height: 18, background: '#fff', borderRadius: '50%', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
+    </button>
+  );
+}
 
+export default function SettingsPage() {
+  const [notifs, setNotifs] = useState({ newOrders: true, lowStock: true, payments: false, promotions: false });
+  const [language, setLanguage] = useState('en');
+  const [timezone, setTimezone] = useState('UTC+3');
+  const [twoFA, setTwoFA] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
   const handleSave = () => {
     setSaving(true);
-    setTimeout(() => {
-      setSaving(false);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
-    }, 1000);
+    setTimeout(() => { setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2000); }, 1000);
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      {/* Header */}
+    <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-        <p className="text-gray-500">Manage your warehouse settings</p>
+        <h1 className="text-xl font-bold text-gray-900">Settings</h1>
+        <p className="text-sm text-gray-500 mt-0.5">Configure your warehouse preferences</p>
       </div>
 
-      {/* Notifications */}
-      <div className="bg-white rounded-xl border border-gray-100 p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <Bell className="w-5 h-5 text-gray-500" />
-          <h2 className="font-semibold text-gray-900">Notifications</h2>
-        </div>
-        <div className="space-y-4">
-          <label className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-gray-900">Email Notifications</p>
-              <p className="text-sm text-gray-500">Receive email notifications for important updates</p>
+      <div className="max-w-2xl space-y-5">
+        {/* Notification Settings */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="flex items-center gap-2.5 px-5 py-4 border-b border-gray-50">
+            <div className="w-7 h-7 rounded-lg bg-purple-50 flex items-center justify-center">
+              <Settings className="text-purple-500" style={{ width: 14, height: 14 }} />
             </div>
-            <input
-              type="checkbox"
-              checked={settings.emailNotifications}
-              onChange={(e) => setSettings({ ...settings, emailNotifications: e.target.checked })}
-              className="w-5 h-5 rounded text-blue-600"
-            />
-          </label>
-          <label className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-gray-900">Order Alerts</p>
-              <p className="text-sm text-gray-500">Get notified when you receive new orders</p>
-            </div>
-            <input
-              type="checkbox"
-              checked={settings.orderAlerts}
-              onChange={(e) => setSettings({ ...settings, orderAlerts: e.target.checked })}
-              className="w-5 h-5 rounded text-blue-600"
-            />
-          </label>
-          <label className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-gray-900">Stock Alerts</p>
-              <p className="text-sm text-gray-500">Get notified when inventory is running low</p>
-            </div>
-            <input
-              type="checkbox"
-              checked={settings.stockAlerts}
-              onChange={(e) => setSettings({ ...settings, stockAlerts: e.target.checked })}
-              className="w-5 h-5 rounded text-blue-600"
-            />
-          </label>
-          <label className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-gray-900">Marketing Emails</p>
-              <p className="text-sm text-gray-500">Receive promotional emails and updates</p>
-            </div>
-            <input
-              type="checkbox"
-              checked={settings.marketingEmails}
-              onChange={(e) => setSettings({ ...settings, marketingEmails: e.target.checked })}
-              className="w-5 h-5 rounded text-blue-600"
-            />
-          </label>
-        </div>
-      </div>
-
-      {/* Regional */}
-      <div className="bg-white rounded-xl border border-gray-100 p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <Globe className="w-5 h-5 text-gray-500" />
-          <h2 className="font-semibold text-gray-900">Regional Settings</h2>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Language</label>
-            <select
-              value={settings.language}
-              onChange={(e) => setSettings({ ...settings, language: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="en">English</option>
-              <option value="es">Spanish</option>
-              <option value="fr">French</option>
-            </select>
+            <h3 className="text-sm font-bold text-gray-900">Notifications</h3>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
-            <select
-              value={settings.timezone}
-              onChange={(e) => setSettings({ ...settings, timezone: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="Africa/Addis_Ababa">East Africa Time (EAT)</option>
-              <option value="Europe/London">GMT / London</option>
-              <option value="Europe/Paris">Central European Time (CET)</option>
-              <option value="Asia/Dubai">Gulf Standard Time (GST)</option>
-              <option value="America/New_York">Eastern Time (ET)</option>
-            </select>
+          <div className="p-5 space-y-4">
+            {[
+              { key: 'newOrders', label: 'New Orders', desc: 'Get notified when a new order arrives' },
+              { key: 'lowStock', label: 'Low Stock Alerts', desc: 'Alert when inventory falls below threshold' },
+              { key: 'payments', label: 'Payment Updates', desc: 'Notifications for payment events' },
+              { key: 'promotions', label: 'Promotions', desc: 'Updates about active promotions' },
+            ].map(n => (
+              <div key={n.key} className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-800">{n.label}</p>
+                  <p className="text-xs text-gray-400">{n.desc}</p>
+                </div>
+                <Toggle on={notifs[n.key as keyof typeof notifs]} onToggle={() => setNotifs(p => ({ ...p, [n.key]: !p[n.key as keyof typeof notifs] }))} />
+              </div>
+            ))}
           </div>
         </div>
-      </div>
 
-      {/* Security */}
-      <div className="bg-white rounded-xl border border-gray-100 p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <Shield className="w-5 h-5 text-gray-500" />
-          <h2 className="font-semibold text-gray-900">Security</h2>
-        </div>
-        <div className="space-y-4">
-          <label className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-gray-900">Two-Factor Authentication</p>
-              <p className="text-sm text-gray-500">Add an extra layer of security to your account</p>
+        {/* Regional */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="flex items-center gap-2.5 px-5 py-4 border-b border-gray-50">
+            <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center">
+              <Globe className="text-blue-500" style={{ width: 14, height: 14 }} />
             </div>
-            <input
-              type="checkbox"
-              checked={settings.twoFactorAuth}
-              onChange={(e) => setSettings({ ...settings, twoFactorAuth: e.target.checked })}
-              className="w-5 h-5 rounded text-blue-600"
-            />
-          </label>
-          <button className="flex items-center gap-2 text-blue-600 hover:underline">
-            <Lock className="w-4 h-4" />
-            Change Password
+            <h3 className="text-sm font-bold text-gray-900">Regional</h3>
+          </div>
+          <div className="p-5 space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">Language</label>
+              <select value={language} onChange={e => setLanguage(e.target.value)}
+                className="w-full px-3 h-10 border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 bg-white cursor-pointer">
+                <option value="en">English</option>
+                <option value="am">Amharic</option>
+                <option value="fr">French</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">Timezone</label>
+              <select value={timezone} onChange={e => setTimezone(e.target.value)}
+                className="w-full px-3 h-10 border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 bg-white cursor-pointer">
+                <option value="UTC+3">UTC+3 (Addis Ababa)</option>
+                <option value="UTC+0">UTC+0 (London)</option>
+                <option value="UTC-5">UTC-5 (New York)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Security */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="flex items-center gap-2.5 px-5 py-4 border-b border-gray-50">
+            <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center">
+              <Shield className="text-emerald-500" style={{ width: 14, height: 14 }} />
+            </div>
+            <h3 className="text-sm font-bold text-gray-900">Security</h3>
+          </div>
+          <div className="p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-800">Two-Factor Authentication</p>
+                <p className="text-xs text-gray-400">Add an extra layer of security</p>
+              </div>
+              <Toggle on={twoFA} onToggle={() => setTwoFA(p => !p)} />
+            </div>
+            <button className="text-sm font-medium text-purple-600 hover:text-purple-800 transition-colors">
+              Change Password →
+            </button>
+          </div>
+        </div>
+
+        <div className="flex justify-end">
+          <button onClick={handleSave} disabled={saving}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90 disabled:opacity-60 shadow-sm"
+            style={{ background: 'linear-gradient(135deg,#7c3aed,#a855f7)' }}>
+            <Save style={{ width: 15, height: 15 }} />
+            {saving ? 'Saving…' : saved ? 'Saved!' : 'Save Settings'}
           </button>
         </div>
-      </div>
-
-      {/* Actions */}
-      <div className="flex items-center justify-end gap-4">
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
-        >
-          <Save className="w-4 h-4" />
-          {saving ? 'Saving...' : saved ? 'Saved!' : 'Save Settings'}
-        </button>
       </div>
     </div>
   );

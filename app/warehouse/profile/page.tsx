@@ -3,254 +3,206 @@
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { Building2, ChevronRight, MapPin, CreditCard, FileText, Edit2, Check, Shield, Truck } from 'lucide-react';
+import { Building, MapPin, CreditCard, Truck, Bell, FileText, Edit2, CheckCircle2 } from 'lucide-react';
 import { warehousesApi } from '@/lib/api';
 import { useAuth } from '@/components/auth/auth-provider';
 import type { Warehouse } from '@/lib/types';
+
+function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
+  return (
+    <button onClick={onToggle} type="button"
+      className={`relative w-10 h-5.5 rounded-full transition-colors focus:outline-none ${on ? 'bg-purple-600' : 'bg-gray-200'}`}
+      style={{ width: 40, height: 22 }}>
+      <span className={`absolute top-0.5 w-4.5 h-4.5 bg-white rounded-full shadow transition-all ${on ? 'left-[18px]' : 'left-0.5'}`}
+        style={{ width: 18, height: 18, left: on ? 20 : 2, top: 2 }} />
+    </button>
+  );
+}
 
 export default function WarehouseProfile() {
   const { user } = useAuth();
   const [warehouse, setWarehouse] = useState<Warehouse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [settings, setSettings] = useState({
+  const [prefs, setPrefs] = useState({
     order_notifications: true,
     low_stock_alerts: true,
-    email_updates: true,
+    email_updates: false,
     sms_notifications: false,
+    weekly_reports: true,
+    promotional: false,
   });
 
   useEffect(() => {
-    async function fetchWarehouse() {
-      const warehouseId = user?.warehouse_id;
-      if (!warehouseId) return;
-      try {
-        const warehouseRes = await warehousesApi.get(warehouseId);
-        setWarehouse(warehouseRes);
-      } catch (error) {
-        console.error('Failed to fetch warehouse:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    if (user?.warehouse_id) fetchWarehouse();
+    const wid = user?.warehouse_id;
+    if (!wid) return;
+    warehousesApi.get(wid).then(setWarehouse).catch(console.error).finally(() => setLoading(false));
   }, [user?.warehouse_id]);
 
-  if (loading || !warehouse) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
-      </div>
-    );
-  }
+  const toggle = (k: keyof typeof prefs) => setPrefs(p => ({ ...p, [k]: !p[k] }));
 
-  const Toggle = ({ value, onChange }: { value: boolean; onChange: () => void }) => (
-    <button
-      onClick={onChange}
-      className={`w-10 h-5 rounded-full transition-colors relative flex-shrink-0 ${value ? 'bg-blue-600' : 'bg-gray-200'}`}
-    >
-      <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${value ? 'right-0.5' : 'left-0.5'}`} />
-    </button>
+  if (loading) return (
+    <div className="flex items-center justify-center py-32">
+      <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+    </div>
   );
 
-  const EditBtn = () => (
-    <button className="text-xs text-blue-600 font-medium flex items-center gap-1 hover:underline">
-      <Edit2 className="w-3 h-3" />
-      Edit
-    </button>
+  if (!warehouse) return (
+    <div className="flex items-center justify-center py-32">
+      <p className="text-sm text-gray-400">Warehouse data unavailable.</p>
+    </div>
   );
 
   return (
     <div className="space-y-5">
-      {/* Header */}
       <div>
-        <div className="flex items-center gap-2 text-sm text-gray-400 mb-1">
-          <Link href="/warehouse" className="hover:text-blue-600">Dashboard</Link>
-          <ChevronRight className="w-3.5 h-3.5" />
-          <span className="text-gray-700 font-medium">Profile</span>
-        </div>
         <h1 className="text-xl font-bold text-gray-900">Warehouse Profile</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Manage your warehouse information and settings.</p>
+        <p className="text-sm text-gray-500 mt-0.5">Manage your warehouse information and settings</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 items-start">
         {/* Left Column */}
-        <div className="space-y-4">
-          {/* Warehouse Profile Card */}
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-gray-900 text-sm">Warehouse Profile</h3>
-              <EditBtn />
-            </div>
-            <div className="flex flex-col items-center mb-5">
-              <div className="w-16 h-16 bg-blue-50 rounded-xl flex items-center justify-center border-2 border-blue-100 mb-3">
-                <Building2 className="w-8 h-8 text-blue-600" />
+        <div className="space-y-5">
+          {/* Warehouse Profile */}
+          <Card
+            title="Warehouse Profile"
+            icon={Building}
+            action={<EditBtn />}
+          >
+            <div className="flex items-center gap-4 mb-5 pb-5 border-b border-gray-50">
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-white text-xl font-bold flex-shrink-0"
+                style={{ background: 'linear-gradient(135deg,#7c3aed,#a855f7)' }}>
+                {warehouse.name?.charAt(0).toUpperCase() || 'W'}
               </div>
-              <h4 className="font-bold text-gray-900 text-sm">{warehouse.name}</h4>
-            </div>
-            <div className="space-y-2.5">
-              {[
-                { label: 'Warehouse Code', value: 'WH-001' },
-                { label: 'Owner Name', value: warehouse.owner_name },
-                { label: 'Email', value: warehouse.email },
-                { label: 'Phone', value: warehouse.phone },
-                { label: 'Established', value: new Date(warehouse.member_since).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) },
-              ].map(item => (
-                <div key={item.label} className="flex items-start justify-between">
-                  <span className="text-xs text-gray-500 flex-shrink-0">{item.label}</span>
-                  <span className="text-xs text-gray-800 font-medium text-right ml-2 truncate max-w-[60%]">{item.value || '—'}</span>
-                </div>
-              ))}
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500">Status</span>
-                <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-                  <Check className="w-3 h-3" />
-                  Active
+              <div className="min-w-0">
+                <p className="text-base font-bold text-gray-900 truncate">{warehouse.name}</p>
+                <p className="text-xs text-gray-400">#{warehouse.id?.slice(-8).toUpperCase()}</p>
+                <span className={`mt-1 inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${warehouse.status === 'active' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+                  <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                  {warehouse.status?.charAt(0).toUpperCase() + warehouse.status?.slice(1)}
                 </span>
               </div>
             </div>
-          </div>
+            <div className="space-y-3">
+              <ProfileRow label="Owner" value={warehouse.owner_name} />
+              <ProfileRow label="Email" value={warehouse.email} />
+              <ProfileRow label="Phone" value={warehouse.phone} />
+              <ProfileRow label="Member Since" value={warehouse.member_since ? new Date(warehouse.member_since).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '—'} />
+              <ProfileRow label="Rating" value={warehouse.rating ? `${Number(warehouse.rating).toFixed(1)} ★` : '—'} />
+            </div>
+          </Card>
 
           {/* Address */}
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-gray-400" />
-                <h3 className="font-bold text-gray-900 text-sm">Address</h3>
-              </div>
-              <EditBtn />
+          <Card title="Address" icon={MapPin} action={<EditBtn />}>
+            <div className="space-y-3">
+              <ProfileRow label="Address" value={warehouse.address || '—'} />
+              <ProfileRow label="City" value={warehouse.city || '—'} />
+              <ProfileRow label="Country" value={warehouse.country || '—'} />
             </div>
-            <div className="space-y-1 text-xs text-gray-600">
-              <p>{warehouse.address || '123 Warehouse Lane'}</p>
-              <p>{warehouse.city}{warehouse.country ? `, ${warehouse.country}` : ''}</p>
-            </div>
-            <button className="mt-3 text-xs text-blue-600 font-medium hover:underline">View on Map</button>
-          </div>
+          </Card>
 
           {/* Bank Details */}
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <CreditCard className="w-4 h-4 text-gray-400" />
-                <h3 className="font-bold text-gray-900 text-sm">Bank Details</h3>
-              </div>
-              <EditBtn />
+          <Card title="Bank Details" icon={CreditCard} action={<EditBtn />}>
+            <div className="space-y-3">
+              <ProfileRow label="Bank" value={warehouse.bank_name || '—'} />
+              <ProfileRow label="Account" value={warehouse.bank_account ? `****${warehouse.bank_account.slice(-4)}` : '—'} />
             </div>
-            <div className="space-y-2">
-              {[
-                { label: 'Bank Name', value: warehouse.bank_name || 'Chase Bank' },
-                { label: 'Account Holder', value: warehouse.owner_name },
-                { label: 'Account Number', value: warehouse.bank_account ? '••••' + warehouse.bank_account.slice(-4) : '•••• 1234' },
-                { label: 'Routing Number', value: '071000021' },
-              ].map(item => (
-                <div key={item.label} className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">{item.label}</span>
-                  <span className="text-xs text-gray-800 font-medium">{item.value || '—'}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* KYC Documents */}
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <Shield className="w-4 h-4 text-gray-400" />
-              <h3 className="font-bold text-gray-900 text-sm">KYC Documents</h3>
-            </div>
-            <div className="space-y-2">
-              {['Business License', 'Tax Certificate', 'ID Proof'].map((doc) => (
-                <div key={doc} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-3.5 h-3.5 text-gray-400" />
-                    <div>
-                      <p className="text-xs font-medium text-gray-700">{doc}</p>
-                      <p className="text-[10px] text-gray-400">Uploaded on Jan 15, 2023</p>
-                    </div>
-                  </div>
-                  <button className="text-xs text-blue-600 font-medium hover:underline">View</button>
-                </div>
-              ))}
-            </div>
-          </div>
+          </Card>
         </div>
 
         {/* Middle Column */}
-        <div className="space-y-4">
-          {/* Business Information */}
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-gray-900 text-sm">Business Information</h3>
-              <EditBtn />
-            </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Business Type</label>
-                <p className="text-sm font-medium text-gray-800">{warehouse.business_type || 'Electronics & Accessories'}</p>
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Tax ID</label>
-                <p className="text-sm font-medium text-gray-800">{warehouse.tax_id || 'TX-123456789'}</p>
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Company Registration</label>
-                <p className="text-sm font-medium text-gray-800">BRN-987654321</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column */}
-        <div className="space-y-4">
-          {/* Shipping Information */}
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Truck className="w-4 h-4 text-gray-400" />
-                <h3 className="font-bold text-gray-900 text-sm">Shipping Information</h3>
-              </div>
-              <EditBtn />
-            </div>
+        <div className="space-y-5">
+          {/* Business Info */}
+          <Card title="Business Information" icon={Building} action={<EditBtn />}>
             <div className="space-y-3">
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Default Shipping Partner</label>
-                <p className="text-sm font-medium text-gray-800">MarketBridge Express</p>
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Shipping Rate</label>
-                <p className="text-sm font-medium text-gray-800">$0.00 - $5.99</p>
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Processing Time</label>
-                <p className="text-sm font-medium text-gray-800">1-2 Business Days</p>
-              </div>
+              <ProfileRow label="Business Type" value={warehouse.business_type || '—'} />
+              <ProfileRow label="Tax ID" value={warehouse.tax_id || '—'} />
+              <ProfileRow label="Total Products" value={String(warehouse.total_products || 0)} />
+              <ProfileRow label="Total Orders" value={String(warehouse.total_orders || 0)} />
+              <ProfileRow label="Total Sales" value={`${Number(warehouse.total_sales || 0).toLocaleString()} Br`} />
+              <ProfileRow label="Performance" value={warehouse.performance_score ? `${warehouse.performance_score}%` : '—'} />
             </div>
-          </div>
+          </Card>
 
-          {/* Settings */}
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-gray-900 text-sm">Settings</h3>
-              <EditBtn />
-            </div>
+          {/* KYC Documents */}
+          <Card title="Verification Documents" icon={FileText}>
             <div className="space-y-3">
               {[
-                { key: 'order_notifications', label: 'Receive Order Notifications' },
-                { key: 'low_stock_alerts', label: 'Low Stock Alerts' },
-                { key: 'email_updates', label: 'Email Updates' },
-                { key: 'sms_notifications', label: 'SMS Notifications' },
-              ].map(item => (
-                <div key={item.key} className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700">{item.label}</span>
-                  <Toggle
-                    value={settings[item.key as keyof typeof settings]}
-                    onChange={() => setSettings(s => ({ ...s, [item.key]: !s[item.key as keyof typeof settings] }))}
-                  />
+                { name: 'Business Registration', date: 'Uploaded Jan 2024' },
+                { name: 'Tax Certificate', date: 'Uploaded Jan 2024' },
+                { name: 'Identity Document', date: 'Uploaded Feb 2024' },
+              ].map(doc => (
+                <div key={doc.name} className="flex items-center gap-3 p-3 bg-emerald-50 rounded-xl">
+                  <CheckCircle2 className="text-emerald-500 flex-shrink-0" style={{ width: 16, height: 16 }} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-gray-800">{doc.name}</p>
+                    <p className="text-[10px] text-gray-400">{doc.date}</p>
+                  </div>
+                  <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">Verified</span>
                 </div>
               ))}
             </div>
-          </div>
+          </Card>
+        </div>
+
+        {/* Right Column */}
+        <div className="space-y-5">
+          {/* Shipping */}
+          <Card title="Shipping Information" icon={Truck} action={<EditBtn />}>
+            <div className="space-y-3">
+              <ProfileRow label="Processing Time" value="1–2 business days" />
+              <ProfileRow label="Shipping Methods" value="Standard, Express" />
+              <ProfileRow label="Delivery Range" value="Nationwide" />
+              <ProfileRow label="Free Shipping Above" value="500 Br" />
+            </div>
+          </Card>
+
+          {/* Notifications */}
+          <Card title="Notification Settings" icon={Bell}>
+            <div className="space-y-3.5">
+              {(Object.keys(prefs) as Array<keyof typeof prefs>).map(k => (
+                <div key={k} className="flex items-center justify-between">
+                  <span className="text-sm text-gray-700 capitalize">{k.replace(/_/g, ' ')}</span>
+                  <Toggle on={prefs[k]} onToggle={() => toggle(k)} />
+                </div>
+              ))}
+            </div>
+          </Card>
         </div>
       </div>
     </div>
+  );
+}
+
+function Card({ title, icon: Icon, children, action }: { title: string; icon: any; children: React.ReactNode; action?: React.ReactNode }) {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-50">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg bg-purple-50 flex items-center justify-center">
+            <Icon className="text-purple-500" style={{ width: 14, height: 14 }} />
+          </div>
+          <h3 className="text-sm font-bold text-gray-900">{title}</h3>
+        </div>
+        {action}
+      </div>
+      <div className="p-5">{children}</div>
+    </div>
+  );
+}
+
+function ProfileRow({ label, value }: { label: string; value?: string | null }) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <span className="text-xs text-gray-400 flex-shrink-0">{label}</span>
+      <span className="text-xs font-medium text-gray-800 text-right truncate">{value || '—'}</span>
+    </div>
+  );
+}
+
+function EditBtn() {
+  return (
+    <button className="flex items-center gap-1 text-xs font-medium text-purple-600 hover:text-purple-800 transition-colors">
+      <Edit2 style={{ width: 12, height: 12 }} /> Edit
+    </button>
   );
 }
