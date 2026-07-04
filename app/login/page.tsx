@@ -3,10 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Eye, EyeOff, Shield, Truck, RotateCcw, Clock } from 'lucide-react';
+import { Eye, EyeOff, Shield, Truck, RotateCcw, Clock, ShoppingBag } from 'lucide-react';
 import { useAuth } from '@/components/auth/auth-provider';
 import { getDashboardPath } from '@/lib/auth/types';
-import { SidebarIcon } from '@/components/ui/market-bridge-logo';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -72,8 +71,10 @@ export default function LoginPage() {
         <div className="px-8 py-5 border-b border-gray-100">
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2.5">
-              <SidebarIcon />
-              <span className="font-bold text-gray-900 text-lg tracking-tight">MarketBridge</span>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%)' }}>
+                <ShoppingBag className="text-white" style={{ width: 18, height: 18 }} />
+              </div>
+              <span className="font-bold text-gray-900 text-sm tracking-tight">MarketBridge</span>
             </Link>
             <Link href="/" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
               Back to Home

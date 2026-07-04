@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Mail, Phone, CheckCircle, ArrowLeft, Send } from 'lucide-react';
-import { SidebarIcon } from '@/components/ui/market-bridge-logo';
+import { Mail, Phone, CheckCircle, ArrowLeft, Send, ShoppingBag } from 'lucide-react';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -23,8 +22,10 @@ export default function ForgotPasswordPage() {
         <div className="px-8 py-5 border-b border-gray-100">
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2.5">
-              <SidebarIcon />
-              <span className="font-bold text-gray-900 text-lg tracking-tight">MarketBridge</span>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%)' }}>
+                <ShoppingBag className="text-white" style={{ width: 18, height: 18 }} />
+              </div>
+              <span className="font-bold text-gray-900 text-sm tracking-tight">MarketBridge</span>
             </Link>
             <Link href="/login" className="text-sm text-blue-600 hover:text-blue-700 font-medium">Back to Login</Link>
           </div>

@@ -3,14 +3,13 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutDashboard, Package, Heart, MapPin, Bell, Settings, Shield, Eye, Star, LogOut, HelpCircle, Truck,
+  LayoutDashboard, Package, Heart, MapPin, Bell, Settings, Shield, Eye, Star, LogOut, Truck, ShoppingBag,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/components/auth/auth-provider';
-import { SidebarIcon } from '@/components/ui/market-bridge-logo';
 
 const navItems = [
-  { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', exact: true },
   { href: '/dashboard/orders', icon: Package, label: 'My Orders' },
   { href: '/dashboard/order-tracking', icon: Truck, label: 'Order Tracking' },
   { href: '/wishlist', icon: Heart, label: 'Wishlist' },
@@ -32,20 +31,25 @@ export default function CustomerSidebar() {
   };
 
   return (
-    <aside className="w-64 flex-shrink-0">
-      <div className="rounded-2xl overflow-hidden sticky top-20 shadow-lg" style={{ background: '#0f1d35' }}>
+    <aside className="w-56 flex-shrink-0">
+      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden sticky top-20">
         {/* Logo */}
-        <div className="px-5 py-4 border-b border-white/10">
-          <Link href="/" className="flex items-center gap-3">
-            <SidebarIcon />
-            <span className="font-bold text-xl bg-gradient-to-r from-fuchsia-500 via-violet-500 to-cyan-400 bg-clip-text text-transparent">MarketBridge</span>
+        <div className="px-4 py-3.5 border-b border-gray-100">
+          <Link href="/" className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%)' }}>
+              <ShoppingBag className="text-white" style={{ width: 18, height: 18 }} />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-gray-900 leading-tight">MarketBridge</p>
+              <p className="text-[10px] text-gray-400 leading-tight">My Account</p>
+            </div>
           </Link>
         </div>
 
         {/* Profile */}
-        <div className="px-5 py-4 border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-blue-400/40">
+        <div className="px-4 py-3 border-b border-gray-100">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-blue-100">
               <img
                 src={user?.avatar_url || "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=100"}
                 alt={user?.name || "User"}
@@ -53,34 +57,39 @@ export default function CustomerSidebar() {
               />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-white truncate">
-                Hello, {user?.name?.split(' ')[0] || 'User'}!
+              <p className="text-[13px] font-semibold text-gray-900 truncate leading-tight">
+                {user?.name?.split(' ')[0] || 'User'}
               </p>
-              <span className="inline-block text-[10px] px-2 py-0.5 bg-blue-500/30 text-blue-300 rounded-full font-medium">
-                {user?.role === 'customer' ? 'Customer' : user?.role || 'Customer'}
+              <span className="inline-block text-[10px] px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full font-medium leading-tight">
+                Customer
               </span>
             </div>
           </div>
         </div>
 
         {/* Nav */}
-        <nav className="p-3">
+        <nav className="p-2 space-y-0.5">
           {navItems.map((item) => {
-            const active = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href) && item.href !== '/wishlist');
+            const active = item.exact
+              ? pathname === item.href
+              : pathname === item.href || pathname.startsWith(item.href + '/');
             return (
               <Link key={item.href} href={item.href}>
                 <div className={cn(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-150 mb-0.5 group',
+                  'flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-150',
                   active
-                    ? 'bg-violet-600 text-white'
-                    : 'text-gray-400 hover:bg-white/8 hover:text-white'
-                )} style={!active ? { '--tw-hover-bg': 'rgba(255,255,255,0.08)' } as React.CSSProperties : {}}>
-                  <item.icon className={cn('w-4 h-4 flex-shrink-0', active ? 'text-white' : 'text-gray-500 group-hover:text-violet-300')} />
-                  <span className="flex-1 font-medium">{item.label}</span>
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                )}>
+                  <item.icon
+                    className={cn('flex-shrink-0', active ? 'text-white' : 'text-gray-400')}
+                    style={{ width: 16, height: 16 }}
+                  />
+                  <span className="flex-1">{item.label}</span>
                   {item.badge && (
                     <span className={cn(
-                      'min-w-[20px] h-5 text-[10px] rounded-full flex items-center justify-center font-medium px-1.5',
-                      active ? 'bg-white/20 text-white' : 'bg-blue-500/30 text-blue-300'
+                      'min-w-[18px] h-[18px] text-[10px] rounded-full flex items-center justify-center font-semibold px-1',
+                      active ? 'bg-white/20 text-white' : 'bg-blue-100 text-blue-600'
                     )}>
                       {item.badge}
                     </span>
@@ -89,29 +98,16 @@ export default function CustomerSidebar() {
               </Link>
             );
           })}
-
-          <div className="border-t border-white/10 mt-3 pt-2">
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-all duration-150 w-full group"
-            >
-              <LogOut className="w-4 h-4 text-gray-500 group-hover:text-red-400" />
-              <span className="font-medium">Logout</span>
-            </button>
-          </div>
         </nav>
 
-        {/* Help Card */}
-        <div className="mx-3 mb-3 p-4 rounded-xl border border-white/10" style={{ background: 'rgba(255,255,255,0.05)' }}>
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-7 h-7 rounded-lg bg-blue-500/30 flex items-center justify-center">
-              <HelpCircle className="w-3.5 h-3.5 text-blue-300" />
-            </div>
-            <p className="text-sm font-semibold text-white">Need Help?</p>
-          </div>
-          <p className="text-xs text-gray-400 mb-3 leading-relaxed">Our support team is here to help you 24/7.</p>
-          <button className="w-full py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors">
-            Contact Support
+        {/* Logout */}
+        <div className="px-2 pb-2 border-t border-gray-100 mt-1 pt-1">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium text-gray-500 hover:bg-red-50 hover:text-red-600 transition-all w-full"
+          >
+            <LogOut className="text-gray-400 flex-shrink-0" style={{ width: 16, height: 16 }} />
+            <span>Logout</span>
           </button>
         </div>
       </div>

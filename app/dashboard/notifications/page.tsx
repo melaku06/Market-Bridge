@@ -22,7 +22,7 @@ const typeColorMap: Record<string, string> = {
   promotion: 'bg-orange-50 text-orange-600',
   system: 'bg-gray-100 text-gray-600',
   account: 'bg-emerald-50 text-emerald-600',
-  product: 'bg-violet-50 text-violet-600',
+  product: 'bg-blue-50 text-blue-600',
   inventory: 'bg-amber-50 text-amber-600',
 };
 

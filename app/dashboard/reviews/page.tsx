@@ -82,7 +82,7 @@ export default function ReviewHistoryPage() {
             { label: 'Total Reviews', value: reviews.length, color: 'text-blue-600', bg: 'bg-blue-50' },
             { label: 'Average Rating', value: `${avgRating} ★`, color: 'text-amber-600', bg: 'bg-amber-50' },
             { label: '5-Star Reviews', value: reviews.filter(r => r.rating === 5).length, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-            { label: 'Products Reviewed', value: new Set(reviews.map(r => r.product_id)).size, color: 'text-violet-600', bg: 'bg-violet-50' },
+            { label: 'Products Reviewed', value: new Set(reviews.map(r => r.product_id)).size, color: 'text-blue-600', bg: 'bg-blue-50' },
           ].map(s => (
             <div key={s.label} className="bg-white rounded-2xl border border-gray-100 p-4">
               <div className={`w-9 h-9 ${s.bg} rounded-lg flex items-center justify-center mb-2`}>
