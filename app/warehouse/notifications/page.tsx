@@ -3,8 +3,8 @@
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState } from 'react';
-import { Bell, Truck, Tag, CheckCircle, Package, AlertCircle, User, Trash2, Loader2, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
+import { Bell, Truck, Tag, CheckCircle, Package, AlertCircle, User, Trash2, Loader2, ChevronRight, Settings2 } from 'lucide-react';
 import { useNotificationsStore } from '@/stores/notifications-store';
 import { useAuth } from '@/components/auth/auth-provider';
 
@@ -20,19 +20,16 @@ const typeIconMap: Record<string, React.ReactNode> = {
 };
 
 const typeColorMap: Record<string, string> = {
-  order: 'bg-blue-100 text-blue-600',
-  promotion: 'bg-orange-100 text-orange-600',
+  order: 'bg-blue-50 text-blue-600',
+  promotion: 'bg-orange-50 text-orange-600',
   system: 'bg-gray-100 text-gray-600',
-  account: 'bg-green-100 text-green-600',
-  product: 'bg-purple-100 text-purple-600',
-  inventory: 'bg-yellow-100 text-yellow-600',
+  account: 'bg-emerald-50 text-emerald-600',
+  product: 'bg-violet-50 text-violet-600',
+  inventory: 'bg-amber-50 text-amber-600',
 };
 
 const typeTabMap: Record<string, string> = {
-  order: 'Orders',
-  product: 'Products',
-  inventory: 'Inventory',
-  system: 'System',
+  order: 'Orders', product: 'Products', inventory: 'Inventory', system: 'System',
 };
 
 function timeAgo(dateString: string): string {
@@ -64,49 +61,70 @@ export default function WarehouseNotifications() {
   return (
     <div className="space-y-5">
       <div>
-        <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
-          <Link href="/warehouse" className="hover:text-blue-600">Warehouse</Link>
-          <ChevronRight className="w-4 h-4" />
-          <span className="text-gray-900 font-medium">Notifications</span>
+        <div className="flex items-center gap-2 text-sm text-gray-400 mb-1">
+          <Link href="/warehouse" className="hover:text-blue-600 transition-colors">Dashboard</Link>
+          <ChevronRight className="w-3.5 h-3.5" />
+          <span className="text-gray-700 font-medium">Notifications</span>
         </div>
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold text-gray-900">Notifications</h1>
-          {unreadCount > 0 && (
-            <button onClick={() => user?.id && markAllAsRead(user.id)} className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-              Mark all as read
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Notifications</h1>
+            <p className="text-sm text-gray-500 mt-0.5">Stay updated with your warehouse activities.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            {unreadCount > 0 && (
+              <button onClick={() => user?.id && markAllAsRead(user.id)} className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1.5 px-3 py-2 rounded-lg hover:bg-blue-50 transition-colors">
+                <CheckCircle className="w-4 h-4" />
+                Mark all as read
+              </button>
+            )}
+            <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+              <Settings2 className="w-4 h-4" />
             </button>
-          )}
+          </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-        <div className="flex border-b border-gray-100 overflow-x-auto">
-          {tabs.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                activeTab === tab ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              {tab}
-              {tab !== 'All' && notifications.filter((n) => typeTabMap[n.type] === tab && !n.is_read).length > 0 && (
-                <span className="ml-1.5 text-xs bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full">
-                  {notifications.filter((n) => typeTabMap[n.type] === tab && !n.is_read).length}
-                </span>
-              )}
-            </button>
-          ))}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        {/* Tabs */}
+        <div className="flex border-b border-gray-100 overflow-x-auto bg-gray-50/50">
+          {tabs.map((tab) => {
+            const tabUnread = notifications.filter((n) => typeTabMap[n.type] === tab && !n.is_read).length;
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-4 py-3.5 text-sm font-medium border-b-2 transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                  activeTab === tab
+                    ? 'border-blue-600 text-blue-600 bg-white'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-white/60'
+                }`}
+              >
+                {tab}
+                {tab !== 'All' && tabUnread > 0 && (
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
+                    activeTab === tab ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'
+                  }`}>
+                    {tabUnread}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
 
+        {/* Notifications List */}
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
           </div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-12">
-            <Bell className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500 text-sm">No notifications yet</p>
+          <div className="text-center py-16">
+            <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Bell className="w-8 h-8 text-gray-300" />
+            </div>
+            <p className="text-gray-500 text-sm font-medium">No notifications yet</p>
+            <p className="text-xs text-gray-400 mt-1">You'll see updates here when they arrive.</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-50">
