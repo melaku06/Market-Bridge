@@ -26,6 +26,10 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react', 'recharts'],
   },
+  webpack: (config) => {
+    config.cache = false;
+    return config;
+  },
 };
 
 module.exports = nextConfig;

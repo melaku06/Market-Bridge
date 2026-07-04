@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { updateProduct } from '@/lib/db-service';
-import { createAuditLog } from '@/lib/db-service';
-import prisma from '@/lib/prisma';
+import { invalidateProducts, invalidateProduct } from '@/lib/cached-data';
 
 export async function POST(
   request: NextRequest,
@@ -9,44 +8,22 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
+    const body = await request.json().catch(() => ({}));
 
-    // Check product exists and is pending
-    const product = await prisma.product.findUnique({ where: { id } });
-
-    if (!product) {
-      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
-    }
-
-    if (product.status !== 'pending') {
-      return NextResponse.json({ error: 'Product is not pending approval' }, { status: 400 });
-    }
-
-    let body: { reason?: string } = {};
-    try {
-      body = await request.json();
-    } catch {
-      // No body is fine
-    }
-
-    // Update product status to rejected
-    const updatedProduct = await updateProduct(id, { status: 'rejected' });
-
-    // Create audit log
-    await createAuditLog({
-      actor_id: 'admin',
-      actor_name: 'Admin User',
-      actor_role: 'admin',
-      action: 'reject',
-      entity_type: 'product',
-      entity_id: id,
-      description: `Product "${product.name}" rejected${body.reason ? `: ${body.reason}` : ''}`,
-      before_state: JSON.stringify({ status: 'pending' }),
-      after_state: JSON.stringify({ status: 'rejected', reason: body.reason }),
+    const product = await updateProduct(id, {
+      status: 'rejected',
+      updated_at: new Date(),
     });
 
-    return NextResponse.json({ data: updatedProduct });
+    invalidateProducts();
+    invalidateProduct(id);
+
+    return NextResponse.json({ data: product });
   } catch (error) {
     console.error('Error rejecting product:', error);
+    if ((error as any).code === 'P2025') {
+      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+    }
     return NextResponse.json({ error: 'Failed to reject product' }, { status: 500 });
   }
 }

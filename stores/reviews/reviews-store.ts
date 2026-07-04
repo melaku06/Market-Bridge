@@ -81,14 +81,36 @@ export const useReviewsStore = create<ReviewsState>()((set, get) => ({
     }
   },
 
-  updateReview: async (_id, _data) => {
-    set({ error: 'Not implemented' });
-    return false;
+  updateReview: async (id, data) => {
+    set({ isLoading: true, error: null });
+    try {
+      const updated = await reviewsApi.update(id, data);
+      set((s) => ({
+        reviews: s.reviews.map((r) => (r.id === id ? updated : r)),
+        productReviews: s.productReviews.map((r) => (r.id === id ? updated : r)),
+        isLoading: false,
+      }));
+      return true;
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Failed to update review', isLoading: false });
+      return false;
+    }
   },
 
-  deleteReview: async (_id) => {
-    set({ error: 'Not implemented' });
-    return false;
+  deleteReview: async (id) => {
+    set({ isLoading: true, error: null });
+    try {
+      await reviewsApi.delete(id);
+      set((s) => ({
+        reviews: s.reviews.filter((r) => r.id !== id),
+        productReviews: s.productReviews.filter((r) => r.id !== id),
+        isLoading: false,
+      }));
+      return true;
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Failed to delete review', isLoading: false });
+      return false;
+    }
   },
 
   clearError: () => set({ error: null }),

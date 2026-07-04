@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { updateProduct } from '@/lib/db-service';
-import { createAuditLog } from '@/lib/db-service';
-import prisma from '@/lib/prisma';
+import { invalidateProducts, invalidateProduct } from '@/lib/cached-data';
 
 export async function POST(
   request: NextRequest,
@@ -10,36 +9,20 @@ export async function POST(
   try {
     const { id } = await params;
 
-    // Check product exists and is pending
-    const product = await prisma.product.findUnique({ where: { id } });
-
-    if (!product) {
-      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
-    }
-
-    if (product.status !== 'pending') {
-      return NextResponse.json({ error: 'Product is not pending approval' }, { status: 400 });
-    }
-
-    // Update product status to published
-    const updatedProduct = await updateProduct(id, { status: 'published' });
-
-    // Create audit log
-    await createAuditLog({
-      actor_id: 'admin',
-      actor_name: 'Admin User',
-      actor_role: 'admin',
-      action: 'approve',
-      entity_type: 'product',
-      entity_id: id,
-      description: `Product "${product.name}" approved`,
-      before_state: JSON.stringify({ status: 'pending' }),
-      after_state: JSON.stringify({ status: 'published' }),
+    const product = await updateProduct(id, {
+      status: 'published',
+      updated_at: new Date(),
     });
 
-    return NextResponse.json({ data: updatedProduct });
+    invalidateProducts();
+    invalidateProduct(id);
+
+    return NextResponse.json({ data: product });
   } catch (error) {
     console.error('Error approving product:', error);
+    if ((error as any).code === 'P2025') {
+      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+    }
     return NextResponse.json({ error: 'Failed to approve product' }, { status: 500 });
   }
 }

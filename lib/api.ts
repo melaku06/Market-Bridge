@@ -190,6 +190,12 @@ export const reviewsApi = {
 
   create: (data: Partial<Review>) =>
     request<Review>('/reviews', { method: 'POST', body: data as Record<string, unknown> }),
+
+  update: (id: string, data: Partial<Review>) =>
+    request<Review>(`/reviews/${id}`, { method: 'PUT', body: data as Record<string, unknown> }),
+
+  delete: (id: string) =>
+    request<{ success: boolean }>(`/reviews/${id}`, { method: 'DELETE' }),
 };
 
 // Wishlist API
