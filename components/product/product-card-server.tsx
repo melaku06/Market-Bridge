@@ -15,6 +15,7 @@ export interface ProductCardData {
   review_count?: number;
   warehouse?: { id?: string; name: string } | null;
   category?: { id?: string; name: string; slug?: string } | null;
+  brand?: string | null;
 }
 
 /**

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ChevronRight, Star, Truck, RotateCcw, Shield, Headphones, ArrowRight, Zap } from 'lucide-react';
+import { ChevronRight, Star, Truck, RotateCcw, Shield, Headphones, ArrowRight, Tag } from 'lucide-react';
 import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
 import HomeCTA from '@/components/home/home-cta';
@@ -7,6 +7,8 @@ import ProductCardInteractive from '@/components/product/product-card-interactiv
 import { getCachedFeaturedProducts, getCachedTrendingProducts, getCachedCategories } from '@/lib/cached-data';
 
 export const dynamic = 'force-dynamic';
+
+const categoryIcons = ['📱', '👗', '🏠', '💄', '⚽', '🧸', '🚗', '📚'];
 
 export default async function HomePage() {
   const [featuredResult, trendingResult, categories] = await Promise.all([
@@ -27,59 +29,63 @@ export default async function HomePage() {
         {/* Hero Section */}
         <section className="bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div className="rounded-2xl overflow-hidden relative flex min-h-[320px]">
-              {/* Left: blue gradient panel */}
-              <div className="relative flex-1 bg-gradient-to-br from-blue-700 via-blue-600 to-blue-500 flex items-center px-8 md:px-12 py-12">
-                <div className="absolute inset-0 opacity-10">
-                  <div className="absolute -left-10 -top-10 w-56 h-56 bg-white rounded-full" />
-                  <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-white rounded-full" />
-                </div>
-                <div className="relative z-10 max-w-sm">
-                  <span className="inline-flex items-center gap-1.5 bg-white/20 text-white text-xs font-semibold px-3 py-1 rounded-full mb-4 backdrop-blur-sm">
-                    <Zap className="w-3.5 h-3.5 text-yellow-300" />
-                    Best Deals 2024
-                  </span>
-                  <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight mb-4">
+            <div className="rounded-2xl overflow-hidden flex min-h-[300px] bg-white border border-gray-100 shadow-sm">
+              {/* Left: text content */}
+              <div className="flex-1 flex items-center px-8 md:px-14 py-12 bg-white">
+                <div className="max-w-lg">
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full border border-blue-100">
+                      <Tag className="w-3 h-3" />
+                      Best Deals 2024
+                    </span>
+                  </div>
+                  <h1 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-4">
                     Discover Quality<br />
-                    Products from{' '}
-                    <span className="text-yellow-300">Trusted Warehouses</span>
+                    Products from<br />
+                    <span className="text-blue-600 relative">
+                      Trusted Warehouses
+                      <svg className="absolute -bottom-1 left-0 w-full" height="4" viewBox="0 0 300 4" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M0 2 Q150 0 300 2" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" opacity="0.4"/>
+                      </svg>
+                    </span>
                   </h1>
-                  <p className="text-blue-100 text-sm mb-7 leading-relaxed">
-                    Shop the best products at competitive prices. Quality first, delivered right to your door.
+                  <p className="text-gray-500 text-base mb-8 leading-relaxed">
+                    Shop the best products at great prices.<br />
+                    Website first, delivered to your door.
                   </p>
                   <div className="flex gap-3 flex-wrap">
                     <Link href="/products">
-                      <button className="bg-white text-blue-700 hover:bg-blue-50 px-6 py-2.5 rounded-xl font-semibold text-sm transition-colors flex items-center gap-2 shadow-md">
+                      <button className="bg-blue-600 hover:bg-blue-700 text-white px-7 py-3 rounded-xl font-semibold text-sm transition-colors flex items-center gap-2 shadow-sm">
                         Shop Now <ArrowRight className="w-4 h-4" />
                       </button>
                     </Link>
                     <Link href="/register">
-                      <button className="border border-white/40 text-white hover:bg-white/10 px-6 py-2.5 rounded-xl font-semibold text-sm transition-colors backdrop-blur-sm">
-                        Become a Seller
+                      <button className="border-2 border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 px-7 py-3 rounded-xl font-semibold text-sm transition-colors">
+                        How It Works
                       </button>
                     </Link>
+                  </div>
+                  {/* Price badge */}
+                  <div className="inline-flex items-center gap-2 mt-8 bg-white border border-gray-100 rounded-xl px-4 py-2.5 shadow-sm">
+                    <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+                      <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-gray-900">From $9.99</p>
+                      <p className="text-[10px] text-gray-500">10,000+ products</p>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Right: product image */}
-              <div className="hidden lg:block w-72 xl:w-96 relative bg-gray-50">
+              {/* Right: lifestyle image */}
+              <div className="hidden lg:block w-[420px] xl:w-[500px] flex-shrink-0 relative">
                 <img
-                  src="https://images.pexels.com/photos/3394650/pexels-photo-3394650.jpeg?auto=compress&cs=tinysrgb&w=800"
-                  alt="Featured Products"
+                  src="https://images.pexels.com/photos/1350789/pexels-photo-1350789.jpeg?auto=compress&cs=tinysrgb&w=800"
+                  alt="Quality Products"
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-l from-transparent to-blue-600/20" />
-                {/* Floating price card */}
-                <div className="absolute bottom-6 left-4 bg-white rounded-xl shadow-xl p-3 flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <Star className="w-5 h-5 text-blue-600 fill-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-gray-900">Top Rated</p>
-                    <p className="text-xs text-gray-500">10,000+ products</p>
-                  </div>
-                </div>
+                <div className="absolute inset-0 bg-gradient-to-r from-white/30 to-transparent" />
               </div>
             </div>
           </div>
@@ -87,13 +93,13 @@ export default async function HomePage() {
 
         {/* Trust Badges */}
         <section className="bg-white border-b border-gray-100">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {[
-                { icon: Truck, title: 'Free Shipping', desc: 'On orders over 500 Br', color: 'text-blue-600', bg: 'bg-blue-50' },
-                { icon: Star, title: 'Quality Products', desc: 'Carefully selected', color: 'text-yellow-600', bg: 'bg-yellow-50' },
-                { icon: RotateCcw, title: '30-Day Returns', desc: 'Easy & hassle-free', color: 'text-green-600', bg: 'bg-green-50' },
-                { icon: Shield, title: 'Secure Payments', desc: '100% protected', color: 'text-purple-600', bg: 'bg-purple-50' },
+                { icon: Star, title: 'Quality Products', desc: 'Carefully selected', color: 'text-blue-600', bg: 'bg-blue-50' },
+                { icon: Tag, title: 'Best Prices', desc: 'Fair pricing always', color: 'text-green-600', bg: 'bg-green-50' },
+                { icon: Truck, title: 'Fast Delivery', desc: 'Quick & reliable', color: 'text-orange-600', bg: 'bg-orange-50' },
+                { icon: Shield, title: 'Secure Payments', desc: '100% secure', color: 'text-purple-600', bg: 'bg-purple-50' },
               ].map((item) => {
                 const Icon = item.icon;
                 return (
@@ -116,32 +122,26 @@ export default async function HomePage() {
         <section className="py-10 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-xl font-bold text-gray-900">Top Categories</h2>
-                <p className="text-sm text-gray-500 mt-0.5">Browse by category</p>
-              </div>
+              <h2 className="text-xl font-bold text-gray-900">Top Categories</h2>
               <Link href="/products" className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
                 View All <ChevronRight className="w-4 h-4" />
               </Link>
             </div>
             <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
-              {topCategories.map((cat, i) => {
-                const icons = ['📱', '💻', '🎧', '📷', '🏠', '👕', '⌚', '🎮'];
-                return (
-                  <Link
-                    key={cat.id}
-                    href={`/categories/${cat.slug}`}
-                    className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-blue-50 hover:border-blue-200 border border-gray-100 bg-white transition-all group"
-                  >
-                    <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-xl group-hover:bg-blue-100 transition-colors">
-                      {icons[i % icons.length]}
-                    </div>
-                    <span className="text-xs font-medium text-gray-700 text-center leading-tight group-hover:text-blue-700 line-clamp-2">
-                      {cat.name}
-                    </span>
-                  </Link>
-                );
-              })}
+              {topCategories.map((cat, i) => (
+                <Link
+                  key={cat.id}
+                  href={`/categories/${cat.slug}`}
+                  className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-blue-50 hover:border-blue-200 border border-gray-100 bg-white transition-all group"
+                >
+                  <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-2xl group-hover:bg-blue-100 transition-colors">
+                    {categoryIcons[i % categoryIcons.length]}
+                  </div>
+                  <span className="text-xs font-medium text-gray-700 text-center leading-tight group-hover:text-blue-700 line-clamp-2">
+                    {cat.name}
+                  </span>
+                </Link>
+              ))}
             </div>
           </div>
         </section>
@@ -150,10 +150,7 @@ export default async function HomePage() {
         <section className="py-10 bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-xl font-bold text-gray-900">Best Selling Products</h2>
-                <p className="text-sm text-gray-500 mt-0.5">Our most popular items</p>
-              </div>
+              <h2 className="text-xl font-bold text-gray-900">Best Selling Products</h2>
               <Link href="/products" className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
                 View All <ChevronRight className="w-4 h-4" />
               </Link>
@@ -177,17 +174,14 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* Auth-dependent CTA */}
+        {/* Join Our Community CTA */}
         <HomeCTA />
 
         {/* Trending Products */}
         <section className="py-10 bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-xl font-bold text-gray-900">Trending Now</h2>
-                <p className="text-sm text-gray-500 mt-0.5">What everyone is buying</p>
-              </div>
+              <h2 className="text-xl font-bold text-gray-900">Trending Now</h2>
               <Link href="/products" className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
                 View All <ChevronRight className="w-4 h-4" />
               </Link>

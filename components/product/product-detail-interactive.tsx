@@ -64,22 +64,16 @@ export default function ProductDetailInteractive({ product, reviews }: ProductDe
       <div className="bg-white rounded-xl border border-gray-100 p-6 md:p-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
           {/* Gallery */}
-          <div className="space-y-4">
-            <div className="aspect-square rounded-xl overflow-hidden bg-gray-50 border border-gray-100">
-              <img
-                src={product.images[selectedImage] || product.images[0] || '/placeholder.jpg'}
-                alt={product.name}
-                className="w-full h-full object-cover"
-              />
-            </div>
+          <div className="flex gap-4">
+            {/* Thumbnails on left */}
             {product.images.length > 1 && (
-              <div className="flex gap-3">
+              <div className="flex flex-col gap-3">
                 {product.images.slice(0, 5).map((img, i) => (
                   <button
                     key={i}
                     onClick={() => setSelectedImage(i)}
                     className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0 ${
-                      selectedImage === i ? 'border-blue-500' : 'border-gray-200 hover:border-gray-300'
+                      selectedImage === i ? 'border-blue-500 ring-2 ring-blue-100' : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
                     <img src={img} alt="" className="w-full h-full object-cover" />
@@ -87,6 +81,14 @@ export default function ProductDetailInteractive({ product, reviews }: ProductDe
                 ))}
               </div>
             )}
+            {/* Main Image */}
+            <div className="flex-1 aspect-square rounded-xl overflow-hidden bg-gray-50 border border-gray-100">
+              <img
+                src={product.images[selectedImage] || product.images[0] || '/placeholder.jpg'}
+                alt={product.name}
+                className="w-full h-full object-cover"
+              />
+            </div>
           </div>
 
           {/* Product Info */}

@@ -21,8 +21,11 @@ interface ProductsBrowserProps {
 
 const sortOptions = ['Newest', 'Price: Low to High', 'Price: High to Low', 'Most Popular', 'Top Rated'] as const;
 
+const brandOptions = ['All Brands', 'Apple', 'Samsung', 'Nike', 'Adidas', 'Sony', 'LG', 'Philips', 'Generic'] as const;
+
 export default function ProductsBrowser({ products, categories, initialCategoryId }: ProductsBrowserProps) {
   const [selectedCategory, setSelectedCategory] = useState(initialCategoryId || 'all');
+  const [selectedBrand, setSelectedBrand] = useState<typeof brandOptions[number]>('All Brands');
   const [sortBy, setSortBy] = useState<typeof sortOptions[number]>('Newest');
   const [priceRange, setPriceRange] = useState(10000);
   const [gridView, setGridView] = useState(true);
@@ -36,6 +39,10 @@ export default function ProductsBrowser({ products, categories, initialCategoryI
 
     if (selectedCategory !== 'all') {
       list = list.filter((p) => p.category?.id === selectedCategory || p.warehouse?.name === selectedCategory);
+    }
+
+    if (selectedBrand !== 'All Brands') {
+      list = list.filter((p) => p.brand === selectedBrand || (p.brand && p.brand.toLowerCase().includes(selectedBrand.toLowerCase())));
     }
 
     list = list.filter((p) => {
@@ -68,7 +75,7 @@ export default function ProductsBrowser({ products, categories, initialCategoryI
     else if (sortBy === 'Most Popular') list.sort((a, b) => (b.review_count || 0) - (a.review_count || 0));
 
     return list;
-  }, [products, selectedCategory, sortBy, priceRange, selectedRating]);
+  }, [products, selectedCategory, selectedBrand, sortBy, priceRange, selectedRating]);
 
   const FilterPanel = () => (
     <div className="space-y-6">
@@ -85,6 +92,23 @@ export default function ProductsBrowser({ products, categories, initialCategoryI
             >
               {cat.name}
               {selectedCategory === cat.id && <ChevronRight className="w-3 h-3" />}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div>
+        <h3 className="font-semibold text-gray-900 text-sm mb-3">Brand</h3>
+        <div className="space-y-1">
+          {brandOptions.map((brand) => (
+            <button
+              key={brand}
+              onClick={() => setSelectedBrand(brand)}
+              className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-colors flex items-center justify-between ${
+                selectedBrand === brand ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              {brand}
+              {selectedBrand === brand && <ChevronRight className="w-3 h-3" />}
             </button>
           ))}
         </div>
@@ -192,7 +216,7 @@ export default function ProductsBrowser({ products, categories, initialCategoryI
             <h3 className="text-lg font-medium text-gray-900 mb-2">No products found</h3>
             <p className="text-gray-500 mb-4">Try adjusting your filters.</p>
             <button
-              onClick={() => { setSelectedCategory('all'); setPriceRange(10000); setSelectedRating(0); }}
+              onClick={() => { setSelectedCategory('all'); setSelectedBrand('All Brands'); setPriceRange(10000); setSelectedRating(0); }}
               className="text-blue-600 hover:underline font-medium"
             >
               Clear all filters

@@ -15,7 +15,6 @@ import {
   LogOut,
   Settings,
   Package,
-  Zap,
 } from 'lucide-react';
 import { SidebarIcon } from '@/components/ui/market-bridge-logo';
 import { Input } from '@/components/ui/input';
@@ -64,18 +63,6 @@ export default function Header() {
 
   return (
     <>
-      {/* Announcement Bar */}
-      <div className="bg-violet-600 text-white text-xs py-2 text-center hidden sm:block">
-        <div className="max-w-7xl mx-auto px-4 flex items-center justify-center gap-2">
-          <Zap className="w-3.5 h-3.5 text-yellow-300" />
-          <span>Free shipping on orders over 500 Br!</span>
-          <span className="mx-2 opacity-50">|</span>
-          <Link href="/products" className="underline underline-offset-2 hover:text-blue-100 transition-colors font-medium">
-            Shop Now
-          </Link>
-        </div>
-      </div>
-
       <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center h-16 gap-4">
