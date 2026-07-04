@@ -65,7 +65,7 @@ export default function Header() {
   return (
     <>
       {/* Announcement Bar */}
-      <div className="bg-indigo-600 text-white text-xs py-2 text-center hidden sm:block">
+      <div className="bg-violet-600 text-white text-xs py-2 text-center hidden sm:block">
         <div className="max-w-7xl mx-auto px-4 flex items-center justify-center gap-2">
           <Zap className="w-3.5 h-3.5 text-yellow-300" />
           <span>Free shipping on orders over 500 Br!</span>
@@ -87,7 +87,7 @@ export default function Header() {
 
             {/* Categories Dropdown */}
             <div className="hidden md:block relative group">
-              <button className="flex items-center gap-1 text-sm text-gray-600 hover:text-indigo-600 font-medium px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors">
+              <button className="flex items-center gap-1 text-sm text-gray-600 hover:text-violet-600 font-medium px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors">
                 Categories
                 <ChevronDown className="w-4 h-4 transition-transform group-hover:rotate-180 duration-200" />
               </button>
@@ -100,7 +100,7 @@ export default function Header() {
                       <Link
                         key={cat.id}
                         href={`/categories/${cat.slug}`}
-                        className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 text-sm text-gray-700 transition-colors"
+                        className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-indigo-50 hover:text-violet-600 text-sm text-gray-700 transition-colors"
                       >
                         <span className="text-base">📦</span>
                         <span>{cat.name}</span>
@@ -184,10 +184,10 @@ export default function Header() {
                         </span>
                       </div>
 
-                      <Link href={getDashboardLink()} className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 text-sm text-gray-700 transition-colors">
+                      <Link href={getDashboardLink()} className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-indigo-50 hover:text-violet-600 text-sm text-gray-700 transition-colors">
                         <Package className="w-4 h-4" /> Dashboard
                       </Link>
-                      <Link href={`${getDashboardLink()}/profile`} className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 text-sm text-gray-700 transition-colors">
+                      <Link href={`${getDashboardLink()}/profile`} className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-indigo-50 hover:text-violet-600 text-sm text-gray-700 transition-colors">
                         <Settings className="w-4 h-4" /> Settings
                       </Link>
                       <button onClick={handleLogout} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-red-50 hover:text-red-600 text-sm text-gray-700 transition-colors">
@@ -198,7 +198,7 @@ export default function Header() {
                 </div>
               ) : (
                 <Link href="/login">
-                  <button className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-gray-600 hover:text-indigo-600 ml-1">
+                  <button className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-gray-600 hover:text-violet-600 ml-1">
                     <User className="w-5 h-5" />
                     <span className="hidden sm:block text-sm font-medium">Login</span>
                   </button>
@@ -208,7 +208,7 @@ export default function Header() {
               {/* Wishlist */}
               {isAuthenticated && user?.role === 'customer' && (
                 <Link href="/wishlist">
-                  <button className="p-2 rounded-lg hover:bg-gray-50 transition-colors text-gray-500 hover:text-indigo-600 relative">
+                  <button className="p-2 rounded-lg hover:bg-gray-50 transition-colors text-gray-500 hover:text-violet-600 relative">
                     <Heart className="w-5 h-5" />
                     {wishlistCount > 0 && (
                       <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
@@ -222,10 +222,10 @@ export default function Header() {
               {/* Cart */}
               {isAuthenticated && user?.role === 'customer' && (
                 <Link href="/dashboard/orders">
-                  <button className="p-2 rounded-lg hover:bg-gray-50 transition-colors text-gray-500 hover:text-indigo-600 relative">
+                  <button className="p-2 rounded-lg hover:bg-gray-50 transition-colors text-gray-500 hover:text-violet-600 relative">
                     <ShoppingCart className="w-5 h-5" />
                     {cartCount > 0 && (
-                      <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-indigo-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                      <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-violet-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                         {cartCount > 99 ? '99+' : cartCount}
                       </span>
                     )}

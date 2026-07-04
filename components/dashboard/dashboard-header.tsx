@@ -37,7 +37,7 @@ export default function DashboardHeader() {
         <div className="flex items-center h-16 gap-4">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #D946EF 0%, #8B5CF6 50%, #38BDF8 100%)' }}>
               <ShoppingBag className="w-5 h-5 text-white" />
             </div>
             <span className="font-bold text-gray-900 text-lg hidden sm:block">MarketBridge</span>
@@ -50,7 +50,7 @@ export default function DashboardHeader() {
               <input
                 type="text"
                 placeholder="Search products..."
-                className="w-full pl-9 pr-4 h-9 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition-colors"
+                className="w-full pl-9 pr-4 h-9 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-violet-500 focus:bg-white transition-colors"
               />
             </div>
           </div>
@@ -67,7 +67,7 @@ export default function DashboardHeader() {
               <button className="relative p-2 rounded-lg hover:bg-gray-50 text-gray-500 transition-colors">
                 <ShoppingCart className="w-5 h-5" />
                 {cartCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-blue-600 text-white text-[10px] rounded-full flex items-center justify-center font-bold">
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-violet-600 text-white text-[10px] rounded-full flex items-center justify-center font-bold">
                     {cartCount > 9 ? '9+' : cartCount}
                   </span>
                 )}
@@ -89,11 +89,11 @@ export default function DashboardHeader() {
             {/* User dropdown */}
             <div className="relative group">
               <button className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-xl hover:bg-gray-50 transition-colors">
-                <div className="w-8 h-8 rounded-full overflow-hidden bg-blue-100 flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 rounded-full overflow-hidden bg-violet-100 flex items-center justify-center flex-shrink-0">
                   {user?.avatar_url ? (
                     <img src={user.avatar_url} alt={user?.name || 'User'} className="w-full h-full object-cover" />
                   ) : (
-                    <span className="text-sm font-bold text-blue-600">{user?.name?.charAt(0).toUpperCase() || 'U'}</span>
+                    <span className="text-sm font-bold text-violet-600">{user?.name?.charAt(0).toUpperCase() || 'U'}</span>
                   )}
                 </div>
                 <span className="text-sm font-medium text-gray-900 hidden sm:block">{user?.name?.split(' ')[0] || 'User'}</span>
@@ -106,7 +106,7 @@ export default function DashboardHeader() {
                     <p className="text-sm font-semibold text-gray-900">{user?.name}</p>
                     <p className="text-xs text-gray-500">{user?.email}</p>
                   </div>
-                  <Link href="/dashboard/profile" className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-blue-50 hover:text-blue-600 text-sm text-gray-700 transition-colors">
+                  <Link href="/dashboard/profile" className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-violet-50 hover:text-violet-600 text-sm text-gray-700 transition-colors">
                     <Settings className="w-4 h-4" /> Profile Settings
                   </Link>
                   <Link href="/dashboard/orders" className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-blue-50 hover:text-blue-600 text-sm text-gray-700 transition-colors">

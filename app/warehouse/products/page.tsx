@@ -62,7 +62,7 @@ export default function WarehouseProducts() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-600"></div>
       </div>
     );
   }
@@ -77,7 +77,7 @@ export default function WarehouseProducts() {
         </div>
         <Link
           href="/warehouse/products/add"
-          className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-xl font-medium hover:from-indigo-600 hover:to-indigo-700 transition-all shadow-sm hover:shadow-md"
+          className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-violet-500 to-violet-600 text-white rounded-xl font-medium hover:from-violet-600 hover:to-violet-700 transition-all shadow-sm hover:shadow-md"
         >
           <Plus className="w-4 h-4" />
           Add Product
@@ -93,7 +93,7 @@ export default function WarehouseProducts() {
             placeholder="Search products..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-11 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+            className="w-full pl-11 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent text-sm"
           />
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -103,12 +103,12 @@ export default function WarehouseProducts() {
               onClick={() => setStatusFilter(status)}
               className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                 statusFilter === status
-                  ? 'bg-indigo-600 text-white shadow-sm'
+                  ? 'bg-violet-600 text-white shadow-sm'
                   : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'
               }`}
             >
               {status.charAt(0).toUpperCase() + status.slice(1)}
-              <span className={`ml-1.5 text-xs ${statusFilter === status ? 'text-indigo-200' : 'text-gray-400'}`}>
+              <span className={`ml-1.5 text-xs ${statusFilter === status ? 'text-violet-200' : 'text-gray-400'}`}>
                 ({statusCounts[status]})
               </span>
             </button>
@@ -179,13 +179,13 @@ export default function WarehouseProducts() {
                     <div className="flex items-center gap-1">
                       <Link
                         href={`/products/${product.id}`}
-                        className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-indigo-600 transition-colors"
+                        className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-violet-600 transition-colors"
                       >
                         <Eye className="w-4 h-4" />
                       </Link>
                       <Link
                         href={`/warehouse/products/${product.id}/edit`}
-                        className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-indigo-600 transition-colors"
+                        className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-violet-600 transition-colors"
                       >
                         <Edit className="w-4 h-4" />
                       </Link>

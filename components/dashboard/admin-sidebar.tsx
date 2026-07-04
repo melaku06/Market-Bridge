@@ -46,7 +46,7 @@ export default function AdminSidebar() {
         <Link href="/" className="flex items-center gap-3">
           <SidebarIcon />
           <div>
-            <span className="text-xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent block">
+            <span className="text-xl font-bold bg-gradient-to-r from-fuchsia-500 via-violet-500 to-cyan-400 bg-clip-text text-transparent block">
               MarketBridge
             </span>
             <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Admin Dashboard</p>
@@ -66,13 +66,13 @@ export default function AdminSidebar() {
               className={cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group',
                 isActive
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25'
+                  ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/25'
                   : 'text-slate-400 hover:bg-slate-800/60 hover:text-white'
               )}
             >
               <item.icon className={cn(
                 'w-5 h-5 transition-transform duration-200',
-                isActive ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'
+                isActive ? 'text-white' : 'text-slate-500 group-hover:text-violet-300'
               )} />
               <span className="flex-1">{item.name}</span>
               {isActive && <ChevronRight className="w-4 h-4 opacity-60" />}

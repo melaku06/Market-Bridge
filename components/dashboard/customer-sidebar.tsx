@@ -38,7 +38,7 @@ export default function CustomerSidebar() {
         <div className="px-5 py-4 border-b border-white/10">
           <Link href="/" className="flex items-center gap-3">
             <SidebarIcon />
-            <span className="font-bold text-xl bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">MarketBridge</span>
+            <span className="font-bold text-xl bg-gradient-to-r from-fuchsia-500 via-violet-500 to-cyan-400 bg-clip-text text-transparent">MarketBridge</span>
           </Link>
         </div>
 
@@ -72,10 +72,10 @@ export default function CustomerSidebar() {
                 <div className={cn(
                   'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-150 mb-0.5 group',
                   active
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-violet-600 text-white'
                     : 'text-gray-400 hover:bg-white/8 hover:text-white'
                 )} style={!active ? { '--tw-hover-bg': 'rgba(255,255,255,0.08)' } as React.CSSProperties : {}}>
-                  <item.icon className={cn('w-4 h-4 flex-shrink-0', active ? 'text-white' : 'text-gray-500 group-hover:text-gray-300')} />
+                  <item.icon className={cn('w-4 h-4 flex-shrink-0', active ? 'text-white' : 'text-gray-500 group-hover:text-violet-300')} />
                   <span className="flex-1 font-medium">{item.label}</span>
                   {item.badge && (
                     <span className={cn(

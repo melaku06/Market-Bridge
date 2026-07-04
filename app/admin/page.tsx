@@ -45,7 +45,7 @@ export default function AdminDashboard() {
   if (loading || !analytics) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-600"></div>
       </div>
     );
   }
@@ -71,7 +71,7 @@ export default function AdminDashboard() {
 
       {/* Alerts */}
       {(pendingProducts.length > 0 || pendingWarehouses.length > 0) && (
-        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-2xl p-5">
+        <div className="bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-100 rounded-2xl p-5">
           <h3 className="font-semibold text-indigo-900 mb-3 flex items-center gap-2">
             <TrendingUp className="w-5 h-5" />
             Items Requiring Attention
@@ -80,7 +80,7 @@ export default function AdminDashboard() {
             {pendingProducts.length > 0 && (
               <Link
                 href="/admin/products"
-                className="flex items-center gap-2 px-4 py-2.5 bg-white rounded-xl border border-indigo-200 text-indigo-700 hover:bg-indigo-100 transition-colors shadow-sm"
+                className="flex items-center gap-2 px-4 py-2.5 bg-white rounded-xl border border-violet-200 text-violet-700 hover:bg-violet-100 transition-colors shadow-sm"
               >
                 <Package className="w-4 h-4" />
                 {pendingProducts.length} pending product approvals
@@ -90,7 +90,7 @@ export default function AdminDashboard() {
             {pendingWarehouses.length > 0 && (
               <Link
                 href="/admin/warehouses"
-                className="flex items-center gap-2 px-4 py-2.5 bg-white rounded-xl border border-indigo-200 text-indigo-700 hover:bg-indigo-100 transition-colors shadow-sm"
+                className="flex items-center gap-2 px-4 py-2.5 bg-white rounded-xl border border-violet-200 text-violet-700 hover:bg-violet-100 transition-colors shadow-sm"
               >
                 <WarehouseIcon className="w-4 h-4" />
                 {pendingWarehouses.length} pending warehouse applications
@@ -108,7 +108,7 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-between mb-4">
               <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
                 stat.color === 'emerald' ? 'bg-emerald-50 text-emerald-600' :
-                stat.color === 'indigo' ? 'bg-indigo-50 text-indigo-600' :
+                stat.color === 'indigo' ? 'bg-violet-50 text-violet-600' :
                 stat.color === 'purple' ? 'bg-purple-50 text-purple-600' :
                 'bg-amber-50 text-amber-600'
               }`}>
@@ -137,7 +137,7 @@ export default function AdminDashboard() {
               return (
                 <div key={idx} className="flex-1 flex flex-col items-center">
                   <div
-                    className="w-full bg-gradient-to-t from-indigo-500 to-indigo-400 rounded-lg transition-all hover:from-indigo-600 hover:to-indigo-500 shadow-sm"
+                    className="w-full bg-gradient-to-t from-violet-500 to-violet-400 rounded-lg transition-all hover:from-violet-600 hover:to-violet-500 shadow-sm"
                     style={{ height: `${height}%` }}
                   ></div>
                   <span className="text-xs text-gray-500 mt-2 font-medium">{item.date.split(' ')[1]}</span>
@@ -163,7 +163,7 @@ export default function AdminDashboard() {
                       className={`h-2.5 rounded-full transition-all ${
                         item.status === 'Delivered' ? 'bg-gradient-to-r from-emerald-400 to-emerald-500' :
                         item.status === 'Processing' ? 'bg-gradient-to-r from-blue-400 to-blue-500' :
-                        item.status === 'Shipped' ? 'bg-gradient-to-r from-indigo-400 to-indigo-500' :
+                        item.status === 'Shipped' ? 'bg-gradient-to-r from-violet-400 to-violet-500' :
                         item.status === 'Cancelled' ? 'bg-gradient-to-r from-red-400 to-red-500' :
                         'bg-gradient-to-r from-amber-400 to-amber-500'
                       }`}
@@ -214,7 +214,7 @@ export default function AdminDashboard() {
                 <span className="font-medium text-gray-900">{cat.name}</span>
                 <div className="flex items-center gap-4">
                   <p className="font-semibold text-gray-900">{cat.revenue.toLocaleString()} Br</p>
-                  <span className="px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-semibold">{cat.percentage}%</span>
+                  <span className="px-2.5 py-1 bg-violet-50 text-violet-600 rounded-lg text-xs font-semibold">{cat.percentage}%</span>
                 </div>
               </div>
             ))}
@@ -225,8 +225,8 @@ export default function AdminDashboard() {
       {/* Quick Links */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
         <Link href="/admin/products" className="bg-white rounded-2xl border border-gray-100 p-5 hover:border-indigo-300 hover:shadow-lg transition-all text-center shadow-sm group">
-          <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:bg-indigo-100 transition-colors">
-            <Package className="w-7 h-7 text-indigo-600" />
+          <div className="w-14 h-14 bg-violet-50 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:bg-violet-100 transition-colors">
+            <Package className="w-7 h-7 text-violet-600" />
           </div>
           <p className="font-semibold text-gray-900">Product Approval</p>
           <p className="text-sm text-gray-500 mt-1">{pendingProducts.length} pending</p>

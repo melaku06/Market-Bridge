@@ -124,7 +124,7 @@ export default function RegisterPage() {
               <SidebarIcon />
               <span className="font-bold text-gray-900 text-lg tracking-tight">MarketBridge</span>
             </Link>
-            <Link href="/" className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">
+            <Link href="/" className="text-sm text-violet-600 hover:text-violet-700 font-medium">
               Back to Home
             </Link>
           </div>
@@ -157,17 +157,17 @@ export default function RegisterPage() {
                         onClick={() => setFormData({ ...formData, role: option.value })}
                         className={`relative p-3 border-2 rounded-xl text-left transition-all ${
                           isSelected
-                            ? 'border-indigo-500 bg-indigo-50 shadow-sm'
+                            ? 'border-violet-500 bg-violet-50 shadow-sm'
                             : 'border-gray-200 hover:border-gray-300 bg-white'
                         }`}
                       >
                         {isSelected && (
-                          <div className="absolute top-2 right-2 w-5 h-5 bg-indigo-500 rounded-full flex items-center justify-center">
+                          <div className="absolute top-2 right-2 w-5 h-5 bg-violet-500 rounded-full flex items-center justify-center">
                             <Check className="w-3 h-3 text-white" />
                           </div>
                         )}
-                        <Icon className={`w-5 h-5 mb-1.5 ${isSelected ? 'text-indigo-600' : 'text-gray-400'}`} />
-                        <p className={`text-sm font-semibold ${isSelected ? 'text-indigo-600' : 'text-gray-900'}`}>
+                        <Icon className={`w-5 h-5 mb-1.5 ${isSelected ? 'text-violet-600' : 'text-gray-400'}`} />
+                        <p className={`text-sm font-semibold ${isSelected ? 'text-violet-600' : 'text-gray-900'}`}>
                           {option.label}
                         </p>
                         <p className="text-xs text-gray-500 mt-0.5">{option.description}</p>
@@ -184,7 +184,7 @@ export default function RegisterPage() {
                   placeholder="Enter your full name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all bg-gray-50 focus:bg-white"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20 transition-all bg-gray-50 focus:bg-white"
                   required
                 />
               </div>
@@ -196,7 +196,7 @@ export default function RegisterPage() {
                   placeholder="Enter your email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all bg-gray-50 focus:bg-white"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20 transition-all bg-gray-50 focus:bg-white"
                   required
                 />
               </div>
@@ -209,7 +209,7 @@ export default function RegisterPage() {
                     placeholder="Create a strong password"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all bg-gray-50 focus:bg-white pr-11"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20 transition-all bg-gray-50 focus:bg-white pr-11"
                     minLength={6}
                     required
                   />
@@ -233,7 +233,7 @@ export default function RegisterPage() {
                   className={`w-full px-4 py-3 border-2 rounded-xl text-sm focus:outline-none focus:ring-2 transition-all bg-gray-50 focus:bg-white ${
                     formData.confirmPassword && formData.password !== formData.confirmPassword
                       ? 'border-red-300 focus:ring-red-500/20 focus:border-red-500'
-                      : 'border-gray-200 focus:border-indigo-500 focus:ring-indigo-500/20'
+                      : 'border-gray-200 focus:border-violet-500 focus:ring-violet-500/20'
                   }`}
                   required
                 />
@@ -245,7 +245,7 @@ export default function RegisterPage() {
               <button
                 type="submit"
                 disabled={isLoading || (formData.confirmPassword !== '' && formData.password !== formData.confirmPassword)}
-                className="w-full py-3 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 disabled:opacity-60 text-white rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
+                className="w-full py-3 bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 disabled:opacity-60 text-white rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
               >
                 {isLoading ? (
                   <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Creating account...</>
@@ -254,7 +254,7 @@ export default function RegisterPage() {
 
               <p className="text-center text-sm text-gray-500">
                 Already have an account?{' '}
-                <Link href="/login" className="text-indigo-600 hover:text-indigo-700 font-semibold">Sign in</Link>
+                <Link href="/login" className="text-violet-600 hover:text-violet-700 font-semibold">Sign in</Link>
               </p>
             </form>
           </div>
@@ -262,7 +262,7 @@ export default function RegisterPage() {
       </div>
 
       {/* Right Panel */}
-      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-indigo-800 via-indigo-700 to-purple-700 items-center justify-center p-12 relative overflow-hidden">
+      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-violet-800 via-violet-700 to-purple-700 items-center justify-center p-12 relative overflow-hidden">
         {/* Background */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-32 -right-32 w-96 h-96 bg-white/5 rounded-full" />
@@ -294,7 +294,7 @@ export default function RegisterPage() {
           <h2 className="text-3xl font-bold text-white mb-3">
             {formData.role === 'warehouse' ? 'Grow Your Business' : 'Shop Everything You Need'}
           </h2>
-          <p className="text-indigo-200 text-sm mb-8 leading-relaxed">
+          <p className="text-violet-200 text-sm mb-8 leading-relaxed">
             {formData.role === 'warehouse'
               ? 'Join hundreds of warehouses already selling on MarketBridge and grow your revenue.'
               : 'Access thousands of quality products from verified warehouses at the best prices.'}

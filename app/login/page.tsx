@@ -76,7 +76,7 @@ export default function LoginPage() {
               <SidebarIcon />
               <span className="font-bold text-gray-900 text-lg tracking-tight">MarketBridge</span>
             </Link>
-            <Link href="/" className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">
+            <Link href="/" className="text-sm text-violet-600 hover:text-violet-700 font-medium">
               Back to Home
             </Link>
           </div>
@@ -102,7 +102,7 @@ export default function LoginPage() {
                   placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all bg-gray-50 focus:bg-white"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20 transition-all bg-gray-50 focus:bg-white"
                   required
                 />
               </div>
@@ -115,7 +115,7 @@ export default function LoginPage() {
                     placeholder="Enter your password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all bg-gray-50 focus:bg-white pr-11"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20 transition-all bg-gray-50 focus:bg-white pr-11"
                     required
                   />
                   <button
@@ -127,7 +127,7 @@ export default function LoginPage() {
                   </button>
                 </div>
                 <div className="flex justify-end mt-1.5">
-                  <Link href="/forgot-password" className="text-xs text-indigo-600 hover:text-indigo-700 font-medium">
+                  <Link href="/forgot-password" className="text-xs text-violet-600 hover:text-violet-700 font-medium">
                     Forgot Password?
                   </Link>
                 </div>
@@ -136,7 +136,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 disabled:opacity-60 text-white rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
+                className="w-full py-3 bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 disabled:opacity-60 text-white rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
               >
                 {isLoading ? (
                   <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Signing in...</>
@@ -145,7 +145,7 @@ export default function LoginPage() {
 
               <p className="text-center text-sm text-gray-500">
                 Don&apos;t have an account?{' '}
-                <Link href="/register" className="text-indigo-600 hover:text-indigo-700 font-semibold">Create Account</Link>
+                <Link href="/register" className="text-violet-600 hover:text-violet-700 font-semibold">Create Account</Link>
               </p>
             </form>
 
@@ -154,7 +154,7 @@ export default function LoginPage() {
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Quick Demo Login</p>
               <div className="space-y-2">
                 {[
-                  { role: 'Customer', email: 'customer@demo.com', color: 'text-indigo-600 bg-indigo-50 border-indigo-200' },
+                  { role: 'Customer', email: 'customer@demo.com', color: 'text-violet-600 bg-violet-50 border-violet-200' },
                   { role: 'Warehouse', email: 'warehouse@demo.com', color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
                   { role: 'Admin', email: 'admin@demo.com', color: 'text-purple-600 bg-purple-50 border-purple-200' },
                 ].map((demo) => (
@@ -175,7 +175,7 @@ export default function LoginPage() {
       </div>
 
       {/* Right Panel */}
-      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-indigo-800 via-indigo-700 to-purple-700 items-center justify-center p-12 relative overflow-hidden">
+      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-violet-800 via-violet-700 to-purple-700 items-center justify-center p-12 relative overflow-hidden">
         {/* Background pattern */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-32 -left-32 w-96 h-96 bg-white/5 rounded-full" />
@@ -204,7 +204,7 @@ export default function LoginPage() {
             </div>
           </div>
           <h2 className="text-3xl font-bold text-white mb-3">Quality Products<br />Delivered to You</h2>
-          <p className="text-indigo-200 text-sm mb-10 leading-relaxed">
+          <p className="text-violet-200 text-sm mb-10 leading-relaxed">
             Join thousands of happy customers shopping with confidence from trusted warehouses.
           </p>
           <div className="space-y-3 text-left max-w-xs mx-auto">
@@ -234,7 +234,7 @@ export default function LoginPage() {
               ))}
             </div>
             <p className="text-white text-sm font-medium">&ldquo;Amazing selection and fast delivery!&rdquo;</p>
-            <p className="text-indigo-300 text-xs mt-1">— Sarah M., Verified Customer</p>
+            <p className="text-violet-300 text-xs mt-1">— Sarah M., Verified Customer</p>
           </div>
         </div>
       </div>

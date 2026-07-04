@@ -47,7 +47,7 @@ export default function WarehouseDashboard() {
   if (loading || !warehouse) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-600"></div>
       </div>
     );
   }
@@ -73,7 +73,7 @@ export default function WarehouseDashboard() {
         </div>
         <Link
           href="/warehouse/products/add"
-          className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-xl font-medium hover:from-indigo-600 hover:to-indigo-700 transition-all shadow-sm hover:shadow-md"
+          className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-violet-500 to-violet-600 text-white rounded-xl font-medium hover:from-violet-600 hover:to-violet-700 transition-all shadow-sm hover:shadow-md"
         >
           <Plus className="w-4 h-4" />
           Add New Product
@@ -86,7 +86,7 @@ export default function WarehouseDashboard() {
           <div key={stat.name} className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-lg transition-all duration-300 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                stat.color === 'indigo' ? 'bg-indigo-50 text-indigo-600' :
+                stat.color === 'indigo' ? 'bg-violet-50 text-violet-600' :
                 stat.color === 'emerald' ? 'bg-emerald-50 text-emerald-600' :
                 stat.color === 'purple' ? 'bg-purple-50 text-purple-600' :
                 'bg-amber-50 text-amber-600'
@@ -132,7 +132,7 @@ export default function WarehouseDashboard() {
         <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
           <div className="p-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
             <h2 className="font-semibold text-gray-900">Recent Orders</h2>
-            <Link href="/warehouse/orders" className="text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1">
+            <Link href="/warehouse/orders" className="text-sm text-violet-600 hover:text-violet-700 font-medium flex items-center gap-1">
               View All <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
@@ -141,7 +141,7 @@ export default function WarehouseDashboard() {
               <div key={order.id} className="p-5 flex items-center justify-between hover:bg-gray-50/50 transition-colors">
                 <div className="flex items-center gap-4">
                   <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${
-                    order.status === 'pending' ? 'bg-amber-100 text-amber-600' : 'bg-indigo-100 text-indigo-600'
+                    order.status === 'pending' ? 'bg-amber-100 text-amber-600' : 'bg-violet-100 text-violet-600'
                   }`}>
                     <Clock className="w-5 h-5" />
                   </div>
@@ -153,7 +153,7 @@ export default function WarehouseDashboard() {
                 <div className="text-right">
                   <p className="font-semibold text-gray-900">{order.total.toLocaleString()} Br</p>
                   <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium mt-1 ${
-                    order.status === 'pending' ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-100' : 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-100'
+                    order.status === 'pending' ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-100' : 'bg-violet-50 text-violet-700 ring-1 ring-violet-100'
                   }`}>
                     {order.status}
                   </span>
@@ -178,13 +178,13 @@ export default function WarehouseDashboard() {
           <div className="space-y-2">
             <Link
               href="/warehouse/products/add"
-              className="flex items-center gap-3 p-3.5 rounded-xl hover:bg-indigo-50 text-gray-700 transition-all group"
+              className="flex items-center gap-3 p-3.5 rounded-xl hover:bg-violet-50 text-gray-700 transition-all group"
             >
-              <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
-                <Package className="w-5 h-5 text-indigo-600" />
+              <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center group-hover:bg-violet-100 transition-colors">
+                <Package className="w-5 h-5 text-violet-600" />
               </div>
               <span className="font-medium">Add New Product</span>
-              <ChevronRight className="w-4 h-4 ml-auto text-gray-400 group-hover:text-indigo-600" />
+              <ChevronRight className="w-4 h-4 ml-auto text-gray-400 group-hover:text-violet-600" />
             </Link>
             <Link
               href="/warehouse/inventory"

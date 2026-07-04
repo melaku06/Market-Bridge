@@ -11,7 +11,7 @@ const statusColor: Record<string, string> = {
   delivered: 'bg-green-100 text-green-700',
   shipped: 'bg-blue-100 text-blue-700',
   processing: 'bg-orange-100 text-orange-700',
-  confirmed: 'bg-indigo-100 text-indigo-700',
+  confirmed: 'bg-violet-100 text-violet-700',
   pending: 'bg-yellow-100 text-yellow-700',
   cancelled: 'bg-red-100 text-red-700',
 };
