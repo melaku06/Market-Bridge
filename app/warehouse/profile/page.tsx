@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Save, Camera, Building2, Check, ChevronRight, Star, Package, ShoppingCart, MapPin, Phone, Mail, CreditCard, FileText, Shield } from 'lucide-react';
+import { Building2, ChevronRight, MapPin, CreditCard, FileText, Edit2, Check, Shield, Truck } from 'lucide-react';
 import { warehousesApi } from '@/lib/api';
 import { useAuth } from '@/components/auth/auth-provider';
 import type { Warehouse } from '@/lib/types';
@@ -13,12 +13,12 @@ export default function WarehouseProfile() {
   const { user } = useAuth();
   const [warehouse, setWarehouse] = useState<Warehouse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [formData, setFormData] = useState({
-    name: '', owner_name: '', email: '', phone: '', address: '', city: '', country: '',
-    business_type: '', bank_name: '', bank_account: '', tax_id: '',
+  const [settings, setSettings] = useState({
+    order_notifications: true,
+    low_stock_alerts: true,
+    email_updates: true,
+    sms_notifications: false,
   });
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     async function fetchWarehouse() {
@@ -27,12 +27,6 @@ export default function WarehouseProfile() {
       try {
         const warehouseRes = await warehousesApi.get(warehouseId);
         setWarehouse(warehouseRes);
-        setFormData({
-          name: warehouseRes.name, owner_name: warehouseRes.owner_name, email: warehouseRes.email,
-          phone: warehouseRes.phone, address: warehouseRes.address, city: warehouseRes.city, country: warehouseRes.country,
-          business_type: warehouseRes.business_type || '', bank_name: warehouseRes.bank_name || '',
-          bank_account: warehouseRes.bank_account || '', tax_id: warehouseRes.tax_id || '',
-        });
       } catch (error) {
         console.error('Failed to fetch warehouse:', error);
       } finally {
@@ -50,202 +44,210 @@ export default function WarehouseProfile() {
     );
   }
 
-  const handleSave = () => {
-    setSaving(true);
-    setTimeout(() => { setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2000); }, 1000);
-  };
-
-  const field = (label: string) => (
-    <label className="block text-sm font-medium text-gray-700 mb-1.5">{label}</label>
+  const Toggle = ({ value, onChange }: { value: boolean; onChange: () => void }) => (
+    <button
+      onClick={onChange}
+      className={`w-10 h-5 rounded-full transition-colors relative flex-shrink-0 ${value ? 'bg-blue-600' : 'bg-gray-200'}`}
+    >
+      <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${value ? 'right-0.5' : 'left-0.5'}`} />
+    </button>
   );
 
-  const inputClass = "w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-gray-50 focus:bg-white transition-all";
+  const EditBtn = () => (
+    <button className="text-xs text-blue-600 font-medium flex items-center gap-1 hover:underline">
+      <Edit2 className="w-3 h-3" />
+      Edit
+    </button>
+  );
 
   return (
     <div className="space-y-5">
       {/* Header */}
       <div>
         <div className="flex items-center gap-2 text-sm text-gray-400 mb-1">
-          <Link href="/warehouse" className="hover:text-blue-600 transition-colors">Dashboard</Link>
+          <Link href="/warehouse" className="hover:text-blue-600">Dashboard</Link>
           <ChevronRight className="w-3.5 h-3.5" />
           <span className="text-gray-700 font-medium">Profile</span>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Warehouse Profile</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Manage your warehouse information and business details.</p>
-      </div>
-
-      {/* Profile Header Card */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-6">
-          <div className="relative">
-            <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-blue-50 rounded-2xl flex items-center justify-center ring-4 ring-blue-50">
-              <Building2 className="w-10 h-10 text-blue-600" />
-            </div>
-            <button className="absolute -bottom-1 -right-1 w-8 h-8 bg-blue-600 text-white rounded-xl flex items-center justify-center hover:bg-blue-700 transition-colors shadow-md">
-              <Camera className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="flex-1">
-            <h2 className="text-xl font-bold text-gray-900">{warehouse.name}</h2>
-            <p className="text-sm text-gray-500 mt-0.5">Member since {new Date(warehouse.member_since).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
-            <div className="mt-2 flex items-center gap-2">
-              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
-                warehouse.status === 'active' ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' :
-                warehouse.status === 'pending_approval' ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' :
-                'bg-red-50 text-red-700 ring-1 ring-red-200'
-              }`}>
-                {warehouse.status === 'active' && <Check className="w-3 h-3" />}
-                {warehouse.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-              </span>
-              <span className="inline-flex items-center gap-1 text-xs font-medium text-gray-600">
-                <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                {Number(warehouse.rating).toFixed(1)}
-              </span>
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div className="px-3">
-              <p className="text-2xl font-bold text-gray-900">{Number(warehouse.total_products)}</p>
-              <p className="text-xs text-gray-500 mt-0.5">Products</p>
-            </div>
-            <div className="px-3 border-x border-gray-100">
-              <p className="text-2xl font-bold text-gray-900">{Number(warehouse.total_orders)}</p>
-              <p className="text-xs text-gray-500 mt-0.5">Orders</p>
-            </div>
-            <div className="px-3">
-              <p className="text-2xl font-bold text-gray-900">{Number(warehouse.performance_score)}%</p>
-              <p className="text-xs text-gray-500 mt-0.5">Score</p>
-            </div>
-          </div>
-        </div>
+        <h1 className="text-xl font-bold text-gray-900">Warehouse Profile</h1>
+        <p className="text-sm text-gray-500 mt-0.5">Manage your warehouse information and settings.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Left - Forms */}
-        <div className="lg:col-span-2 space-y-5">
-          {/* Basic Info */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <div className="flex items-center gap-2 mb-5">
-              <div className="w-7 h-7 bg-blue-50 rounded-lg flex items-center justify-center">
-                <Building2 className="w-3.5 h-3.5 text-blue-600" />
-              </div>
-              <h2 className="font-bold text-gray-900">Basic Information</h2>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                {field('Warehouse Name')}
-                <input type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className={inputClass} />
-              </div>
-              <div>
-                {field('Owner Name')}
-                <input type="text" value={formData.owner_name} onChange={e => setFormData({ ...formData, owner_name: e.target.value })} className={inputClass} />
-              </div>
-              <div>
-                {field('Business Type')}
-                <input type="text" value={formData.business_type} onChange={e => setFormData({ ...formData, business_type: e.target.value })} className={inputClass} placeholder="e.g. Retail, Wholesale" />
-              </div>
-              <div>
-                {field('Tax ID')}
-                <input type="text" value={formData.tax_id} onChange={e => setFormData({ ...formData, tax_id: e.target.value })} className={inputClass} />
-              </div>
-            </div>
-          </div>
-
-          {/* Contact Info */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <div className="flex items-center gap-2 mb-5">
-              <div className="w-7 h-7 bg-emerald-50 rounded-lg flex items-center justify-center">
-                <Phone className="w-3.5 h-3.5 text-emerald-600" />
-              </div>
-              <h2 className="font-bold text-gray-900">Contact Information</h2>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                {field('Email')}
-                <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className={inputClass} />
-              </div>
-              <div>
-                {field('Phone')}
-                <input type="tel" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} className={inputClass} />
-              </div>
-              <div className="sm:col-span-2">
-                {field('Address')}
-                <input type="text" value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} className={inputClass} />
-              </div>
-              <div>
-                {field('City')}
-                <input type="text" value={formData.city} onChange={e => setFormData({ ...formData, city: e.target.value })} className={inputClass} />
-              </div>
-              <div>
-                {field('Country')}
-                <input type="text" value={formData.country} onChange={e => setFormData({ ...formData, country: e.target.value })} className={inputClass} />
-              </div>
-            </div>
-          </div>
-
-          {/* Banking Info */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <div className="flex items-center gap-2 mb-5">
-              <div className="w-7 h-7 bg-violet-50 rounded-lg flex items-center justify-center">
-                <CreditCard className="w-3.5 h-3.5 text-violet-600" />
-              </div>
-              <h2 className="font-bold text-gray-900">Banking Information</h2>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                {field('Bank Name')}
-                <input type="text" value={formData.bank_name} onChange={e => setFormData({ ...formData, bank_name: e.target.value })} className={inputClass} placeholder="Bank name" />
-              </div>
-              <div>
-                {field('Account Number')}
-                <input type="text" value={formData.bank_account} onChange={e => setFormData({ ...formData, bank_account: e.target.value })} className={inputClass} placeholder="Account number" />
-              </div>
-            </div>
-            <div className="flex items-center gap-1.5 mt-4 text-xs text-gray-500">
-              <Shield className="w-3.5 h-3.5 text-gray-400" />
-              Banking information is used for payouts and is kept secure.
-            </div>
-          </div>
-        </div>
-
-        {/* Right - Summary + Actions */}
+        {/* Left Column */}
         <div className="space-y-4">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <h3 className="font-bold text-gray-900 text-sm mb-4">Profile Completion</h3>
-            <div className="relative w-24 h-24 mx-auto mb-3">
-              <svg className="w-full h-full transform -rotate-90">
-                <circle cx="48" cy="48" r="42" stroke="#f3f4f6" strokeWidth="8" fill="none" />
-                <circle cx="48" cy="48" r="42" stroke="#2563eb" strokeWidth="8" fill="none" strokeLinecap="round" strokeDasharray={`${0.85 * 264} 264`} />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-xl font-bold text-gray-900">85%</span>
+          {/* Warehouse Profile Card */}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-gray-900 text-sm">Warehouse Profile</h3>
+              <EditBtn />
+            </div>
+            <div className="flex flex-col items-center mb-5">
+              <div className="w-16 h-16 bg-blue-50 rounded-xl flex items-center justify-center border-2 border-blue-100 mb-3">
+                <Building2 className="w-8 h-8 text-blue-600" />
+              </div>
+              <h4 className="font-bold text-gray-900 text-sm">{warehouse.name}</h4>
+            </div>
+            <div className="space-y-2.5">
+              {[
+                { label: 'Warehouse Code', value: 'WH-001' },
+                { label: 'Owner Name', value: warehouse.owner_name },
+                { label: 'Email', value: warehouse.email },
+                { label: 'Phone', value: warehouse.phone },
+                { label: 'Established', value: new Date(warehouse.member_since).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) },
+              ].map(item => (
+                <div key={item.label} className="flex items-start justify-between">
+                  <span className="text-xs text-gray-500 flex-shrink-0">{item.label}</span>
+                  <span className="text-xs text-gray-800 font-medium text-right ml-2 truncate max-w-[60%]">{item.value || '—'}</span>
+                </div>
+              ))}
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">Status</span>
+                <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                  <Check className="w-3 h-3" />
+                  Active
+                </span>
               </div>
             </div>
-            <p className="text-xs text-gray-500 text-center mb-4">Your profile is 85% complete. Add banking info to reach 100%.</p>
+          </div>
+
+          {/* Address */}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-gray-400" />
+                <h3 className="font-bold text-gray-900 text-sm">Address</h3>
+              </div>
+              <EditBtn />
+            </div>
+            <div className="space-y-1 text-xs text-gray-600">
+              <p>{warehouse.address || '123 Warehouse Lane'}</p>
+              <p>{warehouse.city}{warehouse.country ? `, ${warehouse.country}` : ''}</p>
+            </div>
+            <button className="mt-3 text-xs text-blue-600 font-medium hover:underline">View on Map</button>
+          </div>
+
+          {/* Bank Details */}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <CreditCard className="w-4 h-4 text-gray-400" />
+                <h3 className="font-bold text-gray-900 text-sm">Bank Details</h3>
+              </div>
+              <EditBtn />
+            </div>
             <div className="space-y-2">
               {[
-                { label: 'Basic Info', done: true },
-                { label: 'Contact Info', done: true },
-                { label: 'Banking Info', done: formData.bank_name !== '' },
-                { label: 'Tax ID', done: formData.tax_id !== '' },
+                { label: 'Bank Name', value: warehouse.bank_name || 'Chase Bank' },
+                { label: 'Account Holder', value: warehouse.owner_name },
+                { label: 'Account Number', value: warehouse.bank_account ? '••••' + warehouse.bank_account.slice(-4) : '•••• 1234' },
+                { label: 'Routing Number', value: '071000021' },
               ].map(item => (
-                <div key={item.label} className="flex items-center gap-2 text-sm">
-                  {item.done ? <Check className="w-4 h-4 text-emerald-500" /> : <div className="w-4 h-4 rounded-full border-2 border-gray-200" />}
-                  <span className={item.done ? 'text-gray-700' : 'text-gray-400'}>{item.label}</span>
+                <div key={item.label} className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">{item.label}</span>
+                  <span className="text-xs text-gray-800 font-medium">{item.value || '—'}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="w-full flex items-center justify-center gap-2 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-xl font-semibold text-sm transition-colors shadow-sm shadow-blue-600/20"
-            >
-              {saving ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : saved ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
-              {saved ? 'Saved!' : saving ? 'Saving...' : 'Save Changes'}
-            </button>
+          {/* KYC Documents */}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <Shield className="w-4 h-4 text-gray-400" />
+              <h3 className="font-bold text-gray-900 text-sm">KYC Documents</h3>
+            </div>
+            <div className="space-y-2">
+              {['Business License', 'Tax Certificate', 'ID Proof'].map((doc) => (
+                <div key={doc} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-3.5 h-3.5 text-gray-400" />
+                    <div>
+                      <p className="text-xs font-medium text-gray-700">{doc}</p>
+                      <p className="text-[10px] text-gray-400">Uploaded on Jan 15, 2023</p>
+                    </div>
+                  </div>
+                  <button className="text-xs text-blue-600 font-medium hover:underline">View</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Middle Column */}
+        <div className="space-y-4">
+          {/* Business Information */}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-gray-900 text-sm">Business Information</h3>
+              <EditBtn />
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Business Type</label>
+                <p className="text-sm font-medium text-gray-800">{warehouse.business_type || 'Electronics & Accessories'}</p>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Tax ID</label>
+                <p className="text-sm font-medium text-gray-800">{warehouse.tax_id || 'TX-123456789'}</p>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Company Registration</label>
+                <p className="text-sm font-medium text-gray-800">BRN-987654321</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column */}
+        <div className="space-y-4">
+          {/* Shipping Information */}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Truck className="w-4 h-4 text-gray-400" />
+                <h3 className="font-bold text-gray-900 text-sm">Shipping Information</h3>
+              </div>
+              <EditBtn />
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Default Shipping Partner</label>
+                <p className="text-sm font-medium text-gray-800">MarketBridge Express</p>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Shipping Rate</label>
+                <p className="text-sm font-medium text-gray-800">$0.00 - $5.99</p>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Processing Time</label>
+                <p className="text-sm font-medium text-gray-800">1-2 Business Days</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Settings */}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-gray-900 text-sm">Settings</h3>
+              <EditBtn />
+            </div>
+            <div className="space-y-3">
+              {[
+                { key: 'order_notifications', label: 'Receive Order Notifications' },
+                { key: 'low_stock_alerts', label: 'Low Stock Alerts' },
+                { key: 'email_updates', label: 'Email Updates' },
+                { key: 'sms_notifications', label: 'SMS Notifications' },
+              ].map(item => (
+                <div key={item.key} className="flex items-center justify-between">
+                  <span className="text-sm text-gray-700">{item.label}</span>
+                  <Toggle
+                    value={settings[item.key as keyof typeof settings]}
+                    onChange={() => setSettings(s => ({ ...s, [item.key]: !s[item.key as keyof typeof settings] }))}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

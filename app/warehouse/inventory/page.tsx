@@ -4,15 +4,15 @@ export const dynamic = 'force-dynamic';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Search, AlertTriangle, Package, Plus, Minus, ChevronRight, Download, Filter, TrendingDown, TrendingUp, Boxes } from 'lucide-react';
+import { Search, AlertTriangle, Package, Plus, Minus, ChevronRight, Filter, Boxes, ArrowUp, ArrowDown } from 'lucide-react';
 import { inventoryApi, productsApi } from '@/lib/api';
 import { useAuth } from '@/components/auth/auth-provider';
 import type { Inventory, Product } from '@/lib/types';
 
 const statusBadge: Record<string, string> = {
-  in_stock: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
-  low_stock: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200',
-  out_of_stock: 'bg-red-50 text-red-700 ring-1 ring-red-200',
+  in_stock: 'text-emerald-700 font-semibold',
+  low_stock: 'text-amber-600 font-semibold',
+  out_of_stock: 'text-red-600 font-semibold',
 };
 
 const statusLabels: Record<string, string> = {
@@ -21,7 +21,7 @@ const statusLabels: Record<string, string> = {
   out_of_stock: 'Out of Stock',
 };
 
-const tabs = ['All', 'In Stock', 'Low Stock', 'Out of Stock'] as const;
+const tabs = ['All Inventory', 'Low Stock', 'Out of Stock'] as const;
 
 export default function WarehouseInventory() {
   const { user } = useAuth();
@@ -29,7 +29,9 @@ export default function WarehouseInventory() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [activeTab, setActiveTab] = useState<typeof tabs[number]>('All');
+  const [activeTab, setActiveTab] = useState<typeof tabs[number]>('All Inventory');
+  const [adjustProduct, setAdjustProduct] = useState<Inventory | null>(null);
+  const [adjustQty, setAdjustQty] = useState(0);
 
   useEffect(() => {
     async function fetchData() {
@@ -66,18 +68,20 @@ export default function WarehouseInventory() {
     await inventoryApi.update(itemId, updatedItem);
   };
 
-  const tabStatusMap: Record<string, string> = {
-    'In Stock': 'in_stock', 'Low Stock': 'low_stock', 'Out of Stock': 'out_of_stock',
+  const tabMap: Record<string, string> = {
+    'Low Stock': 'low_stock',
+    'Out of Stock': 'out_of_stock',
   };
 
   const filtered = inventory.filter(item => {
-    if (activeTab !== 'All' && item.status !== tabStatusMap[activeTab]) return false;
+    if (activeTab !== 'All Inventory' && item.status !== tabMap[activeTab]) return false;
     if (search && !item.product_name.toLowerCase().includes(search.toLowerCase()) && !item.sku.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
 
-  const getTabCount = (tab: typeof tabs[number]) =>
-    tab === 'All' ? inventory.length : inventory.filter(i => i.status === tabStatusMap[tab]).length;
+  const lowStockCount = inventory.filter(i => i.status === 'low_stock').length;
+  const outOfStockCount = inventory.filter(i => i.status === 'out_of_stock').length;
+  const totalUnits = inventory.reduce((sum, i) => sum + i.total_stock, 0);
 
   if (loading) {
     return (
@@ -87,182 +91,248 @@ export default function WarehouseInventory() {
     );
   }
 
-  const inStockCount = inventory.filter(i => i.status === 'in_stock').length;
-  const lowStockCount = inventory.filter(i => i.status === 'low_stock').length;
-  const outOfStockCount = inventory.filter(i => i.status === 'out_of_stock').length;
-  const totalUnits = inventory.reduce((sum, i) => sum + i.total_stock, 0);
-
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2 text-sm text-gray-400 mb-1">
-            <Link href="/warehouse" className="hover:text-blue-600 transition-colors">Dashboard</Link>
+            <Link href="/warehouse" className="hover:text-blue-600">Dashboard</Link>
             <ChevronRight className="w-3.5 h-3.5" />
             <span className="text-gray-700 font-medium">Inventory</span>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Inventory Management</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Track and manage your product stock levels.</p>
+          <h1 className="text-xl font-bold text-gray-900">Inventory Management</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Track stock levels, manage inventory and view stock movement history.</p>
         </div>
-        <div className="flex items-center gap-2">
-          <button className="flex items-center gap-1.5 px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50 text-gray-600 transition-colors bg-white">
-            <Download className="w-4 h-4" />
-            <span className="hidden sm:inline">Export</span>
-          </button>
-          <button className="flex items-center gap-1.5 px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50 text-gray-600 transition-colors bg-white">
-            <Filter className="w-4 h-4" />
-            <span className="hidden sm:inline">Filter</span>
-          </button>
-        </div>
+        <button
+          onClick={() => setAdjustProduct(inventory[0] || null)}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-sm transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          Stock Adjustment
+        </button>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Products', value: inventory.length, color: 'text-blue-600', bg: 'bg-blue-50', icon: Boxes },
-          { label: 'In Stock', value: inStockCount, color: 'text-emerald-600', bg: 'bg-emerald-50', icon: Package },
-          { label: 'Low Stock', value: lowStockCount, color: 'text-amber-600', bg: 'bg-amber-50', icon: TrendingDown },
-          { label: 'Out of Stock', value: outOfStockCount, color: 'text-red-600', bg: 'bg-red-50', icon: AlertTriangle },
+          { label: 'Total Products', value: inventory.length, sub: '+6.2% vs last week', icon: Boxes, color: 'text-blue-600', bg: 'bg-blue-50' },
+          { label: 'Total Stock', value: totalUnits.toLocaleString(), sub: 'All warehouse stock', icon: Package, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+          { label: 'Low Stock Items', value: lowStockCount, sub: 'Require attention', icon: AlertTriangle, color: 'text-amber-500', bg: 'bg-amber-50' },
+          { label: 'Out of Stock Items', value: outOfStockCount, sub: 'Need restocking', icon: AlertTriangle, color: 'text-red-500', bg: 'bg-red-50' },
         ].map(s => {
           const Icon = s.icon;
           return (
-            <div key={s.label} className="bg-white rounded-2xl border border-gray-100 p-4">
-              <div className={`w-9 h-9 ${s.bg} rounded-lg flex items-center justify-center mb-2`}>
+            <div key={s.label} className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+              <div className={`w-9 h-9 ${s.bg} rounded-lg flex items-center justify-center mb-3`}>
                 <Icon className={`w-4 h-4 ${s.color}`} />
               </div>
-              <p className="text-xl font-bold text-gray-900">{s.value}</p>
-              <p className="text-xs text-gray-500 font-medium">{s.label}</p>
+              <p className="text-2xl font-bold text-gray-900">{s.value}</p>
+              <p className="text-xs font-semibold text-gray-700 mt-0.5">{s.label}</p>
+              <p className="text-xs text-gray-400 mt-0.5">{s.sub}</p>
             </div>
           );
         })}
       </div>
 
-      {/* Alert Banner */}
-      {outOfStockCount > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-center gap-3">
-          <div className="w-9 h-9 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
-            <AlertTriangle className="w-4 h-4 text-red-600" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-red-800">{outOfStockCount} products are out of stock!</p>
-            <p className="text-xs text-red-600">Restock these items to avoid losing sales.</p>
-          </div>
-        </div>
-      )}
-
-      {/* Table */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        {/* Tabs + Search */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100">
-          <div className="flex overflow-x-auto gap-1">
-            {tabs.map(tab => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-3.5 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-1.5 ${
-                  activeTab === tab ? 'bg-blue-50 text-blue-600' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                {tab}
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
-                  activeTab === tab ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'
-                }`}>
-                  {getTabCount(tab)}
-                </span>
-              </button>
-            ))}
-          </div>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search products or SKU..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="pl-9 pr-3 py-2 border border-gray-200 rounded-xl text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 w-44 bg-gray-50 focus:bg-white transition-all"
-            />
-          </div>
-        </div>
-
+      {/* Main content */}
+      <div className="flex gap-5">
         {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-50 bg-gray-50/30">
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Product</th>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">SKU</th>
-                <th className="text-center px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Total</th>
-                <th className="text-center px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Reserved</th>
-                <th className="text-center px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Available</th>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</th>
-                <th className="text-center px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="py-16 text-center">
-                    <Package className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-                    <p className="text-gray-500 text-sm">No inventory items found</p>
-                  </td>
+        <div className="flex-1 bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+          {/* Tabs */}
+          <div className="flex border-b border-gray-100">
+            {tabs.map(tab => {
+              const count = tab === 'All Inventory' ? inventory.length : tab === 'Low Stock' ? lowStockCount : outOfStockCount;
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-4 py-3.5 text-sm font-medium border-b-2 transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                    activeTab === tab ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  {tab}
+                  {tab !== 'All Inventory' && (
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${activeTab === tab ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'}`}>
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Search + Filters */}
+          <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 bg-gray-50/30">
+            <div className="relative flex-1 max-w-xs">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search by product name or SKU..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:outline-none bg-white"
+              />
+            </div>
+            <select className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white text-gray-600 focus:outline-none">
+              <option>All Categories</option>
+            </select>
+            <select className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white text-gray-600 focus:outline-none">
+              <option>Stock Status</option>
+              <option>In Stock</option>
+              <option>Low Stock</option>
+              <option>Out of Stock</option>
+            </select>
+          </div>
+
+          {/* Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-100 bg-gray-50/50">
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Product</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">SKU</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Category</th>
+                  <th className="text-center px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Stock</th>
+                  <th className="text-center px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Reserved</th>
+                  <th className="text-center px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Available</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="text-center px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Action</th>
                 </tr>
-              ) : (
-                filtered.map(item => {
-                  const product = getProduct(item.product_id);
-                  return (
-                    <tr key={item.id} className="hover:bg-gray-50/60 transition-colors">
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-50 border border-gray-100 flex-shrink-0">
-                            {product?.images?.[0] && <img src={product.images[0]} alt={item.product_name} className="w-full h-full object-cover" />}
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="py-16 text-center">
+                      <Package className="w-10 h-10 text-gray-200 mx-auto mb-3" />
+                      <p className="text-gray-500 text-sm">No inventory items found</p>
+                    </td>
+                  </tr>
+                ) : (
+                  filtered.map(item => {
+                    const product = getProduct(item.product_id);
+                    return (
+                      <tr key={item.id} className="hover:bg-gray-50/60 transition-colors">
+                        <td className="px-5 py-3.5">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-lg overflow-hidden bg-gray-50 border border-gray-100 flex-shrink-0">
+                              {product?.images?.[0] && <img src={product.images[0]} alt={item.product_name} className="w-full h-full object-cover" />}
+                            </div>
+                            <p className="text-sm font-medium text-gray-900">{item.product_name}</p>
                           </div>
-                          <p className="text-sm font-medium text-gray-900">{item.product_name}</p>
-                        </div>
-                      </td>
-                      <td className="px-5 py-4 text-sm text-gray-500 font-mono">{item.sku}</td>
-                      <td className="px-5 py-4 text-center text-sm font-semibold text-gray-900">{item.total_stock}</td>
-                      <td className="px-5 py-4 text-center text-sm text-gray-500">{item.reserved_stock}</td>
-                      <td className="px-5 py-4 text-center text-sm font-semibold text-gray-900">{item.available_stock}</td>
-                      <td className="px-5 py-4">
-                        <span className={`inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full ${statusBadge[item.status]}`}>
-                          {statusLabels[item.status]}
-                        </span>
-                      </td>
-                      <td className="px-5 py-4">
-                        <div className="flex items-center justify-center gap-2">
+                        </td>
+                        <td className="px-5 py-3.5 text-xs text-gray-500 font-mono">{item.sku}</td>
+                        <td className="px-5 py-3.5 text-sm text-gray-500">{product?.category_name || '—'}</td>
+                        <td className="px-5 py-3.5 text-center text-sm font-semibold text-gray-900">{item.total_stock}</td>
+                        <td className="px-5 py-3.5 text-center text-sm text-gray-500">{item.reserved_stock}</td>
+                        <td className="px-5 py-3.5 text-center text-sm font-semibold text-gray-900">{item.available_stock}</td>
+                        <td className="px-5 py-3.5">
+                          <span className={`text-xs ${statusBadge[item.status]}`}>
+                            {statusLabels[item.status]}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3.5">
                           <button
-                            onClick={() => handleStockUpdate(item.id, -1)}
-                            className="w-7 h-7 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors"
+                            onClick={() => { setAdjustProduct(item); setAdjustQty(0); }}
+                            className="text-xs text-blue-600 font-semibold border border-blue-200 hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors"
                           >
-                            <Minus className="w-3.5 h-3.5" />
+                            Adjust
                           </button>
-                          <span className="text-sm font-semibold text-gray-900 w-6 text-center">{item.total_stock}</span>
-                          <button
-                            onClick={() => handleStockUpdate(item.id, 1)}
-                            className="w-7 h-7 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 transition-colors"
-                          >
-                            <Plus className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100 bg-gray-50/30">
+            <p className="text-xs text-gray-500">
+              Showing <span className="font-semibold text-gray-700">{filtered.length}</span> of <span className="font-semibold text-gray-700">{inventory.length}</span> items
+            </p>
+            <div className="flex items-center gap-1">
+              <button className="w-7 h-7 rounded-lg border border-gray-200 flex items-center justify-center text-xs hover:bg-gray-100 text-gray-600">‹</button>
+              <button className="w-7 h-7 rounded-lg text-xs font-semibold bg-blue-600 text-white">1</button>
+              <button className="w-7 h-7 rounded-lg border border-gray-200 flex items-center justify-center text-xs hover:bg-gray-100 text-gray-600">›</button>
+            </div>
+          </div>
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-t border-gray-100 bg-gray-50/30">
-          <p className="text-xs text-gray-500">
-            Showing <span className="font-semibold text-gray-700">{filtered.length}</span> of <span className="font-semibold text-gray-700">{inventory.length}</span> items
-          </p>
-          <div className="flex items-center gap-1">
-            <button className="w-7 h-7 rounded-lg border border-gray-200 flex items-center justify-center text-xs hover:bg-gray-100 text-gray-600 transition-colors">‹</button>
-            <button className="w-7 h-7 rounded-lg text-xs font-semibold bg-blue-600 text-white">1</button>
-            <button className="w-7 h-7 rounded-lg border border-gray-200 flex items-center justify-center text-xs hover:bg-gray-100 text-gray-600 transition-colors">›</button>
+        {/* Stock Adjustment Panel */}
+        <div className="w-64 flex-shrink-0 space-y-4">
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+            <h3 className="font-bold text-gray-900 text-sm mb-1">Stock Adjustment</h3>
+            <p className="text-xs text-gray-500 mb-4">Update your stock quantities. Quickly adjust inventory levels for any product.</p>
+
+            {adjustProduct ? (
+              <div className="space-y-3">
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Product</p>
+                  <p className="text-sm font-semibold text-gray-800">{adjustProduct.product_name}</p>
+                  <p className="text-xs text-gray-400">Current stock: {adjustProduct.total_stock}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Adjustment Qty</p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setAdjustQty(q => q - 1)}
+                      className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center hover:bg-gray-50"
+                    >
+                      <Minus className="w-3.5 h-3.5" />
+                    </button>
+                    <input
+                      type="number"
+                      value={adjustQty}
+                      onChange={e => setAdjustQty(Number(e.target.value))}
+                      className="flex-1 text-center border border-gray-200 rounded-lg py-1.5 text-sm font-semibold focus:outline-none focus:border-blue-400"
+                    />
+                    <button
+                      onClick={() => setAdjustQty(q => q + 1)}
+                      className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center hover:bg-gray-50"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+                <button
+                  onClick={() => { if (adjustQty !== 0 && adjustProduct) { handleStockUpdate(adjustProduct.id, adjustQty); setAdjustQty(0); } }}
+                  className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-colors"
+                >
+                  + Adjust Stock
+                </button>
+              </div>
+            ) : (
+              <p className="text-xs text-gray-400 text-center py-4">Select a product to adjust stock</p>
+            )}
+          </div>
+
+          {/* Recent Stock Movements */}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-bold text-gray-900 text-sm">Recent Stock Movements</h3>
+            </div>
+            <div className="space-y-3">
+              {inventory.slice(0, 4).map((item, i) => (
+                <div key={item.id} className="flex items-start gap-2">
+                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${i % 2 === 0 ? 'bg-emerald-50' : 'bg-red-50'}`}>
+                    {i % 2 === 0 ? <ArrowUp className="w-3.5 h-3.5 text-emerald-600" /> : <ArrowDown className="w-3.5 h-3.5 text-red-500" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-gray-800 truncate">{item.product_name}</p>
+                    <p className="text-[11px] text-gray-400">
+                      {new Date(item.last_updated).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </p>
+                  </div>
+                  <span className={`text-xs font-semibold ${i % 2 === 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                    {i % 2 === 0 ? '+' : '-'}{Math.abs((i + 1) * 5)} units
+                  </span>
+                </div>
+              ))}
+            </div>
+            {inventory.length > 4 && (
+              <button className="w-full mt-3 text-xs text-blue-600 hover:underline font-medium">View All Movements</button>
+            )}
           </div>
         </div>
       </div>
