@@ -5,37 +5,24 @@ import { Send } from 'lucide-react';
 
 export default function HomeCTA() {
   return (
-    <section className="py-10 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 p-8 md:p-12 flex flex-col md:flex-row items-center gap-6">
-          <div className="flex-1">
-            <div className="inline-flex items-center gap-2 mb-3">
-              <span className="text-2xl">💬</span>
-              <span className="text-slate-400 text-sm font-medium">Telegram Community</span>
-            </div>
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">Join Our Community</h2>
-            <p className="text-slate-300 text-sm mb-6 max-w-md">
-              Stay updated with the latest deals, new arrivals, and exclusive offers. Join thousands of shoppers in our Telegram channel.
-            </p>
-            <a
-              href="https://t.me/marketbridge"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-sky-500 hover:bg-sky-600 text-white px-6 py-3 rounded-xl font-semibold text-sm transition-colors"
-            >
-              <Send className="w-4 h-4" />
-              Join Telegram Channel
-            </a>
-          </div>
-          <div className="hidden md:flex items-center justify-center flex-shrink-0">
-            <div className="w-40 h-40 bg-slate-700/50 rounded-2xl flex items-center justify-center">
-              <div className="w-24 h-24 bg-sky-500/20 rounded-xl flex items-center justify-center">
-                <Send className="w-12 h-12 text-sky-400" />
-              </div>
-            </div>
-          </div>
+    <div className="relative rounded-3xl overflow-hidden"
+      style={{ background: 'linear-gradient(135deg,#1e3a8a 0%,#1d4ed8 50%,#2563eb 100%)' }}>
+      <div className="absolute inset-0 opacity-10"
+        style={{ backgroundImage: 'radial-gradient(circle at 70% 50%, white 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
+      <div className="relative px-6 md:px-12 py-10 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="text-white">
+          <h2 className="text-2xl md:text-3xl font-extrabold mb-2">Join Our Telegram Channel</h2>
+          <p className="text-blue-100 text-sm md:text-base max-w-md">
+            Get exclusive deals, flash sales, and product updates directly on Telegram. Be the first to know!
+          </p>
         </div>
+        <Link href="https://t.me/marketbridge" target="_blank" rel="noopener noreferrer">
+          <button className="flex items-center gap-2.5 px-6 py-3 bg-white text-blue-600 font-bold text-sm rounded-xl hover:bg-blue-50 transition-all shadow-lg hover:shadow-xl whitespace-nowrap flex-shrink-0">
+            <Send style={{ width: 16, height: 16 }} />
+            Join Channel
+          </button>
+        </Link>
       </div>
-    </section>
+    </div>
   );
 }

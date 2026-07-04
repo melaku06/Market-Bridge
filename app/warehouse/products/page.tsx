@@ -220,12 +220,12 @@ export default function ProductsPage() {
                     <td className="px-4 py-3.5">
                       <span className="text-xs font-mono bg-gray-50 px-2 py-1 rounded-lg text-gray-600 border border-gray-100">{product.sku || '—'}</span>
                     </td>
-                    <td className="px-4 py-3.5 text-xs text-gray-500">{product.category?.name || '—'}</td>
+                    <td className="px-4 py-3.5 text-xs text-gray-500">{(product as any).category?.name || '—'}</td>
                     <td className="px-4 py-3.5">
                       <div>
                         <p className="text-sm font-bold text-gray-900">{Number(product.final_price || 0).toFixed(2)} Br</p>
-                        {product.original_price && product.original_price > product.final_price && (
-                          <p className="text-[11px] text-gray-400 line-through">{Number(product.original_price).toFixed(2)} Br</p>
+                        {(product as any).original_price && (product as any).original_price > product.final_price && (
+                          <p className="text-[11px] text-gray-400 line-through">{Number((product as any).original_price).toFixed(2)} Br</p>
                         )}
                       </div>
                     </td>

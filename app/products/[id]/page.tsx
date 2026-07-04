@@ -61,7 +61,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <ProductDetailInteractive product={product} reviews={reviews} />
+          <ProductDetailInteractive product={product as any} reviews={reviews as any} />
 
           {/* Related Products */}
           {relatedProducts.length > 0 && (

@@ -1,24 +1,41 @@
 import Link from 'next/link';
-import { ShoppingBag, Send, Phone, Mail, MapPin, Facebook, Twitter, Instagram } from 'lucide-react';
+import { ShoppingBag, Facebook, Twitter, Instagram, Send, Mail, Phone, MapPin } from 'lucide-react';
+
+const QUICK_LINKS = [
+  { label: 'About Us', href: '#' },
+  { label: 'Contact', href: '#' },
+  { label: 'FAQs', href: '#' },
+  { label: 'Careers', href: '#' },
+  { label: 'Privacy Policy', href: '#' },
+  { label: 'Terms of Service', href: '#' },
+];
+const CATEGORIES = [
+  { label: 'Electronics', href: '/categories/electronics' },
+  { label: 'Fashion', href: '/categories/fashion' },
+  { label: 'Home & Living', href: '/categories/home-living' },
+  { label: 'Beauty', href: '/categories/beauty' },
+  { label: 'Sports', href: '/categories/sports' },
+  { label: 'Books', href: '/categories/books' },
+];
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-900 text-gray-300">
-      {/* Trust Badges */}
+    <footer className="bg-gray-900 text-gray-400">
+      {/* Trust strip */}
       <div className="border-b border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
-              { icon: '🚚', title: 'Free Shipping', desc: 'On orders over $50' },
-              { icon: '↩️', title: '30-Day Returns', desc: 'Easy returns' },
-              { icon: '🛡️', title: 'Secure Payments', desc: '100% secure' },
-              { icon: '🎧', title: '24/7 Support', desc: 'Dedicated support' },
-            ].map((item) => (
-              <div key={item.title} className="flex items-center gap-3">
-                <span className="text-2xl">{item.icon}</span>
+              { icon: '🚚', title: 'Free Shipping', sub: 'On orders over $50' },
+              { icon: '↩️', title: '30-Day Returns', sub: 'Easy returns' },
+              { icon: '💬', title: '24/7 Support', sub: 'We are here to help' },
+              { icon: '🔒', title: 'Secure Checkout', sub: '100% secure payments' },
+            ].map(b => (
+              <div key={b.title} className="flex items-center gap-3">
+                <span className="text-2xl">{b.icon}</span>
                 <div>
-                  <p className="text-sm font-medium text-white">{item.title}</p>
-                  <p className="text-xs text-gray-400">{item.desc}</p>
+                  <p className="text-sm font-semibold text-white">{b.title}</p>
+                  <p className="text-xs text-gray-500">{b.sub}</p>
                 </div>
               </div>
             ))}
@@ -26,51 +43,41 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+      {/* Main footer */}
+      <div className="max-w-7xl mx-auto px-4 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
           {/* Brand */}
-          <div className="lg:col-span-1">
+          <div>
             <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <ShoppingBag className="w-5 h-5 text-white" />
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#1d4ed8,#3b82f6)' }}>
+                <ShoppingBag className="text-white" style={{ width: 15, height: 15 }} />
               </div>
-              <span className="font-bold text-white text-lg">MarketBridge</span>
+              <span className="font-bold text-white text-[15px]">MarketBridge</span>
             </Link>
-            <p className="text-sm text-gray-400 mb-4 leading-relaxed">
-              Shop the best products at great prices. Verified warehouses, fast delivery, secure payments.
+            <p className="text-sm text-gray-500 leading-relaxed mb-5">
+              Quality products from trusted warehouses, delivered to your door.
             </p>
-            <div className="flex gap-3">
-              <a href="#" className="w-8 h-8 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-blue-600 transition-colors">
-                <Facebook className="w-4 h-4" />
-              </a>
-              <a href="#" className="w-8 h-8 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-blue-600 transition-colors">
-                <Twitter className="w-4 h-4" />
-              </a>
-              <a href="#" className="w-8 h-8 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-blue-600 transition-colors">
-                <Send className="w-4 h-4" />
-              </a>
-              <a href="#" className="w-8 h-8 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-blue-600 transition-colors">
-                <Instagram className="w-4 h-4" />
-              </a>
+            <div className="flex items-center gap-3">
+              {[
+                { icon: Facebook, href: '#' },
+                { icon: Twitter, href: '#' },
+                { icon: Instagram, href: '#' },
+                { icon: Send, href: 'https://t.me/marketbridge' },
+              ].map(({ icon: Icon, href }) => (
+                <a key={href} href={href} className="w-8 h-8 rounded-xl bg-gray-800 flex items-center justify-center hover:bg-blue-600 transition-colors">
+                  <Icon style={{ width: 14, height: 14 }} className="text-gray-400 hover:text-white" />
+                </a>
+              ))}
             </div>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Quick Links</h3>
-            <ul className="space-y-2">
-              {[
-                { label: 'Home', href: '/' },
-                { label: 'Products', href: '/products' },
-                { label: 'Categories', href: '/' },
-                { label: 'Product Request', href: '/product-request' },
-                { label: 'My Orders', href: '/dashboard/orders' },
-                { label: 'Wishlist', href: '/wishlist' },
-              ].map((link) => (
-                <li key={link.label}>
-                  <Link href={link.href} className="text-sm text-gray-400 hover:text-blue-400 transition-colors">
-                    {link.label}
-                  </Link>
+            <h4 className="text-sm font-bold text-white mb-4 uppercase tracking-wide">Quick Links</h4>
+            <ul className="space-y-2.5">
+              {QUICK_LINKS.map(l => (
+                <li key={l.label}>
+                  <Link href={l.href} className="text-sm text-gray-500 hover:text-white transition-colors">{l.label}</Link>
                 </li>
               ))}
             </ul>
@@ -78,13 +85,11 @@ export default function Footer() {
 
           {/* Categories */}
           <div>
-            <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Categories</h3>
-            <ul className="space-y-2">
-              {['Electronics', 'Fashion', 'Home & Living', 'Beauty', 'Sports', 'Books'].map((cat) => (
-                <li key={cat}>
-                  <Link href={`/categories/${cat.toLowerCase().replace(/ & /g, '-').replace(' ', '-')}`} className="text-sm text-gray-400 hover:text-blue-400 transition-colors">
-                    {cat}
-                  </Link>
+            <h4 className="text-sm font-bold text-white mb-4 uppercase tracking-wide">Categories</h4>
+            <ul className="space-y-2.5">
+              {CATEGORIES.map(c => (
+                <li key={c.label}>
+                  <Link href={c.href} className="text-sm text-gray-500 hover:text-white transition-colors">{c.label}</Link>
                 </li>
               ))}
             </ul>
@@ -92,31 +97,33 @@ export default function Footer() {
 
           {/* Contact */}
           <div>
-            <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Contact</h3>
+            <h4 className="text-sm font-bold text-white mb-4 uppercase tracking-wide">Contact</h4>
             <ul className="space-y-3">
-              <li className="flex items-start gap-2 text-sm text-gray-400">
-                <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0 text-blue-400" />
-                <span>500 Business Center Drive, New York, NY 10001</span>
+              <li className="flex items-start gap-2.5">
+                <MapPin style={{ width: 14, height: 14, flexShrink: 0, marginTop: 2 }} />
+                <span className="text-sm text-gray-500">123 Business Ave, Addis Ababa, Ethiopia</span>
               </li>
-              <li className="flex items-center gap-2 text-sm text-gray-400">
-                <Phone className="w-4 h-4 flex-shrink-0 text-blue-400" />
-                <span>+1 (555) 123-4567</span>
+              <li className="flex items-center gap-2.5">
+                <Phone style={{ width: 14, height: 14, flexShrink: 0 }} />
+                <a href="tel:+251911234567" className="text-sm text-gray-500 hover:text-white transition-colors">+251 911 234 567</a>
               </li>
-              <li className="flex items-center gap-2 text-sm text-gray-400">
-                <Mail className="w-4 h-4 flex-shrink-0 text-blue-400" />
-                <span>support@marketbridge.com</span>
+              <li className="flex items-center gap-2.5">
+                <Mail style={{ width: 14, height: 14, flexShrink: 0 }} />
+                <a href="mailto:support@marketbridge.com" className="text-sm text-gray-500 hover:text-white transition-colors">support@marketbridge.com</a>
               </li>
             </ul>
           </div>
         </div>
       </div>
 
+      {/* Bottom bar */}
       <div className="border-t border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p className="text-xs text-gray-500">© 2024 MarketBridge. All rights reserved.</p>
-          <div className="flex gap-4">
-            <a href="#" className="text-xs text-gray-500 hover:text-gray-300">Privacy Policy</a>
-            <a href="#" className="text-xs text-gray-500 hover:text-gray-300">Terms of Service</a>
+        <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <p className="text-xs text-gray-600">&copy; {new Date().getFullYear()} MarketBridge. All rights reserved.</p>
+          <div className="flex items-center gap-4">
+            {['Privacy', 'Terms', 'Cookies'].map(t => (
+              <Link key={t} href="#" className="text-xs text-gray-600 hover:text-gray-400 transition-colors">{t}</Link>
+            ))}
           </div>
         </div>
       </div>

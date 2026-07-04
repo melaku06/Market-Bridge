@@ -1,99 +1,92 @@
 'use client';
 
 import Link from 'next/link';
-import { Heart } from 'lucide-react';
 import { useState } from 'react';
-import StarRating from '@/components/ui/star-rating';
+import { Heart, ShoppingCart, Check, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ProductCardProps {
-  product: {
-    id: string;
-    name: string;
-    final_price?: number;
-    price?: number;
-    original_price?: number;
-    originalPrice?: number;
-    discount_percent?: number;
-    discount?: number;
-    images?: string[];
-    image?: string;
-    rating: number;
-    review_count?: number;
-    reviews?: number;
-    category_name?: string;
-    category?: string;
-  };
+  id: string;
+  name: string;
+  price?: number;
+  final_price?: number;
+  original_price?: number;
+  originalPrice?: number;
+  discount_percent?: number;
+  discount?: number;
+  images?: string[];
+  image?: string;
+  rating?: number;
+  review_count?: number;
+  reviews?: number;
+  category_name?: string;
+  category?: string;
+  warehouse_name?: string;
+  brand?: string;
   className?: string;
 }
 
-export default function ProductCard({ product, className }: ProductCardProps) {
+const formatPrice = (n: number) => `${Number(n).toLocaleString()} Br`;
+
+export default function ProductCard(props: ProductCardProps) {
   const [wishlisted, setWishlisted] = useState(false);
-  const [addedToCart, setAddedToCart] = useState(false);
+  const [added, setAdded] = useState(false);
 
-  // Normalize data from API or legacy format
-  const price = product.final_price ?? product.price ?? 0;
-  const originalPrice = product.original_price ?? product.originalPrice ?? price;
-  const discount = product.discount_percent ?? product.discount ?? 0;
-  const image = product.images?.[0] ?? product.image ?? '';
-  const reviewCount = product.review_count ?? product.reviews ?? 0;
-  const category = product.category_name ?? product.category ?? '';
+  const image = props.images?.[0] || props.image || '';
+  const finalPrice = props.final_price || props.price || 0;
+  const originalPrice = props.original_price || props.originalPrice || 0;
+  const discount = props.discount_percent || props.discount || 0;
+  const rating = props.rating || 0;
+  const reviewCount = props.review_count || props.reviews || 0;
+  const seller = props.warehouse_name || props.brand || '';
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleCart = (e: React.MouseEvent) => {
     e.preventDefault();
-    setAddedToCart(true);
-    setTimeout(() => setAddedToCart(false), 1500);
+    setAdded(true);
+    setTimeout(() => setAdded(false), 1500);
   };
 
   return (
-    <Link href={`/products/${product.id}`} className={cn('group block', className)}>
-      <div className="bg-white rounded-xl border border-gray-100 hover:border-blue-200 hover:shadow-md transition-all duration-200 overflow-hidden">
-        {/* Image */}
+    <Link href={`/products/${props.id}`} className={cn('group block', props.className)}>
+      <div className="bg-white rounded-2xl border border-gray-100 hover:border-blue-200 hover:shadow-lg transition-all duration-200 overflow-hidden">
         <div className="relative aspect-square overflow-hidden bg-gray-50">
-          <img
-            src={image}
-            alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          />
+          {image ? (
+            <img src={image} alt={props.name} loading="lazy"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-3xl">📦</div>
+          )}
           {discount > 0 && (
-            <span className="absolute top-2 left-2 bg-red-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
-              -{discount}%
+            <span className="absolute top-2 left-2 bg-red-500 text-white text-[11px] font-bold px-2 py-0.5 rounded-full">
+              -{discount.toFixed(0)}%
             </span>
           )}
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              setWishlisted(!wishlisted);
-            }}
-            className="absolute top-2 right-2 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm hover:scale-110 transition-transform"
-          >
-            <Heart className={cn('w-4 h-4', wishlisted ? 'fill-red-500 text-red-500' : 'text-gray-400')} />
+          <button onClick={e => { e.preventDefault(); setWishlisted(w => !w); }}
+            className={`absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 shadow-sm ${wishlisted ? 'bg-red-500 text-white opacity-100' : 'bg-white text-gray-400 hover:text-red-500'}`}>
+            <Heart style={{ width: 12, height: 12, fill: wishlisted ? 'currentColor' : 'none' }} />
           </button>
         </div>
-
-        {/* Info */}
-        <div className="p-3">
-          {category && <p className="text-xs text-blue-600 font-medium mb-1">{category}</p>}
-          <h3 className="text-sm font-medium text-gray-900 line-clamp-2 mb-1 leading-snug">{product.name}</h3>
-          <StarRating rating={product.rating} count={reviewCount} className="mb-2" />
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <span className="text-base font-bold text-gray-900">{price.toLocaleString()} Br</span>
-              {discount > 0 && originalPrice > price && (
-                <span className="text-xs text-gray-400 line-through">{originalPrice.toLocaleString()} Br</span>
-              )}
+        <div className="p-3.5">
+          {seller && <p className="text-[11px] text-blue-600 font-medium mb-1 truncate">{seller}</p>}
+          <h3 className="text-sm font-semibold text-gray-800 line-clamp-2 mb-2 leading-snug">{props.name}</h3>
+          <div className="flex items-center gap-1 mb-2.5">
+            <div className="flex items-center gap-0.5">
+              {[1,2,3,4,5].map(i => (
+                <Star key={i} style={{ width: 11, height: 11 }}
+                  className={i <= Math.round(rating) ? 'text-amber-400 fill-amber-400' : 'text-gray-200 fill-gray-200'} />
+              ))}
             </div>
+            <span className="text-[11px] text-gray-400">({reviewCount})</span>
           </div>
-          <button
-            onClick={handleAddToCart}
-            className={cn(
-              'mt-2 w-full py-1.5 rounded-lg text-xs font-medium transition-all duration-200',
-              addedToCart
-                ? 'bg-green-500 text-white'
-                : 'bg-blue-600 hover:bg-blue-700 text-white'
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-base font-extrabold text-gray-900">{formatPrice(finalPrice)}</span>
+            {originalPrice > finalPrice && (
+              <span className="text-xs text-gray-400 line-through">{formatPrice(originalPrice)}</span>
             )}
-          >
-            {addedToCart ? 'Added' : 'Add to Cart'}
+          </div>
+          <button onClick={handleCart}
+            className={`w-full h-9 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${added ? 'bg-emerald-500 text-white' : 'bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white'}`}>
+            {added ? <><Check style={{ width: 13, height: 13 }} /> Added!</> : <><ShoppingCart style={{ width: 13, height: 13 }} /> Add to Cart</>}
           </button>
         </div>
       </div>

@@ -44,28 +44,30 @@ export default async function CategoryPage({ params }: PageProps) {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           {/* Category Banner */}
-          <div className="relative rounded-xl overflow-hidden mb-6 h-32 bg-gradient-to-r from-blue-600 to-blue-800">
+          <div className="relative rounded-2xl overflow-hidden mb-6 h-36 shadow-sm" style={{ background: 'linear-gradient(135deg,#1e3a8a,#1d4ed8,#2563eb)' }}>
             <img
               src={(category as any).image_url || (category as any).image || 'https://images.pexels.com/photos/356056/pexels-photo-356056.jpeg?auto=compress&cs=tinysrgb&w=1200'}
               alt={category.name}
-              className="absolute inset-0 w-full h-full object-cover opacity-20"
+              className="absolute inset-0 w-full h-full object-cover opacity-10"
             />
-            <div className="relative z-10 px-6 py-5 flex items-center justify-between h-full">
+            <div className="relative z-10 px-8 py-6 flex items-center justify-between h-full">
               <div>
-                <h1 className="text-2xl font-bold text-white">{category.name}</h1>
-                <p className="text-blue-200 text-sm">
+                <p className="text-blue-200 text-xs font-medium mb-1 uppercase tracking-wider">Category</p>
+                <h1 className="text-2xl font-extrabold text-white">{category.name}</h1>
+                <p className="text-blue-200 text-sm mt-1">
                   {category.description || `Explore the latest ${category.name.toLowerCase()} products`}
                 </p>
               </div>
-              <div className="text-white text-right">
-                <p className="text-sm opacity-70">{productsResult.products.length} products</p>
+              <div className="text-white text-right bg-white/10 px-4 py-2 rounded-xl">
+                <p className="text-2xl font-extrabold">{productsResult.products.length}</p>
+                <p className="text-xs text-blue-200">Products</p>
               </div>
             </div>
           </div>
 
           <ProductsBrowser
             products={productsResult.products}
-            categories={categories}
+            categories={categories as any}
             initialCategoryId={category.id}
           />
         </div>
