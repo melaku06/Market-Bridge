@@ -54,6 +54,9 @@ function SearchResults() {
     if (selectedCategory !== 'All Categories') {
       if (p.category_name !== selectedCategory) return false;
     }
+    if (selectedBrands.length > 0) {
+      if (!selectedBrands.some((brand) => p.brand?.toLowerCase().includes(brand.toLowerCase()))) return false;
+    }
     const price = p.final_price ?? 0;
     if (price < priceRange[0] || price > priceRange[1]) return false;
     return true;
@@ -67,51 +70,92 @@ function SearchResults() {
     return 0;
   });
 
-  const brands = ['Sony', 'JBL', 'Bose', 'Sennheiser', 'Apple'];
+  const brands = ['Apple', 'Samsung', 'Sony', 'JBL', 'Bose', 'Sennheiser', 'LG', 'Philips'];
+  const subCategories = ['Smartphones', 'Laptops', 'Tablets', 'Headphones', 'Cameras', 'Smartwatches', 'Accessories'];
   const allCategories = ['All Categories', ...categories.map((c) => c.name)];
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
+  const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null);
 
   const getCategoryCount = (cat: string) => {
     if (cat === 'All Categories') return products.length;
     return products.filter((p) => p.category_name === cat).length;
   };
 
+  const getBrandCount = (brand: string) => {
+    return products.filter((p) => p.brand?.toLowerCase().includes(brand.toLowerCase())).length;
+  };
+
+  const toggleBrand = (brand: string) => {
+    setSelectedBrands((prev) => prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]);
+  };
+
   const FilterPanel = () => (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div>
         <h3 className="font-semibold text-gray-900 text-sm mb-3">Categories</h3>
         <div className="space-y-1">
-          {allCategories.map((cat) => (
+          {allCategories.slice(0, 8).map((cat) => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-colors flex items-center justify-between ${
-                selectedCategory === cat ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-50'
+              className={`w-full text-left px-2.5 py-1.5 rounded-lg text-sm transition-colors flex items-center justify-between ${
+                selectedCategory === cat ? 'bg-blue-600 text-white font-medium' : 'text-gray-600 hover:bg-gray-50'
               }`}
             >
               {cat}
-              <span className="text-xs text-gray-400">
+              <span className={`text-xs ${selectedCategory === cat ? 'text-white/70' : 'text-gray-400'}`}>
                 ({getCategoryCount(cat)})
               </span>
             </button>
           ))}
         </div>
       </div>
-      <div>
+      <div className="border-t border-gray-100 pt-4">
+        <h3 className="font-semibold text-gray-900 text-sm mb-3">Sub Categories</h3>
+        <div className="flex flex-wrap gap-2">
+          {subCategories.map((subCat) => (
+            <button
+              key={subCat}
+              onClick={() => setSelectedSubCategory(selectedSubCategory === subCat ? null : subCat)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                selectedSubCategory === subCat
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600'
+              }`}
+            >
+              {subCat}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="border-t border-gray-100 pt-4">
+        <h3 className="font-semibold text-gray-900 text-sm mb-3">Brands</h3>
+        <div className="space-y-2">
+          {brands.map((brand) => {
+            const count = getBrandCount(brand);
+            return (
+              <label key={brand} className="flex items-center gap-2 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={selectedBrands.includes(brand)}
+                  onChange={() => toggleBrand(brand)}
+                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                />
+                <span className={`text-sm transition-colors flex-1 ${selectedBrands.includes(brand) ? 'text-blue-700 font-medium' : 'text-gray-600 group-hover:text-gray-800'}`}>
+                  {brand}
+                </span>
+                <span className={`text-xs ${selectedBrands.includes(brand) ? 'text-blue-600 font-medium' : 'text-gray-400'}`}>
+                  ({count})
+                </span>
+              </label>
+            );
+          })}
+        </div>
+      </div>
+      <div className="border-t border-gray-100 pt-4">
         <h3 className="font-semibold text-gray-900 text-sm mb-3">Price Range</h3>
         <input type="range" min={0} max={10000} value={priceRange[1]} onChange={(e) => setPriceRange([0, Number(e.target.value)])} className="w-full accent-blue-600" />
         <div className="flex justify-between text-sm text-gray-500 mt-1"><span>Br 0</span><span>Br {priceRange[1]}+</span></div>
-      </div>
-      <div>
-        <h3 className="font-semibold text-gray-900 text-sm mb-3">Brand</h3>
-        <div className="space-y-2">
-          {brands.map((brand) => (
-            <label key={brand} className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" className="w-4 h-4 accent-blue-600 rounded" />
-              <span className="text-sm text-gray-600">{brand}</span>
-            </label>
-          ))}
-          <button className="text-sm text-blue-600 hover:underline">+ Show More</button>
-        </div>
       </div>
     </div>
   );

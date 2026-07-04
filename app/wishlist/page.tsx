@@ -91,13 +91,13 @@ export default function WishlistPage() {
           ) : (
             <div className="flex gap-6">
               {/* Left Sidebar Filters */}
-              <aside className="hidden lg:block w-52 flex-shrink-0">
+              <aside className="hidden lg:block w-56 flex-shrink-0">
                 <div className="bg-white rounded-xl border border-gray-100 p-4 sticky top-20">
                   <h3 className="font-bold text-gray-900 mb-4">Filters</h3>
 
                   {/* Price Range */}
-                  <div className="mb-6">
-                    <h4 className="text-sm font-semibold text-gray-700 mb-3">Price Range</h4>
+                  <div className="mb-5 border-b border-gray-100 pb-4">
+                    <h4 className="text-sm font-semibold text-gray-900 mb-3">Price Range</h4>
                     <input
                       type="range"
                       min={0}
@@ -106,15 +106,15 @@ export default function WishlistPage() {
                       onChange={(e) => setPriceRange(Number(e.target.value))}
                       className="w-full accent-blue-600 mb-2"
                     />
-                    <div className="flex justify-between text-xs text-gray-500">
-                      <span>$0</span>
-                      <span>${priceRange}+</span>
+                    <div className="flex justify-between text-sm text-gray-500">
+                      <span>Br 0</span>
+                      <span>Br {priceRange}+</span>
                     </div>
                   </div>
 
                   {/* Categories */}
                   <div>
-                    <h4 className="text-sm font-semibold text-gray-700 mb-3">Categories</h4>
+                    <h4 className="text-sm font-semibold text-gray-900 mb-3">Categories</h4>
                     <div className="space-y-2">
                       {CATEGORIES.map((cat) => {
                         const count = items.filter(() => true).length;
@@ -132,7 +132,7 @@ export default function WishlistPage() {
                                 {cat}
                               </span>
                             </div>
-                            <span className="text-xs text-gray-400">({count})</span>
+                            <span className={`text-xs ${isChecked ? 'text-blue-600 font-medium' : 'text-gray-400'}`}>({count})</span>
                           </label>
                         );
                       })}

@@ -21,11 +21,14 @@ interface ProductsBrowserProps {
 
 const sortOptions = ['Newest', 'Price: Low to High', 'Price: High to Low', 'Most Popular', 'Top Rated'] as const;
 
-const brandOptions = ['All Brands', 'Apple', 'Samsung', 'Nike', 'Adidas', 'Sony', 'LG', 'Philips', 'Generic'] as const;
+const brandOptions = ['Apple', 'Samsung', 'Nike', 'Adidas', 'Sony', 'LG', 'Philips', 'Generic'] as const;
+
+const subCategories = ['Smartphones', 'Laptops', 'Tablets', 'Headphones', 'Cameras', 'Smartwatches', 'Accessories'] as const;
 
 export default function ProductsBrowser({ products, categories, initialCategoryId }: ProductsBrowserProps) {
   const [selectedCategory, setSelectedCategory] = useState(initialCategoryId || 'all');
-  const [selectedBrand, setSelectedBrand] = useState<typeof brandOptions[number]>('All Brands');
+  const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null);
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<typeof sortOptions[number]>('Newest');
   const [priceRange, setPriceRange] = useState(10000);
   const [gridView, setGridView] = useState(true);
@@ -34,6 +37,14 @@ export default function ProductsBrowser({ products, categories, initialCategoryI
 
   const allCategories = [{ id: 'all', name: 'All Categories', slug: '' }, ...categories];
 
+  const getBrandCount = (brand: string) => {
+    return products.filter((p) => p.brand?.toLowerCase().includes(brand.toLowerCase())).length;
+  };
+
+  const toggleBrand = (brand: string) => {
+    setSelectedBrands((prev) => prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]);
+  };
+
   const filtered = useMemo(() => {
     let list = [...products];
 
@@ -41,8 +52,8 @@ export default function ProductsBrowser({ products, categories, initialCategoryI
       list = list.filter((p) => p.category?.id === selectedCategory || p.warehouse?.name === selectedCategory);
     }
 
-    if (selectedBrand !== 'All Brands') {
-      list = list.filter((p) => p.brand === selectedBrand || (p.brand && p.brand.toLowerCase().includes(selectedBrand.toLowerCase())));
+    if (selectedBrands.length > 0) {
+      list = list.filter((p) => selectedBrands.some((brand) => p.brand?.toLowerCase().includes(brand.toLowerCase())));
     }
 
     list = list.filter((p) => {
@@ -75,43 +86,66 @@ export default function ProductsBrowser({ products, categories, initialCategoryI
     else if (sortBy === 'Most Popular') list.sort((a, b) => (b.review_count || 0) - (a.review_count || 0));
 
     return list;
-  }, [products, selectedCategory, selectedBrand, sortBy, priceRange, selectedRating]);
+  }, [products, selectedCategory, selectedBrands, sortBy, priceRange, selectedRating]);
 
   const FilterPanel = () => (
     <div className="space-y-5">
       <div>
         <h3 className="font-semibold text-gray-900 text-sm mb-3">Categories</h3>
         <div className="space-y-1">
-          {allCategories.slice(0, 10).map((cat) => (
+          {allCategories.slice(0, 8).map((cat) => (
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
               className={`w-full text-left px-2.5 py-1.5 rounded-lg text-sm transition-colors flex items-center gap-2 ${
-                selectedCategory === cat.id ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-50'
+                selectedCategory === cat.id ? 'bg-blue-600 text-white font-medium' : 'text-gray-600 hover:bg-gray-50'
               }`}
             >
-              <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${selectedCategory === cat.id ? 'bg-blue-600' : 'bg-gray-300'}`} />
               {cat.name}
             </button>
           ))}
         </div>
       </div>
       <div className="border-t border-gray-100 pt-4">
-        <h3 className="font-semibold text-gray-900 text-sm mb-3">Brand</h3>
-        <div className="space-y-2">
-          {brandOptions.filter(b => b !== 'All Brands').map((brand) => (
-            <label key={brand} className="flex items-center gap-2 cursor-pointer group">
-              <input
-                type="checkbox"
-                checked={selectedBrand === brand}
-                onChange={() => setSelectedBrand(selectedBrand === brand ? 'All Brands' : brand)}
-                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-              />
-              <span className={`text-sm transition-colors ${selectedBrand === brand ? 'text-blue-700 font-medium' : 'text-gray-600 group-hover:text-gray-800'}`}>
-                {brand}
-              </span>
-            </label>
+        <h3 className="font-semibold text-gray-900 text-sm mb-3">Sub Categories</h3>
+        <div className="flex flex-wrap gap-2">
+          {subCategories.map((subCat) => (
+            <button
+              key={subCat}
+              onClick={() => setSelectedSubCategory(selectedSubCategory === subCat ? null : subCat)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                selectedSubCategory === subCat
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600'
+              }`}
+            >
+              {subCat}
+            </button>
           ))}
+        </div>
+      </div>
+      <div className="border-t border-gray-100 pt-4">
+        <h3 className="font-semibold text-gray-900 text-sm mb-3">Brands</h3>
+        <div className="space-y-2">
+          {brandOptions.map((brand) => {
+            const count = getBrandCount(brand);
+            return (
+              <label key={brand} className="flex items-center gap-2 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={selectedBrands.includes(brand)}
+                  onChange={() => toggleBrand(brand)}
+                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                />
+                <span className={`text-sm transition-colors flex-1 ${selectedBrands.includes(brand) ? 'text-blue-700 font-medium' : 'text-gray-600 group-hover:text-gray-800'}`}>
+                  {brand}
+                </span>
+                <span className={`text-xs ${selectedBrands.includes(brand) ? 'text-blue-600 font-medium' : 'text-gray-400'}`}>
+                  ({count})
+                </span>
+              </label>
+            );
+          })}
         </div>
       </div>
       <div className="border-t border-gray-100 pt-4">
@@ -217,7 +251,7 @@ export default function ProductsBrowser({ products, categories, initialCategoryI
             <h3 className="text-lg font-medium text-gray-900 mb-2">No products found</h3>
             <p className="text-gray-500 mb-4">Try adjusting your filters.</p>
             <button
-              onClick={() => { setSelectedCategory('all'); setSelectedBrand('All Brands'); setPriceRange(10000); setSelectedRating(0); }}
+              onClick={() => { setSelectedCategory('all'); setSelectedBrands([]); setPriceRange(10000); setSelectedRating(0); setSelectedSubCategory(null); }}
               className="text-blue-600 hover:underline font-medium"
             >
               Clear all filters
