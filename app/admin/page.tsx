@@ -5,37 +5,52 @@ export const dynamic = 'force-dynamic';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
-  DollarSign, ShoppingCart, Users, Package, TrendingUp, TrendingDown,
-  ArrowUp, Clock, Check, X, ChevronRight, BarChart2, Star
+  DollarSign, ShoppingCart, Warehouse, Package, TrendingUp, TrendingDown,
+  ArrowUp, BarChart2, Bell, ChevronRight, Plus, Activity, CheckCircle,
+  Clock, XCircle, Users
 } from 'lucide-react';
-import { analyticsApi, ordersApi, productsApi, usersApi, warehousesApi } from '@/lib/api';
+import { analyticsApi, ordersApi, productsApi, warehousesApi } from '@/lib/api';
+import { useAuth } from '@/components/auth/auth-provider';
 
 const statusColors: Record<string, string> = {
-  pending:   'bg-amber-50 text-amber-700 ring-1 ring-amber-200',
-  confirmed: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200',
-  processing:'bg-orange-50 text-orange-700 ring-1 ring-orange-200',
-  shipped:   'bg-violet-50 text-violet-700 ring-1 ring-violet-200',
-  delivered: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
-  cancelled: 'bg-red-50 text-red-700 ring-1 ring-red-200',
+  pending:    'bg-amber-50 text-amber-700',
+  confirmed:  'bg-blue-50 text-blue-700',
+  processing: 'bg-orange-50 text-orange-700',
+  shipped:    'bg-violet-50 text-violet-700',
+  delivered:  'bg-emerald-50 text-emerald-700',
+  cancelled:  'bg-red-50 text-red-700',
 };
 
+const recentActivities = [
+  { icon: Warehouse, color: 'text-blue-600 bg-blue-50', text: 'New warehouse "TechMart" registered', time: '2 min ago' },
+  { icon: CheckCircle, color: 'text-emerald-600 bg-emerald-50', text: 'Product "Wireless Headphones" approved', time: '15 min ago' },
+  { icon: Package, color: 'text-violet-600 bg-violet-50', text: 'Order #ORD-10245 delivered successfully', time: '1 hr ago' },
+  { icon: XCircle, color: 'text-red-600 bg-red-50', text: 'Warehouse "GadgetHub" suspended', time: '2 hr ago' },
+  { icon: Bell, color: 'text-amber-600 bg-amber-50', text: 'New product submitted for approval', time: '3 hr ago' },
+];
+
 export default function AdminDashboard() {
+  const { user } = useAuth();
   const [analytics, setAnalytics] = useState<any>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [pendingProducts, setPendingProducts] = useState<any[]>([]);
+  const [warehouses, setWarehouses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [analyticsRes, ordersRes, productsRes] = await Promise.all([
+        const [analyticsRes, ordersRes, productsRes, warehousesRes] = await Promise.all([
           analyticsApi.get({}),
           ordersApi.list({ limit: 5 }),
           productsApi.list({ status: 'pending', limit: 5 }),
+          warehousesApi.list({}),
         ]);
         setAnalytics(analyticsRes);
         setOrders(Array.isArray(ordersRes) ? ordersRes.slice(0, 5) : (ordersRes as any).data?.slice(0, 5) || []);
         setPendingProducts(Array.isArray(productsRes) ? productsRes.slice(0, 5) : (productsRes as any).data?.slice(0, 5) || []);
+        const whList = Array.isArray(warehousesRes) ? warehousesRes : (warehousesRes as any).data || [];
+        setWarehouses(whList);
       } catch (e) {
         console.error(e);
       } finally {
@@ -47,126 +62,180 @@ export default function AdminDashboard() {
 
   if (loading) return (
     <div className="flex items-center justify-center py-20">
-      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
     </div>
   );
 
+  const activeWarehouses = warehouses.filter(w => w.status === 'active').length;
+  const totalProducts = analytics?.total_products || 12458;
+
   const stats = [
-    { label: 'Total Revenue', value: `${(analytics?.total_revenue || 254780).toLocaleString()} Br`, sub: '+18.6% vs Apr', isUp: true, icon: DollarSign, border: 'border-t-blue-500', iconBg: 'bg-blue-50', iconColor: 'text-blue-600' },
-    { label: 'Total Orders', value: (analytics?.orders?.total || 2450).toLocaleString(), sub: '+12.4% vs Apr', isUp: true, icon: ShoppingCart, border: 'border-t-emerald-500', iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600' },
-    { label: 'Total Customers', value: (analytics?.customers?.total || 5632).toLocaleString(), sub: '+14.0% vs Apr', isUp: true, icon: Users, border: 'border-t-violet-500', iconBg: 'bg-violet-50', iconColor: 'text-violet-600' },
-    { label: 'Conversion Rate', value: `${analytics?.conversion_rate || 3.75}%`, sub: '-8.3% vs Apr', isUp: false, icon: TrendingUp, border: 'border-t-amber-500', iconBg: 'bg-amber-50', iconColor: 'text-amber-600' },
+    {
+      label: 'Total Revenue',
+      value: `$${((analytics?.total_revenue || 256780.5) / 1000).toFixed(1)}K`,
+      sub: '+16.6% vs Apr',
+      isUp: true,
+      icon: DollarSign,
+      iconBg: 'bg-blue-50',
+      iconColor: 'text-blue-600',
+    },
+    {
+      label: 'Total Orders',
+      value: (analytics?.orders?.total || 2549).toLocaleString(),
+      sub: '+12.4% vs Apr',
+      isUp: true,
+      icon: ShoppingCart,
+      iconBg: 'bg-emerald-50',
+      iconColor: 'text-emerald-600',
+    },
+    {
+      label: 'Active Warehouses',
+      value: (activeWarehouses || 128).toLocaleString(),
+      sub: '+8.7% vs Apr',
+      isUp: true,
+      icon: Warehouse,
+      iconBg: 'bg-violet-50',
+      iconColor: 'text-violet-600',
+    },
+    {
+      label: 'Active Products',
+      value: (totalProducts).toLocaleString(),
+      sub: '+10.3% vs Apr',
+      isUp: true,
+      icon: Package,
+      iconBg: 'bg-amber-50',
+      iconColor: 'text-amber-600',
+    },
+    {
+      label: 'Pending Approvals',
+      value: (pendingProducts.length || 87).toLocaleString(),
+      sub: '-5.3% vs Apr',
+      isUp: false,
+      icon: Clock,
+      iconBg: 'bg-red-50',
+      iconColor: 'text-red-500',
+    },
   ];
 
-  const categories = analytics?.top_categories || [
-    { name: 'Electronics', revenue: 86430, percent: 33.9, bar: 85 },
-    { name: 'Fashion', revenue: 62310, percent: 24.4, bar: 61 },
-    { name: 'Home & Kitchen', revenue: 41760, percent: 16.4, bar: 41 },
-    { name: 'Beauty & Health', revenue: 28640, percent: 11.2, bar: 28 },
-    { name: 'Sports', revenue: 18330, percent: 7.1, bar: 18 },
+  const orderStatuses = [
+    { label: 'Delivered', count: analytics?.orders?.delivered || 1258, pct: 49.3, color: '#10b981' },
+    { label: 'Processing', count: analytics?.orders?.processing || 714, pct: 28.0, color: '#f59e0b' },
+    { label: 'Shipped', count: analytics?.orders?.shipped || 427, pct: 16.8, color: '#3b82f6' },
+    { label: 'Cancelled', count: analytics?.orders?.cancelled || 23, pct: 5.9, color: '#ef4444' },
   ];
 
   const weeklyRevenue = analytics?.weekly_revenue || [];
-  const maxRev = weeklyRevenue.length > 0 ? Math.max(...weeklyRevenue.map((r: any) => r.revenue || 0), 1) : 1;
+  const chartDates = ['May 1', 'May 8', 'May 15', 'May 22', 'May 29'];
+  const chartHeights = [60, 95, 75, 130, 110];
 
-  const orderStatuses = [
-    { label: 'Delivered', count: analytics?.orders?.delivered || 302, pct: 60.5, color: '#10b981' },
-    { label: 'Processing', count: analytics?.orders?.processing || 188, pct: 37.6, color: '#3b82f6' },
-    { label: 'Shipped', count: analytics?.orders?.shipped || 8, pct: 1.6, color: '#8b5cf6' },
-    { label: 'Cancelled', count: analytics?.orders?.cancelled || 9, pct: 1.8, color: '#ef4444' },
+  const systemHealth = [
+    { label: 'Products', value: analytics?.total_products || 66, href: '/admin/products' },
+    { label: 'Warehouses', value: activeWarehouses || 12, href: '/admin/warehouses' },
+    { label: 'Margin Updates', value: 8, href: '/admin/margins' },
+    { label: 'Promotions', value: analytics?.promotions || 11, href: '/admin/promotions' },
   ];
 
   return (
     <div className="space-y-5">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      {/* Welcome */}
+      <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Analytics Dashboard</h1>
-          <p className="text-sm text-gray-500 mt-0.5">May 1, 2024 – May 31, 2024</p>
+          <h1 className="text-xl font-bold text-gray-900">Welcome back, {user?.name?.split(' ')[0] || 'Super Admin'}!</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Here's what's happening with your platform today.</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Link href="/admin/products">
-            <button className="flex items-center gap-1.5 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm shadow-blue-600/20">
-              <Package className="w-4 h-4" />
-              Pending Approvals
-              {pendingProducts.length > 0 && <span className="bg-white/30 text-white text-xs px-1.5 py-0.5 rounded-full">{pendingProducts.length}</span>}
-            </button>
-          </Link>
-        </div>
+        <span className="text-sm text-gray-400 bg-white border border-gray-100 rounded-lg px-3 py-1.5 font-medium">
+          May 1 – May 31, 2024
+        </span>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         {stats.map(s => {
           const Icon = s.icon;
           return (
-            <div key={s.label} className={`bg-white rounded-2xl border border-gray-100 border-t-4 ${s.border} p-5 hover:shadow-md hover:-translate-y-0.5 transition-all`}>
+            <div key={s.label} className="bg-white rounded-xl border border-gray-100 p-4 hover:shadow-sm transition-shadow">
               <div className="flex items-center justify-between mb-3">
-                <div className={`w-10 h-10 ${s.iconBg} rounded-xl flex items-center justify-center`}>
-                  <Icon className={`w-5 h-5 ${s.iconColor}`} />
+                <div className={`w-8 h-8 ${s.iconBg} rounded-lg flex items-center justify-center`}>
+                  <Icon className={s.iconColor} style={{ width: 16, height: 16 }} />
                 </div>
-                <span className={`flex items-center gap-0.5 text-xs font-semibold ${s.isUp ? 'text-emerald-600' : 'text-red-500'}`}>
-                  {s.isUp ? <ArrowUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                <span className={`flex items-center gap-0.5 text-[11px] font-semibold ${s.isUp ? 'text-emerald-600' : 'text-red-500'}`}>
+                  {s.isUp ? <ArrowUp style={{ width: 11, height: 11 }} /> : <TrendingDown style={{ width: 11, height: 11 }} />}
                   {s.sub.split(' ')[0]}
                 </span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{s.value}</p>
-              <p className="text-xs font-semibold text-gray-500 mt-0.5">{s.label}</p>
-              <p className="text-xs text-gray-400 mt-0.5">{s.sub}</p>
+              <p className="text-xl font-bold text-gray-900">{s.value}</p>
+              <p className="text-[11px] font-medium text-gray-500 mt-0.5">{s.label}</p>
+              <p className="text-[10px] text-gray-400">{s.sub}</p>
             </div>
           );
         })}
       </div>
 
-      {/* Charts row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Revenue chart */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Revenue Overview */}
+        <div className="lg:col-span-2 bg-white rounded-xl border border-gray-100 p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="font-bold text-gray-900">Revenue Overview</h2>
+              <h2 className="text-sm font-bold text-gray-900">Revenue Overview</h2>
               <div className="flex items-center gap-4 mt-1">
-                <span className="flex items-center gap-1.5 text-xs text-gray-500"><span className="w-3 h-0.5 bg-blue-500 rounded block" />Revenue</span>
-                <span className="flex items-center gap-1.5 text-xs text-gray-500"><span className="w-3 h-0.5 bg-violet-400 rounded block" />Orders</span>
+                <span className="flex items-center gap-1.5 text-[11px] text-gray-400">
+                  <span className="w-3 h-0.5 bg-blue-500 rounded block" />Revenue
+                </span>
+                <span className="flex items-center gap-1.5 text-[11px] text-gray-400">
+                  <span className="w-3 h-0.5 bg-violet-400 rounded block" />Orders
+                </span>
               </div>
             </div>
-            <BarChart2 className="w-5 h-5 text-gray-300" />
+            <select className="text-[11px] border border-gray-200 rounded-lg px-2 py-1 text-gray-500 bg-white focus:outline-none">
+              <option>This Month</option>
+            </select>
           </div>
-          <div className="flex items-end gap-1.5 h-36">
-            {weeklyRevenue.length > 0 ? weeklyRevenue.map((item: any, i: number) => {
-              const h = Math.max(4, (item.revenue / maxRev) * 128);
-              return (
-                <div key={i} className="flex-1 flex flex-col items-center gap-1 group">
-                  <div className="w-full bg-gradient-to-t from-blue-600 to-blue-400 rounded-sm hover:from-blue-700 hover:to-blue-500 transition-all" style={{ height: h }} />
-                  <span className="text-[9px] text-gray-400">{item.date?.split(' ')[1] || i + 1}</span>
-                </div>
-              );
-            }) : ['May 1','May 8','May 15','May 22','May 29'].map((d, i) => {
-              const heights = [55, 80, 65, 110, 90];
-              return (
-                <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                  <div className="w-full bg-gradient-to-t from-blue-600 to-blue-400 rounded-sm" style={{ height: heights[i] }} />
-                  <span className="text-[9px] text-gray-400">{d}</span>
-                </div>
-              );
-            })}
+          <div className="relative h-32">
+            {/* Y axis labels */}
+            <div className="absolute left-0 inset-y-0 flex flex-col justify-between text-[9px] text-gray-400 pr-2">
+              <span>150k</span>
+              <span>100k</span>
+              <span>50k</span>
+              <span>0</span>
+            </div>
+            {/* Chart bars */}
+            <div className="ml-7 flex items-end gap-2 h-full border-b border-gray-100">
+              {(weeklyRevenue.length > 0 ? weeklyRevenue : chartDates).map((item: any, i: number) => {
+                const h = weeklyRevenue.length > 0
+                  ? Math.max(8, (item.revenue / Math.max(...weeklyRevenue.map((r: any) => r.revenue), 1)) * 120)
+                  : chartHeights[i];
+                return (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                    <div className="w-full bg-gradient-to-t from-blue-600 to-blue-400 rounded-t" style={{ height: h }} />
+                    <span className="text-[9px] text-gray-400">{typeof item === 'string' ? item : (item.date?.split(' ')[1] || chartDates[i])}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
 
-        {/* Orders by Status donut */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h2 className="font-bold text-gray-900 mb-4">Orders by Status</h2>
-          <div className="flex items-center justify-center mb-4">
-            <div className="relative w-28 h-28">
+        {/* Orders by Status */}
+        <div className="bg-white rounded-xl border border-gray-100 p-5">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-bold text-gray-900">Orders by Status</h2>
+            <select className="text-[11px] border border-gray-200 rounded-lg px-2 py-1 text-gray-500 bg-white focus:outline-none">
+              <option>This Month</option>
+            </select>
+          </div>
+          <div className="flex justify-center mb-4">
+            <div className="relative w-24 h-24">
               <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
-                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#f3f4f6" strokeWidth="4" />
-                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#10b981" strokeWidth="4" strokeDasharray="60.5 39.5" strokeDashoffset="0" />
-                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#3b82f6" strokeWidth="4" strokeDasharray="37.6 62.4" strokeDashoffset="-60.5" />
-                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#8b5cf6" strokeWidth="4" strokeDasharray="1.6 98.4" strokeDashoffset="-98.1" />
+                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#f3f4f6" strokeWidth="3.5" />
+                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#10b981" strokeWidth="3.5" strokeDasharray="49.3 50.7" strokeDashoffset="0" />
+                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#f59e0b" strokeWidth="3.5" strokeDasharray="28 72" strokeDashoffset="-49.3" />
+                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#3b82f6" strokeWidth="3.5" strokeDasharray="16.8 83.2" strokeDashoffset="-77.3" />
+                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#ef4444" strokeWidth="3.5" strokeDasharray="5.9 94.1" strokeDashoffset="-94.1" />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <p className="text-lg font-bold text-gray-900">{orders.length || 500}</p>
-                <p className="text-[10px] text-gray-400">Total</p>
+                <p className="text-base font-bold text-gray-900">{(analytics?.orders?.total || 2549).toLocaleString()}</p>
+                <p className="text-[9px] text-gray-400">Total</p>
               </div>
             </div>
           </div>
@@ -174,12 +243,12 @@ export default function AdminDashboard() {
             {orderStatuses.map((s, i) => (
               <div key={i} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: s.color }} />
-                  <span className="text-xs text-gray-600">{s.label}</span>
+                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: s.color }} />
+                  <span className="text-[12px] text-gray-600">{s.label}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-gray-900">{s.count}</span>
-                  <span className="text-[10px] text-gray-400">({s.pct}%)</span>
+                  <span className="text-[12px] font-semibold text-gray-900">{s.count.toLocaleString()}</span>
+                  <span className="text-[10px] text-gray-400 w-12 text-right">({s.pct}%)</span>
                 </div>
               </div>
             ))}
@@ -187,76 +256,102 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Bottom row: Top categories + Recent orders */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
-        {/* Top Selling Categories */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+      {/* Bottom panels */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Recent Activities */}
+        <div className="bg-white rounded-xl border border-gray-100 p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-bold text-gray-900">Top Selling Categories</h2>
+            <h2 className="text-sm font-bold text-gray-900">Recent Activities</h2>
+            <Link href="/admin/audit-logs" className="text-[11px] text-blue-600 hover:text-blue-700 font-medium">View All Activities</Link>
           </div>
           <div className="space-y-3">
-            {categories.slice(0, 5).map((cat: any, idx: number) => (
-              <div key={idx} className="flex items-center gap-3">
-                <span className="text-xs font-bold text-gray-400 w-4">{idx + 1}.</span>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-0.5">
-                    <span className="text-sm font-medium text-gray-900">{cat.name}</span>
-                    <span className="text-xs text-gray-500">{cat.percent || cat.pct || 0}%</span>
+            {recentActivities.map((a, i) => {
+              const Icon = a.icon;
+              return (
+                <div key={i} className="flex items-start gap-3">
+                  <div className={`w-7 h-7 ${a.color} rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                    <Icon style={{ width: 14, height: 14 }} />
                   </div>
-                  <div className="w-full bg-gray-100 rounded-full h-1.5">
-                    <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${cat.bar || cat.percent || 50}%` }} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[12px] text-gray-700 leading-snug">{a.text}</p>
+                    <p className="text-[10px] text-gray-400 mt-0.5">{a.time}</p>
                   </div>
                 </div>
-                <span className="text-xs font-semibold text-gray-700 w-20 text-right">{(cat.revenue || 0).toLocaleString()} Br</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
-        {/* Recent Orders */}
-        <div className="lg:col-span-3 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-            <h2 className="font-bold text-gray-900">Recent Orders</h2>
-            <Link href="/admin/orders" className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
-              View All <ChevronRight className="w-3.5 h-3.5" />
+        {/* Pending Approvals */}
+        <div className="bg-white rounded-xl border border-gray-100 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-bold text-gray-900">Pending Approvals</h2>
+            <span className="text-[11px] bg-amber-50 text-amber-600 font-semibold px-2 py-0.5 rounded-full">
+              {pendingProducts.length || 87}
+            </span>
+          </div>
+          <div className="space-y-2.5 mb-4">
+            {(pendingProducts.length > 0 ? pendingProducts : [
+              { name: 'Products', count: 66 },
+              { name: 'Warehouses', count: 12 },
+              { name: 'Margin Updates', count: 8 },
+              { name: 'Promotions', count: 11 },
+            ] as any[]).slice(0, 5).map((item: any, i: number) => (
+              <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-amber-400" />
+                  <span className="text-[12px] text-gray-700">{item.name || item.label}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[12px] font-semibold text-gray-900">{item.count || item.value}</span>
+                  <ChevronRight className="text-gray-300" style={{ width: 14, height: 14 }} />
+                </div>
+              </div>
+            ))}
+          </div>
+          <Link href="/admin/products">
+            <button className="w-full py-2 text-[12px] font-semibold text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors">
+              Go to Approval Queue
+            </button>
+          </Link>
+        </div>
+
+        {/* System Health */}
+        <div className="bg-white rounded-xl border border-gray-100 p-5">
+          <h2 className="text-sm font-bold text-gray-900 mb-4">System Health</h2>
+          <div className="space-y-2.5 mb-4">
+            {systemHealth.map((item, i) => (
+              <div key={i} className="flex items-center justify-between">
+                <span className="text-[12px] text-gray-600">{item.label}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[12px] font-semibold text-gray-900">{item.value}</span>
+                  <ChevronRight className="text-gray-300" style={{ width: 14, height: 14 }} />
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="space-y-2">
+            <Link href="/admin/warehouses">
+              <button className="w-full py-1.5 text-[12px] font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors flex items-center justify-center gap-1.5">
+                <Plus style={{ width: 13, height: 13 }} /> Add New Warehouse
+              </button>
+            </Link>
+            <Link href="/admin/categories">
+              <button className="w-full py-1.5 text-[12px] font-medium text-gray-700 border border-gray-200 hover:bg-gray-50 rounded-lg transition-colors flex items-center justify-center gap-1.5">
+                <Plus style={{ width: 13, height: 13 }} /> Add New Category
+              </button>
+            </Link>
+            <Link href="/admin/margins">
+              <button className="w-full py-1.5 text-[12px] font-medium text-gray-700 border border-gray-200 hover:bg-gray-50 rounded-lg transition-colors flex items-center justify-center gap-1.5">
+                <TrendingUp style={{ width: 13, height: 13 }} /> Manage Margins
+              </button>
+            </Link>
+            <Link href="/admin/promotions">
+              <button className="w-full py-1.5 text-[12px] font-medium text-gray-700 border border-gray-200 hover:bg-gray-50 rounded-lg transition-colors flex items-center justify-center gap-1.5">
+                <Activity style={{ width: 13, height: 13 }} /> Create Promotion
+              </button>
             </Link>
           </div>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-50 bg-gray-50/40">
-                <th className="px-5 py-2.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Order ID</th>
-                <th className="px-5 py-2.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Customer</th>
-                <th className="px-5 py-2.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Amount</th>
-                <th className="px-5 py-2.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</th>
-                <th className="px-5 py-2.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Date</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {orders.length > 0 ? orders.map((order: any) => (
-                <tr key={order.id} className="hover:bg-gray-50/60 transition-colors">
-                  <td className="px-5 py-3 font-bold text-gray-900">#{order.id?.slice(-7).toUpperCase()}</td>
-                  <td className="px-5 py-3 text-gray-700">{order.customer_name}</td>
-                  <td className="px-5 py-3 font-semibold text-gray-900">{Number(order.total).toLocaleString()} Br</td>
-                  <td className="px-5 py-3"><span className={`text-xs font-semibold px-2.5 py-1 rounded-full capitalize ${statusColors[order.status] || 'bg-gray-100 text-gray-600'}`}>{order.status}</span></td>
-                  <td className="px-5 py-3 text-gray-500 text-xs">{new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
-                </tr>
-              )) : [
-                { id: '#MB100251', name: 'John Doe', amount: 125, status: 'delivered', date: 'May 31, 2024' },
-                { id: '#MB100250', name: 'Sarah Johnson', amount: 88.5, status: 'processing', date: 'May 31, 2024' },
-                { id: '#MB100248', name: 'Michael Brown', amount: 245.75, status: 'shipped', date: 'May 30, 2024' },
-                { id: '#MB100247', name: 'Emily Davis', amount: 65, status: 'delivered', date: 'May 30, 2024' },
-                { id: '#MB100247', name: 'David Wilson', amount: 150.3, status: 'processing', date: 'May 29, 2024' },
-              ].map((order, i) => (
-                <tr key={i} className="hover:bg-gray-50/60 transition-colors">
-                  <td className="px-5 py-3 font-bold text-gray-900">{order.id}</td>
-                  <td className="px-5 py-3 text-gray-700">{order.name}</td>
-                  <td className="px-5 py-3 font-semibold text-gray-900">{order.amount.toLocaleString()} Br</td>
-                  <td className="px-5 py-3"><span className={`text-xs font-semibold px-2.5 py-1 rounded-full capitalize ${statusColors[order.status] || 'bg-gray-100 text-gray-600'}`}>{order.status}</span></td>
-                  <td className="px-5 py-3 text-gray-500 text-xs">{order.date}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         </div>
       </div>
     </div>
