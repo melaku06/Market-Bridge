@@ -36,9 +36,10 @@ export async function POST(
       actor_id: 'admin',
       actor_name: 'Admin User',
       actor_role: 'admin',
-      action: 'PRODUCT_REJECTED',
+      action: 'reject',
       entity_type: 'product',
       entity_id: id,
+      description: `Product "${product.name}" rejected${body.reason ? `: ${body.reason}` : ''}`,
       before_state: JSON.stringify({ status: 'pending' }),
       after_state: JSON.stringify({ status: 'rejected', reason: body.reason }),
     });

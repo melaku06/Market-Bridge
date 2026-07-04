@@ -7,10 +7,12 @@ import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
 import { useWishlistStore, useCartStore } from '@/stores';
 import { formatPrice } from '@/lib/price';
+import { useAuth } from '@/components/auth/auth-provider';
 
 const CATEGORIES = ['Electronics', 'Fashion', 'Home & Living', 'Beauty', 'Sports'];
 
 export default function WishlistPage() {
+  const { user } = useAuth();
   const { items, isLoading, fetchWishlist, removeFromWishlist } = useWishlistStore();
   const { addItem } = useCartStore();
 
@@ -18,11 +20,15 @@ export default function WishlistPage() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   useEffect(() => {
-    fetchWishlist();
-  }, [fetchWishlist]);
+    if (user?.id) {
+      fetchWishlist(user.id);
+    }
+  }, [fetchWishlist, user?.id]);
 
   const removeItem = (productId: string) => {
-    removeFromWishlist(productId);
+    if (user?.id) {
+      removeFromWishlist(user.id, productId);
+    }
   };
 
   const moveAllToCart = () => {

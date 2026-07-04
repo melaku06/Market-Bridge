@@ -223,6 +223,7 @@ export interface AuditLog {
   action: string;
   entity_type: string;
   entity_id: string;
+  description?: string;
   before?: Record<string, unknown>;
   after?: Record<string, unknown>;
   ip_address?: string;

@@ -524,6 +524,7 @@ model AuditLog {
   action        String
   entity_type   String
   entity_id     String
+  description   String?
   before_state  String?
   after_state   String?
   ip_address    String?

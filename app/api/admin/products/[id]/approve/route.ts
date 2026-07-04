@@ -29,9 +29,10 @@ export async function POST(
       actor_id: 'admin',
       actor_name: 'Admin User',
       actor_role: 'admin',
-      action: 'PRODUCT_APPROVED',
+      action: 'approve',
       entity_type: 'product',
       entity_id: id,
+      description: `Product "${product.name}" approved`,
       before_state: JSON.stringify({ status: 'pending' }),
       after_state: JSON.stringify({ status: 'published' }),
     });

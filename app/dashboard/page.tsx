@@ -23,20 +23,29 @@ const statusLabel: Record<string, string> = {
 };
 
 export default function DashboardPage() {
-  const customerId = 'usr-001';
-
   const { user } = useAuth();
   const { orders, fetchOrders, isLoading: ordersLoading } = useOrdersStore();
   const { products, fetchProducts } = useProductsStore();
   const { fetchWishlist, totalItems: wishlistTotal } = useWishlistStore();
   const { fetchNotifications } = useNotificationsStore();
 
+  const customerId = user?.id;
+
   useEffect(() => {
+    if (!customerId) return;
     fetchOrders({ customer_id: customerId });
     fetchProducts({ status: 'published', limit: 10 });
     fetchWishlist(customerId);
     fetchNotifications({ user_id: customerId });
   }, [fetchOrders, fetchProducts, fetchWishlist, fetchNotifications, customerId]);
+
+  if (!user || !customerId) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
+      </div>
+    );
+  }
 
   if (ordersLoading) {
     return (

@@ -17,6 +17,7 @@ interface WarehouseState {
   fetchWarehouseProducts: (warehouseId: string) => Promise<void>;
   fetchWarehouseOrders: (warehouseId: string) => Promise<void>;
   fetchWarehouseInventory: (warehouseId: string) => Promise<void>;
+  fetchInventory: (params?: { warehouse_id?: string; product_id?: string; status?: string }) => Promise<void>;
   clearError: () => void;
 }
 
@@ -88,6 +89,17 @@ export const useWarehouseStore = create<WarehouseState>()((set) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await inventoryApi.list({ warehouse_id: warehouseId });
+      const inventoryList = Array.isArray(response) ? response : response.data || [];
+      set({ inventory: inventoryList, isLoading: false });
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Failed to fetch inventory', isLoading: false });
+    }
+  },
+
+  fetchInventory: async (params) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await inventoryApi.list(params);
       const inventoryList = Array.isArray(response) ? response : response.data || [];
       set({ inventory: inventoryList, isLoading: false });
     } catch (error) {
