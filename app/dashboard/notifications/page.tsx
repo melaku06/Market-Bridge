@@ -2,19 +2,19 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Bell, Truck, Tag, CheckCircle, TrendingDown, User, ChevronRight, Package, AlertCircle, Trash2, Loader2, Settings2 } from 'lucide-react';
+import { Bell, Truck, Tag, CheckCircle, Package, AlertCircle, Trash2, Settings2, ChevronRight } from 'lucide-react';
 import { useNotificationsStore } from '@/stores/notifications-store';
 import { useAuth } from '@/components/auth/auth-provider';
 
 const tabs = ['All', 'Orders', 'Promotions', 'Account', 'System', 'Inventory'] as const;
 
 const typeIconMap: Record<string, React.ReactNode> = {
-  order: <Truck className="w-4 h-4" />,
-  product: <Package className="w-4 h-4" />,
-  system: <AlertCircle className="w-4 h-4" />,
-  promotion: <Tag className="w-4 h-4" />,
-  account: <User className="w-4 h-4" />,
-  inventory: <Package className="w-4 h-4" />,
+  order: <Truck style={{ width: 14, height: 14 }} />,
+  product: <Package style={{ width: 14, height: 14 }} />,
+  system: <AlertCircle style={{ width: 14, height: 14 }} />,
+  promotion: <Tag style={{ width: 14, height: 14 }} />,
+  account: <Package style={{ width: 14, height: 14 }} />,
+  inventory: <Package style={{ width: 14, height: 14 }} />,
 };
 
 const typeColorMap: Record<string, string> = {
@@ -76,7 +76,7 @@ export default function NotificationsPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
       </div>
     );
   }
@@ -85,32 +85,31 @@ export default function NotificationsPage() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <div className="flex items-center gap-2 text-sm text-gray-400 mb-1">
-          <Link href="/dashboard" className="hover:text-blue-600 transition-colors">Dashboard</Link>
-          <ChevronRight className="w-3.5 h-3.5" />
-          <span className="text-gray-700 font-medium">Notifications</span>
+      {/* Breadcrumb + Header */}
+      <div className="flex items-start justify-between">
+        <div>
+          <div className="flex items-center gap-1.5 text-[12px] text-gray-400 mb-1">
+            <Link href="/dashboard" className="hover:text-blue-600 transition-colors">Dashboard</Link>
+            <ChevronRight style={{ width: 12, height: 12 }} />
+            <span className="text-gray-700 font-medium">Notifications</span>
+          </div>
+          <h1 className="text-lg font-bold text-gray-900">Notifications</h1>
+          <p className="text-[13px] text-gray-500 mt-0.5">Stay updated with your latest activities.</p>
         </div>
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Notifications</h1>
-            <p className="text-sm text-gray-500 mt-1">Stay updated with your latest activities.</p>
-          </div>
-          <div className="flex items-center gap-2">
-            {unreadCount > 0 && (
-              <button onClick={handleMarkAllRead} className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1.5 px-3 py-2 rounded-lg hover:bg-blue-50 transition-colors">
-                <CheckCircle className="w-4 h-4" />
-                Mark all as read
-              </button>
-            )}
-            <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-              <Settings2 className="w-4 h-4" />
+        <div className="flex items-center gap-2">
+          {unreadCount > 0 && (
+            <button onClick={handleMarkAllRead} className="text-[12px] text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1.5 px-3 py-2 rounded-lg hover:bg-blue-50 transition-colors">
+              <CheckCircle style={{ width: 14, height: 14 }} />
+              Mark all as read
             </button>
-          </div>
+          )}
+          <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+            <Settings2 style={{ width: 14, height: 14 }} />
+          </button>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
         {/* Tabs */}
         <div className="flex border-b border-gray-100 overflow-x-auto bg-gray-50/50">
           {tabs.map((tab) => {
@@ -119,7 +118,7 @@ export default function NotificationsPage() {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-4 py-3.5 text-sm font-medium border-b-2 transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                className={`px-4 py-3 text-[13px] font-medium border-b-2 transition-all whitespace-nowrap flex items-center gap-1.5 ${
                   activeTab === tab
                     ? 'border-blue-600 text-blue-600 bg-white'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-white/60'
@@ -142,20 +141,20 @@ export default function NotificationsPage() {
         <div className="divide-y divide-gray-50">
           {filtered.length === 0 ? (
             <div className="text-center py-16">
-              <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Bell className="w-8 h-8 text-gray-300" />
+              <div className="w-14 h-14 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <Bell style={{ width: 24, height: 24 }} className="text-gray-300" />
               </div>
-              <p className="text-gray-500 text-sm font-medium">No notifications yet</p>
-              <p className="text-xs text-gray-400 mt-1">You'll see updates here when they arrive.</p>
+              <p className="text-sm font-medium text-gray-900">No notifications yet</p>
+              <p className="text-[12px] text-gray-500 mt-1">You'll see updates here when they arrive.</p>
             </div>
           ) : (
             filtered.map((notif) => (
               <div
                 key={notif.id}
-                className={`flex items-start gap-4 p-5 hover:bg-gray-50/50 transition-colors group ${!notif.is_read ? 'bg-blue-50/30' : ''}`}
+                className={`flex items-start gap-3 px-5 py-3.5 hover:bg-gray-50/50 transition-colors group ${!notif.is_read ? 'bg-blue-50/30' : ''}`}
               >
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${typeColorMap[notif.type] || 'bg-gray-100 text-gray-500'}`}>
-                  {typeIconMap[notif.type] || <Bell className="w-4 h-4" />}
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${typeColorMap[notif.type] || 'bg-gray-100 text-gray-500'}`}>
+                  {typeIconMap[notif.type] || <Bell style={{ width: 14, height: 14 }} />}
                 </div>
                 <div
                   className="flex-1 min-w-0 cursor-pointer"
@@ -166,13 +165,13 @@ export default function NotificationsPage() {
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <p className={`text-sm ${!notif.is_read ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'}`}>
+                      <p className={`text-[13px] ${!notif.is_read ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'}`}>
                         {notif.title}
                       </p>
-                      <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{notif.message}</p>
+                      <p className="text-[12px] text-gray-500 mt-0.5 leading-relaxed">{notif.message}</p>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <span className="text-xs text-gray-400 whitespace-nowrap">{timeAgo(notif.created_at)}</span>
+                      <span className="text-[11px] text-gray-400 whitespace-nowrap">{timeAgo(notif.created_at)}</span>
                       {!notif.is_read && (
                         <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0" />
                       )}
@@ -183,7 +182,7 @@ export default function NotificationsPage() {
                   onClick={() => handleDelete(notif.id)}
                   className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 style={{ width: 14, height: 14 }} />
                 </button>
               </div>
             ))

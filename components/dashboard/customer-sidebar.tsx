@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutDashboard, Package, Heart, MapPin, Bell, Settings, Shield, Eye, Star, LogOut, Truck, ShoppingBag,
+  LayoutDashboard, Package, Heart, MapPin, Bell, Settings, Shield, Eye, Star, LogOut, Truck, ShoppingBag, HelpCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/components/auth/auth-provider';
@@ -32,43 +32,19 @@ export default function CustomerSidebar() {
 
   return (
     <aside className="w-56 flex-shrink-0">
-      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden sticky top-20">
+      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden sticky top-20 flex flex-col">
         {/* Logo */}
         <div className="px-4 py-3.5 border-b border-gray-100">
           <Link href="/" className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%)' }}>
               <ShoppingBag className="text-white" style={{ width: 18, height: 18 }} />
             </div>
-            <div>
-              <p className="text-sm font-bold text-gray-900 leading-tight">MarketBridge</p>
-              <p className="text-[10px] text-gray-400 leading-tight">My Account</p>
-            </div>
+            <span className="text-sm font-bold text-gray-900">MarketBridge</span>
           </Link>
         </div>
 
-        {/* Profile */}
-        <div className="px-4 py-3 border-b border-gray-100">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-blue-100">
-              <img
-                src={user?.avatar_url || "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=100"}
-                alt={user?.name || "User"}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[13px] font-semibold text-gray-900 truncate leading-tight">
-                {user?.name?.split(' ')[0] || 'User'}
-              </p>
-              <span className="inline-block text-[10px] px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full font-medium leading-tight">
-                Customer
-              </span>
-            </div>
-          </div>
-        </div>
-
         {/* Nav */}
-        <nav className="p-2 space-y-0.5">
+        <nav className="p-2 space-y-0.5 flex-1">
           {navItems.map((item) => {
             const active = item.exact
               ? pathname === item.href
@@ -83,7 +59,7 @@ export default function CustomerSidebar() {
                 )}>
                   <item.icon
                     className={cn('flex-shrink-0', active ? 'text-white' : 'text-gray-400')}
-                    style={{ width: 16, height: 16 }}
+                    style={{ width: 15, height: 15 }}
                   />
                   <span className="flex-1">{item.label}</span>
                   {item.badge && (
@@ -98,16 +74,28 @@ export default function CustomerSidebar() {
               </Link>
             );
           })}
-        </nav>
 
-        {/* Logout */}
-        <div className="px-2 pb-2 border-t border-gray-100 mt-1 pt-1">
+          {/* Logout */}
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium text-gray-500 hover:bg-red-50 hover:text-red-600 transition-all w-full"
+            className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium text-gray-500 hover:bg-red-50 hover:text-red-600 transition-all w-full mt-1"
           >
-            <LogOut className="text-gray-400 flex-shrink-0" style={{ width: 16, height: 16 }} />
+            <LogOut className="text-gray-400 flex-shrink-0" style={{ width: 15, height: 15 }} />
             <span>Logout</span>
+          </button>
+        </nav>
+
+        {/* Need Help card */}
+        <div className="mx-2 mb-2 p-3 rounded-xl bg-blue-50 border border-blue-100">
+          <div className="flex items-center gap-2 mb-1.5">
+            <div className="w-6 h-6 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
+              <HelpCircle className="text-white" style={{ width: 12, height: 12 }} />
+            </div>
+            <p className="text-[12px] font-bold text-gray-900">Need Help?</p>
+          </div>
+          <p className="text-[11px] text-gray-500 mb-2 leading-relaxed">Our support team is here to help you.</p>
+          <button className="w-full py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold rounded-lg transition-colors">
+            Contact Support
           </button>
         </div>
       </div>
