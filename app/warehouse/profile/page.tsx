@@ -99,21 +99,21 @@ export default function WarehouseProfile() {
               </span>
               <span className="inline-flex items-center gap-1 text-xs font-medium text-gray-600">
                 <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                {warehouse.rating.toFixed(1)}
+                {Number(warehouse.rating).toFixed(1)}
               </span>
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4 text-center">
             <div className="px-3">
-              <p className="text-2xl font-bold text-gray-900">{warehouse.total_products}</p>
+              <p className="text-2xl font-bold text-gray-900">{Number(warehouse.total_products)}</p>
               <p className="text-xs text-gray-500 mt-0.5">Products</p>
             </div>
             <div className="px-3 border-x border-gray-100">
-              <p className="text-2xl font-bold text-gray-900">{warehouse.total_orders}</p>
+              <p className="text-2xl font-bold text-gray-900">{Number(warehouse.total_orders)}</p>
               <p className="text-xs text-gray-500 mt-0.5">Orders</p>
             </div>
             <div className="px-3">
-              <p className="text-2xl font-bold text-gray-900">{warehouse.performance_score}%</p>
+              <p className="text-2xl font-bold text-gray-900">{Number(warehouse.performance_score)}%</p>
               <p className="text-xs text-gray-500 mt-0.5">Score</p>
             </div>
           </div>

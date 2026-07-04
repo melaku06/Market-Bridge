@@ -60,15 +60,15 @@ export default function WarehouseDashboard() {
   const recentOrders = orders.slice(0, 5);
   const lowStockItems = inventory.filter(i => i.status === 'low_stock');
   const outOfStockItems = inventory.filter(i => i.status === 'out_of_stock');
-  const totalRevenue = analytics?.revenue?.month || warehouse.total_sales;
+  const totalRevenue = analytics?.revenue?.month || Number(warehouse.total_sales);
   const todayOrders = analytics?.orders?.active || 0;
   const weeklyRevenue: Array<{ date: string; revenue: number }> = analytics?.weekly_revenue || [];
 
   const statsCards = [
     {
       label: 'Total Products',
-      value: warehouse.total_products,
-      sub: `+${Math.floor(warehouse.total_products * 0.08)} this month`,
+      value: Number(warehouse.total_products),
+      sub: `+${Math.floor(Number(warehouse.total_products) * 0.08)} this month`,
       icon: Package,
       iconBg: 'bg-blue-50',
       iconColor: 'text-blue-600',
@@ -76,7 +76,7 @@ export default function WarehouseDashboard() {
     },
     {
       label: 'Total Orders',
-      value: warehouse.total_orders,
+      value: Number(warehouse.total_orders),
       sub: `+${todayOrders} today`,
       icon: ShoppingCart,
       iconBg: 'bg-emerald-50',
@@ -85,7 +85,7 @@ export default function WarehouseDashboard() {
     },
     {
       label: 'Total Revenue',
-      value: `${warehouse.total_sales.toLocaleString()} Br`,
+      value: `${Number(warehouse.total_sales).toLocaleString()} Br`,
       sub: '+8.2% this month',
       icon: DollarSign,
       iconBg: 'bg-violet-50',
@@ -94,7 +94,7 @@ export default function WarehouseDashboard() {
     },
     {
       label: 'Performance Score',
-      value: `${warehouse.performance_score}%`,
+      value: `${Number(warehouse.performance_score)}%`,
       sub: 'Excellent',
       icon: TrendingUp,
       iconBg: 'bg-amber-50',
@@ -273,7 +273,7 @@ export default function WarehouseDashboard() {
             <div className="space-y-2.5">
               {[
                 { label: 'Status', value: <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${warehouse.status === 'active' ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' : 'bg-amber-50 text-amber-700'}`}>{warehouse.status}</span> },
-                { label: 'Rating', value: <span className="flex items-center gap-1 text-sm font-semibold text-gray-900">{warehouse.rating.toFixed(1)} <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" /></span> },
+                { label: 'Rating', value: <span className="flex items-center gap-1 text-sm font-semibold text-gray-900">{Number(warehouse.rating).toFixed(1)} <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" /></span> },
                 { label: 'Location', value: <span className="text-sm text-gray-700">{warehouse.city}</span> },
                 { label: 'Member Since', value: <span className="text-sm text-gray-700">{new Date(warehouse.member_since).toLocaleDateString()}</span> },
               ].map((item) => (

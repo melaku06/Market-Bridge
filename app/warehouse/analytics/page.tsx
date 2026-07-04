@@ -51,10 +51,10 @@ export default function WarehouseAnalytics() {
   const maxRevenue = weeklyRevenue.length > 0 ? Math.max(...weeklyRevenue.map(r => r.revenue), 1) : 1;
 
   const stats = [
-    { name: 'Total Revenue', value: `${warehouse.total_sales.toLocaleString()} Br`, change: '+12.5%', icon: DollarSign, iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600', borderColor: 'border-t-emerald-500', isUp: true },
-    { name: 'Total Orders', value: warehouse.total_orders.toLocaleString(), change: '+8.2%', icon: ShoppingCart, iconBg: 'bg-blue-50', iconColor: 'text-blue-600', borderColor: 'border-t-blue-500', isUp: true },
-    { name: 'Total Products', value: warehouse.total_products.toLocaleString(), change: '+3', icon: Package, iconBg: 'bg-violet-50', iconColor: 'text-violet-600', borderColor: 'border-t-violet-500', isUp: true },
-    { name: 'Rating', value: warehouse.rating.toFixed(1), change: '+0.2', icon: Star, iconBg: 'bg-amber-50', iconColor: 'text-amber-600', borderColor: 'border-t-amber-500', isUp: true },
+    { name: 'Total Revenue', value: `${Number(warehouse.total_sales).toLocaleString()} Br`, change: '+12.5%', icon: DollarSign, iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600', borderColor: 'border-t-emerald-500', isUp: true },
+    { name: 'Total Orders', value: Number(warehouse.total_orders).toLocaleString(), change: '+8.2%', icon: ShoppingCart, iconBg: 'bg-blue-50', iconColor: 'text-blue-600', borderColor: 'border-t-blue-500', isUp: true },
+    { name: 'Total Products', value: Number(warehouse.total_products).toLocaleString(), change: '+3', icon: Package, iconBg: 'bg-violet-50', iconColor: 'text-violet-600', borderColor: 'border-t-violet-500', isUp: true },
+    { name: 'Rating', value: Number(warehouse.rating).toFixed(1), change: '+0.2', icon: Star, iconBg: 'bg-amber-50', iconColor: 'text-amber-600', borderColor: 'border-t-amber-500', isUp: true },
   ];
 
   const lowStockItems = inventory.filter(i => i.status === 'low_stock');
@@ -214,14 +214,14 @@ export default function WarehouseAnalytics() {
             <div className="relative w-32 h-32 mb-4">
               <svg className="w-full h-full transform -rotate-90">
                 <circle cx="64" cy="64" r="56" stroke="#f3f4f6" strokeWidth="12" fill="none" />
-                <circle cx="64" cy="64" r="56" stroke="#2563eb" strokeWidth="12" fill="none" strokeLinecap="round" strokeDasharray={`${warehouse.performance_score * 3.52} 350`} />
+                <circle cx="64" cy="64" r="56" stroke="#2563eb" strokeWidth="12" fill="none" strokeLinecap="round" strokeDasharray={`${Number(warehouse.performance_score) * 3.52} 350`} />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-3xl font-bold text-gray-900">{warehouse.performance_score}%</span>
+                <span className="text-3xl font-bold text-gray-900">{Number(warehouse.performance_score)}%</span>
               </div>
             </div>
             <p className="text-sm text-gray-500 text-center mb-4">
-              {warehouse.performance_score >= 90 ? 'Excellent performance!' : warehouse.performance_score >= 80 ? 'Good performance' : 'Needs improvement'}
+              {Number(warehouse.performance_score) >= 90 ? 'Excellent performance!' : Number(warehouse.performance_score) >= 80 ? 'Good performance' : 'Needs improvement'}
             </p>
             <div className="w-full space-y-2">
               <div className="flex items-center justify-between text-sm">
@@ -231,7 +231,7 @@ export default function WarehouseAnalytics() {
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-500">Customer Rating</span>
                 <span className="font-semibold text-gray-900 flex items-center gap-1">
-                  {warehouse.rating.toFixed(1)} <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                  {Number(warehouse.rating).toFixed(1)} <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">
