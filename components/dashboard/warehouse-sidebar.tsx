@@ -16,6 +16,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { SidebarIcon } from '@/components/ui/market-bridge-logo';
 
 const navigation = [
   { name: 'Dashboard', href: '/warehouse', icon: LayoutDashboard },
@@ -29,27 +30,6 @@ const navigation = [
   { name: 'Settings', href: '/warehouse/settings', icon: Settings },
 ];
 
-function MarketBridgeLogo() {
-  return (
-    <div className="flex items-center gap-3">
-      <div className="relative">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-          <svg viewBox="0 0 24 24" className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z" />
-          </svg>
-        </div>
-        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 rounded-full border-2 border-[#0F172A]"></div>
-      </div>
-      <div>
-        <span className="text-xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
-          MarketBridge
-        </span>
-        <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Warehouse Portal</p>
-      </div>
-    </div>
-  );
-}
-
 export default function WarehouseSidebar() {
   const pathname = usePathname();
 
@@ -57,8 +37,14 @@ export default function WarehouseSidebar() {
     <aside className="w-64 min-h-screen bg-[#0F172A] text-white flex flex-col">
       {/* Logo */}
       <div className="p-5 border-b border-slate-800/50">
-        <Link href="/">
-          <MarketBridgeLogo />
+        <Link href="/" className="flex items-center gap-3">
+          <SidebarIcon />
+          <div>
+            <span className="text-xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent block">
+              MarketBridge
+            </span>
+            <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Warehouse Portal</p>
+          </div>
         </Link>
       </div>
 

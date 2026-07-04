@@ -12,12 +12,12 @@ import {
   ChevronDown,
   Bell,
   Globe,
-  ShoppingBag,
   LogOut,
   Settings,
   Package,
   Zap,
 } from 'lucide-react';
+import { SidebarIcon } from '@/components/ui/market-bridge-logo';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/components/auth/auth-provider';
 import { useCartStore } from '@/stores/cart-store';
@@ -65,7 +65,7 @@ export default function Header() {
   return (
     <>
       {/* Announcement Bar */}
-      <div className="bg-blue-600 text-white text-xs py-2 text-center hidden sm:block">
+      <div className="bg-indigo-600 text-white text-xs py-2 text-center hidden sm:block">
         <div className="max-w-7xl mx-auto px-4 flex items-center justify-center gap-2">
           <Zap className="w-3.5 h-3.5 text-yellow-300" />
           <span>Free shipping on orders over 500 Br!</span>
@@ -80,16 +80,14 @@ export default function Header() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center h-16 gap-4">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <ShoppingBag className="w-5 h-5 text-white" />
-              </div>
-              <span className="font-bold text-gray-900 text-lg hidden sm:block">MarketBridge</span>
+            <Link href="/" className="flex items-center gap-2.5 flex-shrink-0">
+              <SidebarIcon />
+              <span className="font-bold text-gray-900 text-lg hidden sm:block tracking-tight">MarketBridge</span>
             </Link>
 
             {/* Categories Dropdown */}
             <div className="hidden md:block relative group">
-              <button className="flex items-center gap-1 text-sm text-gray-600 hover:text-blue-600 font-medium px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors">
+              <button className="flex items-center gap-1 text-sm text-gray-600 hover:text-indigo-600 font-medium px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors">
                 Categories
                 <ChevronDown className="w-4 h-4 transition-transform group-hover:rotate-180 duration-200" />
               </button>
@@ -102,7 +100,7 @@ export default function Header() {
                       <Link
                         key={cat.id}
                         href={`/categories/${cat.slug}`}
-                        className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-blue-50 hover:text-blue-600 text-sm text-gray-700 transition-colors"
+                        className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 text-sm text-gray-700 transition-colors"
                       >
                         <span className="text-base">📦</span>
                         <span>{cat.name}</span>
@@ -110,7 +108,7 @@ export default function Header() {
                     ))
                   )}
                   <div className="border-t border-gray-100 mt-1 pt-1">
-                    <Link href="/products" className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-blue-50 text-sm text-blue-600 font-medium transition-colors">
+                    <Link href="/products" className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-indigo-50 text-sm text-blue-600 font-medium transition-colors">
                       View all categories
                     </Link>
                   </div>
@@ -186,10 +184,10 @@ export default function Header() {
                         </span>
                       </div>
 
-                      <Link href={getDashboardLink()} className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-blue-50 hover:text-blue-600 text-sm text-gray-700 transition-colors">
+                      <Link href={getDashboardLink()} className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 text-sm text-gray-700 transition-colors">
                         <Package className="w-4 h-4" /> Dashboard
                       </Link>
-                      <Link href={`${getDashboardLink()}/profile`} className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-blue-50 hover:text-blue-600 text-sm text-gray-700 transition-colors">
+                      <Link href={`${getDashboardLink()}/profile`} className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 text-sm text-gray-700 transition-colors">
                         <Settings className="w-4 h-4" /> Settings
                       </Link>
                       <button onClick={handleLogout} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-red-50 hover:text-red-600 text-sm text-gray-700 transition-colors">
@@ -200,7 +198,7 @@ export default function Header() {
                 </div>
               ) : (
                 <Link href="/login">
-                  <button className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-gray-600 hover:text-blue-600 ml-1">
+                  <button className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-gray-600 hover:text-indigo-600 ml-1">
                     <User className="w-5 h-5" />
                     <span className="hidden sm:block text-sm font-medium">Login</span>
                   </button>
@@ -210,7 +208,7 @@ export default function Header() {
               {/* Wishlist */}
               {isAuthenticated && user?.role === 'customer' && (
                 <Link href="/wishlist">
-                  <button className="p-2 rounded-lg hover:bg-gray-50 transition-colors text-gray-500 hover:text-blue-600 relative">
+                  <button className="p-2 rounded-lg hover:bg-gray-50 transition-colors text-gray-500 hover:text-indigo-600 relative">
                     <Heart className="w-5 h-5" />
                     {wishlistCount > 0 && (
                       <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
@@ -224,10 +222,10 @@ export default function Header() {
               {/* Cart */}
               {isAuthenticated && user?.role === 'customer' && (
                 <Link href="/dashboard/orders">
-                  <button className="p-2 rounded-lg hover:bg-gray-50 transition-colors text-gray-500 hover:text-blue-600 relative">
+                  <button className="p-2 rounded-lg hover:bg-gray-50 transition-colors text-gray-500 hover:text-indigo-600 relative">
                     <ShoppingCart className="w-5 h-5" />
                     {cartCount > 0 && (
-                      <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-blue-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                      <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-indigo-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                         {cartCount > 99 ? '99+' : cartCount}
                       </span>
                     )}
@@ -270,7 +268,7 @@ export default function Header() {
                 <Link
                   key={cat.id}
                   href={`/categories/${cat.slug}`}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-blue-50 text-sm text-gray-700"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-indigo-50 text-sm text-gray-700"
                   onClick={() => setMobileOpen(false)}
                 >
                   <span>📦</span>
@@ -281,15 +279,15 @@ export default function Header() {
               {isAuthenticated ? (
                 <div className="border-t border-gray-100 mt-2 pt-2 space-y-1">
                   <p className="px-3 text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">Account</p>
-                  <Link href={getDashboardLink()} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-blue-50 text-sm text-gray-700" onClick={() => setMobileOpen(false)}>
+                  <Link href={getDashboardLink()} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-indigo-50 text-sm text-gray-700" onClick={() => setMobileOpen(false)}>
                     <Package className="w-4 h-4" /> Dashboard
                   </Link>
                   {user?.role === 'customer' && (
                     <>
-                      <Link href="/wishlist" className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-blue-50 text-sm text-gray-700" onClick={() => setMobileOpen(false)}>
+                      <Link href="/wishlist" className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-indigo-50 text-sm text-gray-700" onClick={() => setMobileOpen(false)}>
                         <Heart className="w-4 h-4" /> Wishlist
                       </Link>
-                      <Link href="/dashboard/orders" className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-blue-50 text-sm text-gray-700" onClick={() => setMobileOpen(false)}>
+                      <Link href="/dashboard/orders" className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-indigo-50 text-sm text-gray-700" onClick={() => setMobileOpen(false)}>
                         <ShoppingCart className="w-4 h-4" /> My Orders
                       </Link>
                     </>
@@ -300,7 +298,7 @@ export default function Header() {
                 </div>
               ) : (
                 <div className="border-t border-gray-100 mt-2 pt-2">
-                  <Link href="/login" className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-blue-50 text-sm text-blue-600 font-medium" onClick={() => setMobileOpen(false)}>
+                  <Link href="/login" className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-indigo-50 text-sm text-blue-600 font-medium" onClick={() => setMobileOpen(false)}>
                     <User className="w-4 h-4" /> Login / Register
                   </Link>
                 </div>

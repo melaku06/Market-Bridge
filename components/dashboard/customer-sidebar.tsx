@@ -3,10 +3,11 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutDashboard, Package, Heart, MapPin, Bell, Settings, Shield, Eye, Star, LogOut, ShoppingBag, HelpCircle, Truck,
+  LayoutDashboard, Package, Heart, MapPin, Bell, Settings, Shield, Eye, Star, LogOut, HelpCircle, Truck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/components/auth/auth-provider';
+import { SidebarIcon } from '@/components/ui/market-bridge-logo';
 
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -35,11 +36,9 @@ export default function CustomerSidebar() {
       <div className="rounded-2xl overflow-hidden sticky top-20 shadow-lg" style={{ background: '#0f1d35' }}>
         {/* Logo */}
         <div className="px-5 py-4 border-b border-white/10">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
-              <ShoppingBag className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-bold text-white text-base">MarketBridge</span>
+          <Link href="/" className="flex items-center gap-3">
+            <SidebarIcon />
+            <span className="font-bold text-xl bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">MarketBridge</span>
           </Link>
         </div>
 

@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Eye, EyeOff, ShoppingBag, Shield, Truck, RotateCcw, Clock, Star } from 'lucide-react';
+import { Eye, EyeOff, Shield, Truck, RotateCcw, Clock, Star } from 'lucide-react';
 import { useAuth } from '@/components/auth/auth-provider';
 import { getDashboardPath } from '@/lib/auth/types';
+import { SidebarIcon } from '@/components/ui/market-bridge-logo';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -71,13 +72,11 @@ export default function LoginPage() {
         {/* Header */}
         <div className="px-8 py-5 border-b border-gray-100">
           <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <ShoppingBag className="w-5 h-5 text-white" />
-              </div>
-              <span className="font-bold text-gray-900 text-lg">MarketBridge</span>
+            <Link href="/" className="flex items-center gap-2.5">
+              <SidebarIcon />
+              <span className="font-bold text-gray-900 text-lg tracking-tight">MarketBridge</span>
             </Link>
-            <Link href="/" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+            <Link href="/" className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">
               Back to Home
             </Link>
           </div>
@@ -103,7 +102,7 @@ export default function LoginPage() {
                   placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all bg-gray-50 focus:bg-white"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all bg-gray-50 focus:bg-white"
                   required
                 />
               </div>
@@ -116,7 +115,7 @@ export default function LoginPage() {
                     placeholder="Enter your password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all bg-gray-50 focus:bg-white pr-11"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all bg-gray-50 focus:bg-white pr-11"
                     required
                   />
                   <button
@@ -128,7 +127,7 @@ export default function LoginPage() {
                   </button>
                 </div>
                 <div className="flex justify-end mt-1.5">
-                  <Link href="/forgot-password" className="text-xs text-blue-600 hover:text-blue-700 font-medium">
+                  <Link href="/forgot-password" className="text-xs text-indigo-600 hover:text-indigo-700 font-medium">
                     Forgot Password?
                   </Link>
                 </div>
@@ -137,7 +136,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-xl font-semibold text-sm transition-colors flex items-center justify-center gap-2 shadow-sm"
+                className="w-full py-3 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 disabled:opacity-60 text-white rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
               >
                 {isLoading ? (
                   <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Signing in...</>
@@ -145,8 +144,8 @@ export default function LoginPage() {
               </button>
 
               <p className="text-center text-sm text-gray-500">
-                Don't have an account?{' '}
-                <Link href="/register" className="text-blue-600 hover:text-blue-700 font-semibold">Create Account</Link>
+                Don&apos;t have an account?{' '}
+                <Link href="/register" className="text-indigo-600 hover:text-indigo-700 font-semibold">Create Account</Link>
               </p>
             </form>
 
@@ -155,8 +154,8 @@ export default function LoginPage() {
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Quick Demo Login</p>
               <div className="space-y-2">
                 {[
-                  { role: 'Customer', email: 'customer@demo.com', color: 'text-blue-600 bg-blue-50 border-blue-200' },
-                  { role: 'Warehouse', email: 'warehouse@demo.com', color: 'text-green-600 bg-green-50 border-green-200' },
+                  { role: 'Customer', email: 'customer@demo.com', color: 'text-indigo-600 bg-indigo-50 border-indigo-200' },
+                  { role: 'Warehouse', email: 'warehouse@demo.com', color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
                   { role: 'Admin', email: 'admin@demo.com', color: 'text-purple-600 bg-purple-50 border-purple-200' },
                 ].map((demo) => (
                   <button
@@ -176,29 +175,36 @@ export default function LoginPage() {
       </div>
 
       {/* Right Panel */}
-      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-blue-700 via-blue-600 to-blue-500 items-center justify-center p-12 relative overflow-hidden">
+      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-indigo-800 via-indigo-700 to-purple-700 items-center justify-center p-12 relative overflow-hidden">
         {/* Background pattern */}
-        <div className="absolute inset-0">
-          <div className="absolute -top-20 -left-20 w-80 h-80 bg-white/5 rounded-full" />
-          <div className="absolute -bottom-20 -right-20 w-96 h-96 bg-white/5 rounded-full" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-white/5 rounded-full" />
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-32 -left-32 w-96 h-96 bg-white/5 rounded-full" />
+          <div className="absolute -bottom-32 -right-32 w-[500px] h-[500px] bg-white/5 rounded-full" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-white/3 rounded-full" />
         </div>
 
-        {/* Product image */}
+        {/* Product image overlay */}
         <div className="absolute inset-0">
           <img
             src="https://images.pexels.com/photos/1350789/pexels-photo-1350789.jpeg?auto=compress&cs=tinysrgb&w=1200"
             alt="Quality Products"
-            className="w-full h-full object-cover opacity-20"
+            className="w-full h-full object-cover opacity-10"
           />
         </div>
 
         <div className="relative z-10 text-center max-w-md">
-          <div className="w-20 h-20 bg-white/20 rounded-3xl flex items-center justify-center mx-auto mb-6 backdrop-blur-sm">
-            <ShoppingBag className="w-10 h-10 text-white" />
+          <div className="flex items-center justify-center gap-4 mb-8">
+            <div className="w-20 h-20 bg-white/15 rounded-3xl flex items-center justify-center backdrop-blur-sm ring-1 ring-white/20">
+              <svg viewBox="0 0 28 28" className="w-10 h-10" fill="none">
+                <rect x="3" y="3" width="10" height="10" rx="2" fill="white" opacity="0.95"/>
+                <rect x="15" y="3" width="10" height="10" rx="2" fill="white" opacity="0.6"/>
+                <rect x="3" y="15" width="10" height="10" rx="2" fill="white" opacity="0.6"/>
+                <rect x="15" y="15" width="10" height="10" rx="2" fill="white" opacity="0.95"/>
+              </svg>
+            </div>
           </div>
           <h2 className="text-3xl font-bold text-white mb-3">Quality Products<br />Delivered to You</h2>
-          <p className="text-blue-100 text-sm mb-10 leading-relaxed">
+          <p className="text-indigo-200 text-sm mb-10 leading-relaxed">
             Join thousands of happy customers shopping with confidence from trusted warehouses.
           </p>
           <div className="space-y-3 text-left max-w-xs mx-auto">
@@ -210,7 +216,7 @@ export default function LoginPage() {
             ].map((item) => {
               const Icon = item.icon;
               return (
-                <div key={item.text} className="flex items-center gap-3 bg-white/10 rounded-xl px-4 py-3 backdrop-blur-sm">
+                <div key={item.text} className="flex items-center gap-3 bg-white/10 rounded-xl px-4 py-3 backdrop-blur-sm ring-1 ring-white/10">
                   <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
                     <Icon className="w-4 h-4 text-white" />
                   </div>
@@ -221,14 +227,14 @@ export default function LoginPage() {
           </div>
 
           {/* Rating card */}
-          <div className="mt-8 bg-white/15 backdrop-blur-sm rounded-2xl p-4 text-left">
-            <div className="flex items-center gap-1 mb-1">
+          <div className="mt-8 bg-white/10 backdrop-blur-sm rounded-2xl p-4 text-left ring-1 ring-white/15">
+            <div className="flex items-center gap-1 mb-2">
               {[...Array(5)].map((_, i) => (
                 <Star key={i} className="w-4 h-4 text-yellow-300 fill-yellow-300" />
               ))}
             </div>
-            <p className="text-white text-sm font-medium">"Amazing selection and fast delivery!"</p>
-            <p className="text-blue-200 text-xs mt-1">— Sarah M., Verified Customer</p>
+            <p className="text-white text-sm font-medium">&ldquo;Amazing selection and fast delivery!&rdquo;</p>
+            <p className="text-indigo-300 text-xs mt-1">— Sarah M., Verified Customer</p>
           </div>
         </div>
       </div>

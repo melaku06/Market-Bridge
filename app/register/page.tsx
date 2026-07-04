@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Eye, EyeOff, ShoppingBag, User, Building2, Shield, Check, Star, Package, TrendingUp } from 'lucide-react';
+import { Eye, EyeOff, User, Building2, Shield, Check, Star, Package, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/components/auth/auth-provider';
 import type { UserRole } from '@/lib/auth/types';
 import { getDashboardPath } from '@/lib/auth/types';
+import { SidebarIcon } from '@/components/ui/market-bridge-logo';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -119,13 +120,11 @@ export default function RegisterPage() {
         {/* Header */}
         <div className="px-8 py-5 border-b border-gray-100">
           <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <ShoppingBag className="w-5 h-5 text-white" />
-              </div>
-              <span className="font-bold text-gray-900 text-lg">MarketBridge</span>
+            <Link href="/" className="flex items-center gap-2.5">
+              <SidebarIcon />
+              <span className="font-bold text-gray-900 text-lg tracking-tight">MarketBridge</span>
             </Link>
-            <Link href="/" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+            <Link href="/" className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">
               Back to Home
             </Link>
           </div>
@@ -158,17 +157,17 @@ export default function RegisterPage() {
                         onClick={() => setFormData({ ...formData, role: option.value })}
                         className={`relative p-3 border-2 rounded-xl text-left transition-all ${
                           isSelected
-                            ? 'border-blue-500 bg-blue-50 shadow-sm'
+                            ? 'border-indigo-500 bg-indigo-50 shadow-sm'
                             : 'border-gray-200 hover:border-gray-300 bg-white'
                         }`}
                       >
                         {isSelected && (
-                          <div className="absolute top-2 right-2 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                          <div className="absolute top-2 right-2 w-5 h-5 bg-indigo-500 rounded-full flex items-center justify-center">
                             <Check className="w-3 h-3 text-white" />
                           </div>
                         )}
-                        <Icon className={`w-5 h-5 mb-1.5 ${isSelected ? 'text-blue-600' : 'text-gray-400'}`} />
-                        <p className={`text-sm font-semibold ${isSelected ? 'text-blue-600' : 'text-gray-900'}`}>
+                        <Icon className={`w-5 h-5 mb-1.5 ${isSelected ? 'text-indigo-600' : 'text-gray-400'}`} />
+                        <p className={`text-sm font-semibold ${isSelected ? 'text-indigo-600' : 'text-gray-900'}`}>
                           {option.label}
                         </p>
                         <p className="text-xs text-gray-500 mt-0.5">{option.description}</p>
@@ -185,7 +184,7 @@ export default function RegisterPage() {
                   placeholder="Enter your full name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all bg-gray-50 focus:bg-white"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all bg-gray-50 focus:bg-white"
                   required
                 />
               </div>
@@ -197,7 +196,7 @@ export default function RegisterPage() {
                   placeholder="Enter your email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all bg-gray-50 focus:bg-white"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all bg-gray-50 focus:bg-white"
                   required
                 />
               </div>
@@ -210,7 +209,7 @@ export default function RegisterPage() {
                     placeholder="Create a strong password"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all bg-gray-50 focus:bg-white pr-11"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all bg-gray-50 focus:bg-white pr-11"
                     minLength={6}
                     required
                   />
@@ -234,7 +233,7 @@ export default function RegisterPage() {
                   className={`w-full px-4 py-3 border-2 rounded-xl text-sm focus:outline-none focus:ring-2 transition-all bg-gray-50 focus:bg-white ${
                     formData.confirmPassword && formData.password !== formData.confirmPassword
                       ? 'border-red-300 focus:ring-red-500/20 focus:border-red-500'
-                      : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500/20'
+                      : 'border-gray-200 focus:border-indigo-500 focus:ring-indigo-500/20'
                   }`}
                   required
                 />
@@ -246,7 +245,7 @@ export default function RegisterPage() {
               <button
                 type="submit"
                 disabled={isLoading || (formData.confirmPassword !== '' && formData.password !== formData.confirmPassword)}
-                className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-xl font-semibold text-sm transition-colors flex items-center justify-center gap-2 shadow-sm"
+                className="w-full py-3 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 disabled:opacity-60 text-white rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
               >
                 {isLoading ? (
                   <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Creating account...</>
@@ -255,7 +254,7 @@ export default function RegisterPage() {
 
               <p className="text-center text-sm text-gray-500">
                 Already have an account?{' '}
-                <Link href="/login" className="text-blue-600 hover:text-blue-700 font-semibold">Sign in</Link>
+                <Link href="/login" className="text-indigo-600 hover:text-indigo-700 font-semibold">Sign in</Link>
               </p>
             </form>
           </div>
@@ -263,32 +262,39 @@ export default function RegisterPage() {
       </div>
 
       {/* Right Panel */}
-      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-blue-700 via-blue-600 to-blue-500 items-center justify-center p-12 relative overflow-hidden">
+      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-indigo-800 via-indigo-700 to-purple-700 items-center justify-center p-12 relative overflow-hidden">
         {/* Background */}
-        <div className="absolute inset-0">
-          <div className="absolute -top-20 -right-20 w-80 h-80 bg-white/5 rounded-full" />
-          <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-white/5 rounded-full" />
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-32 -right-32 w-96 h-96 bg-white/5 rounded-full" />
+          <div className="absolute -bottom-32 -left-32 w-[500px] h-[500px] bg-white/5 rounded-full" />
         </div>
         <div className="absolute inset-0">
           <img
             src="https://images.pexels.com/photos/5632399/pexels-photo-5632399.jpeg?auto=compress&cs=tinysrgb&w=1200"
             alt="Join MarketBridge"
-            className="w-full h-full object-cover opacity-15"
+            className="w-full h-full object-cover opacity-10"
           />
         </div>
 
         <div className="relative z-10 text-center max-w-md">
-          <div className="w-20 h-20 bg-white/20 rounded-3xl flex items-center justify-center mx-auto mb-6 backdrop-blur-sm">
-            {formData.role === 'warehouse' ? (
-              <Building2 className="w-10 h-10 text-white" />
-            ) : (
-              <ShoppingBag className="w-10 h-10 text-white" />
-            )}
+          <div className="flex justify-center mb-8">
+            <div className="w-20 h-20 bg-white/15 rounded-3xl flex items-center justify-center backdrop-blur-sm ring-1 ring-white/20">
+              {formData.role === 'warehouse' ? (
+                <Building2 className="w-10 h-10 text-white" />
+              ) : (
+                <svg viewBox="0 0 28 28" className="w-10 h-10" fill="none">
+                  <rect x="3" y="3" width="10" height="10" rx="2" fill="white" opacity="0.95"/>
+                  <rect x="15" y="3" width="10" height="10" rx="2" fill="white" opacity="0.6"/>
+                  <rect x="3" y="15" width="10" height="10" rx="2" fill="white" opacity="0.6"/>
+                  <rect x="15" y="15" width="10" height="10" rx="2" fill="white" opacity="0.95"/>
+                </svg>
+              )}
+            </div>
           </div>
           <h2 className="text-3xl font-bold text-white mb-3">
             {formData.role === 'warehouse' ? 'Grow Your Business' : 'Shop Everything You Need'}
           </h2>
-          <p className="text-blue-100 text-sm mb-8 leading-relaxed">
+          <p className="text-indigo-200 text-sm mb-8 leading-relaxed">
             {formData.role === 'warehouse'
               ? 'Join hundreds of warehouses already selling on MarketBridge and grow your revenue.'
               : 'Access thousands of quality products from verified warehouses at the best prices.'}
@@ -298,7 +304,7 @@ export default function RegisterPage() {
             {benefits.map((benefit) => {
               const Icon = benefit.icon;
               return (
-                <div key={benefit.text} className="flex items-center gap-3 bg-white/10 rounded-xl px-4 py-3 backdrop-blur-sm">
+                <div key={benefit.text} className="flex items-center gap-3 bg-white/10 rounded-xl px-4 py-3 backdrop-blur-sm ring-1 ring-white/10">
                   <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
                     <Icon className="w-4 h-4 text-white" />
                   </div>
@@ -314,9 +320,9 @@ export default function RegisterPage() {
               { value: '500+', label: 'Warehouses' },
               { value: '50K+', label: 'Customers' },
             ].map((stat) => (
-              <div key={stat.label} className="bg-white/10 backdrop-blur-sm rounded-xl py-3 px-2">
+              <div key={stat.label} className="bg-white/10 backdrop-blur-sm rounded-xl py-3 px-2 ring-1 ring-white/10">
                 <p className="text-white font-bold text-lg">{stat.value}</p>
-                <p className="text-blue-200 text-xs">{stat.label}</p>
+                <p className="text-indigo-300 text-xs">{stat.label}</p>
               </div>
             ))}
           </div>
