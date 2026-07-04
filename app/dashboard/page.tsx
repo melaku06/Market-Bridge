@@ -2,11 +2,11 @@
 
 import { useEffect } from 'react';
 import Link from 'next/link';
-import { Package, Clock, CheckCircle, DollarSign, ChevronRight, Star, Heart } from 'lucide-react';
+import { Package, Clock, CheckCircle, DollarSign, ChevronRight, Star, Heart, ShoppingBag, ArrowRight } from 'lucide-react';
 import { useOrdersStore, useProductsStore, useWishlistStore, useAuthStore, useNotificationsStore } from '@/stores';
 
 const statusColor: Record<string, string> = {
-  delivered: 'bg-green-100 text-green-700',
+  delivered: 'bg-emerald-100 text-emerald-700',
   shipped: 'bg-blue-100 text-blue-700',
   processing: 'bg-orange-100 text-orange-700',
   pending: 'bg-yellow-100 text-yellow-700',
@@ -24,19 +24,10 @@ const statusLabels: Record<string, string> = {
 export default function DashboardPage() {
   const customerId = 'usr-001';
 
-  // Auth store
-  const { user, isAuthenticated } = useAuthStore();
-
-  // Orders store
+  const { user } = useAuthStore();
   const { orders, fetchOrders, isLoading: ordersLoading } = useOrdersStore();
-
-  // Products store
   const { products, fetchProducts, isLoading: productsLoading } = useProductsStore();
-
-  // Wishlist store
   const { items: wishlistItems, fetchWishlist, totalItems: wishlistTotal } = useWishlistStore();
-
-  // Notifications store
   const { unreadCount, fetchNotifications } = useNotificationsStore();
 
   const loading = ordersLoading || productsLoading;
@@ -51,12 +42,12 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
       </div>
     );
   }
 
-  const recentOrders = orders.slice(0, 4);
+  const recentOrders = orders.slice(0, 5);
   const recommended = products.slice(2, 6);
   const totalSpent = orders.reduce((sum, o) => sum + o.total, 0);
   const deliveredCount = orders.filter(o => o.status === 'delivered').length;
@@ -65,97 +56,170 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Welcome */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Hello, {user?.name?.split(' ')[0] || 'Sarah'}!</h1>
-        <p className="text-gray-500 text-sm">Welcome back to MarketBridge. Explore and shop the best products.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Hello, {user?.name?.split(' ')[0] || 'Sarah'}! 👋
+          </h1>
+          <p className="text-gray-500 text-sm mt-0.5">Welcome back to MarketBridge. Here's what's happening.</p>
+        </div>
+        <Link href="/products">
+          <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium transition-colors">
+            <ShoppingBag className="w-4 h-4" />
+            Shop Now
+          </button>
+        </Link>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Orders', value: orders.length.toString(), sub: 'View all orders', href: '/dashboard/orders', icon: <Package className="w-5 h-5 text-blue-600" />, bg: 'bg-blue-50' },
-          { label: 'Pending Orders', value: pendingCount.toString(), sub: 'Track now', href: '/dashboard/orders', icon: <Clock className="w-5 h-5 text-yellow-600" />, bg: 'bg-yellow-50' },
-          { label: 'Delivered Orders', value: deliveredCount.toString(), sub: 'View history', href: '/dashboard/orders', icon: <CheckCircle className="w-5 h-5 text-green-600" />, bg: 'bg-green-50' },
-          { label: 'Total Spent', value: `${totalSpent.toLocaleString()} Br`, sub: 'This year', href: '#', icon: <DollarSign className="w-5 h-5 text-purple-600" />, bg: 'bg-purple-50' },
-        ].map((stat) => (
-          <Link key={stat.label} href={stat.href}>
-            <div className="bg-white rounded-xl border border-gray-100 p-4 hover:border-blue-200 hover:shadow-sm transition-all cursor-pointer">
-              <div className="flex items-start justify-between mb-3">
-                <div className={`w-10 h-10 ${stat.bg} rounded-xl flex items-center justify-center`}>{stat.icon}</div>
+          {
+            label: 'Total Orders',
+            value: orders.length,
+            sub: 'All time',
+            href: '/dashboard/orders',
+            icon: Package,
+            iconColor: 'text-blue-600',
+            bgColor: 'bg-blue-50',
+            borderColor: 'border-t-blue-500',
+          },
+          {
+            label: 'Pending Orders',
+            value: pendingCount,
+            sub: 'In progress',
+            href: '/dashboard/orders',
+            icon: Clock,
+            iconColor: 'text-orange-600',
+            bgColor: 'bg-orange-50',
+            borderColor: 'border-t-orange-500',
+          },
+          {
+            label: 'Delivered',
+            value: deliveredCount,
+            sub: 'Completed',
+            href: '/dashboard/orders',
+            icon: CheckCircle,
+            iconColor: 'text-emerald-600',
+            bgColor: 'bg-emerald-50',
+            borderColor: 'border-t-emerald-500',
+          },
+          {
+            label: 'Total Spent',
+            value: `${totalSpent.toLocaleString()} Br`,
+            sub: 'This year',
+            href: '#',
+            icon: DollarSign,
+            iconColor: 'text-purple-600',
+            bgColor: 'bg-purple-50',
+            borderColor: 'border-t-purple-500',
+          },
+        ].map((stat) => {
+          const Icon = stat.icon;
+          return (
+            <Link key={stat.label} href={stat.href}>
+              <div className={`bg-white rounded-xl border border-gray-100 border-t-4 ${stat.borderColor} p-4 hover:shadow-md transition-all cursor-pointer`}>
+                <div className={`w-10 h-10 ${stat.bgColor} rounded-xl flex items-center justify-center mb-3`}>
+                  <Icon className={`w-5 h-5 ${stat.iconColor}`} />
+                </div>
+                <p className="text-2xl font-bold text-gray-900 mb-0.5">{stat.value}</p>
+                <p className="text-xs font-semibold text-gray-500">{stat.label}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{stat.sub}</p>
               </div>
-              <p className="text-2xl font-bold text-gray-900 mb-0.5">{stat.value}</p>
-              <p className="text-xs font-medium text-gray-500">{stat.label}</p>
-              <p className="text-xs text-blue-600 mt-1">{stat.sub}</p>
-            </div>
-          </Link>
-        ))}
+            </Link>
+          );
+        })}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Orders */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-gray-100">
-          <div className="flex items-center justify-between p-5 border-b border-gray-100">
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
             <h2 className="font-bold text-gray-900">Recent Orders</h2>
             <Link href="/dashboard/orders" className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
               View All <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
-          <div className="divide-y divide-gray-50">
-            {recentOrders.map((order) => (
-              <div key={order.id} className="flex items-center gap-3 p-4">
-                <div className="flex -space-x-2">
-                  {order.items.slice(0, 2).map((item, i) => (
-                    <div key={i} className="w-10 h-10 rounded-lg overflow-hidden border-2 border-white bg-gray-50 flex-shrink-0">
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                    </div>
-                  ))}
+
+          {recentOrders.length === 0 ? (
+            <div className="text-center py-12">
+              <Package className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+              <p className="text-sm text-gray-500">No orders yet</p>
+              <Link href="/products">
+                <button className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700">Browse Products</button>
+              </Link>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-50">
+              {recentOrders.map((order) => (
+                <div key={order.id} className="flex items-center gap-4 px-5 py-3.5 hover:bg-gray-50/50 transition-colors">
+                  {/* Product thumbnails */}
+                  <div className="flex -space-x-2 flex-shrink-0">
+                    {order.items.slice(0, 2).map((item, i) => (
+                      <div key={i} className="w-10 h-10 rounded-lg overflow-hidden border-2 border-white bg-gray-100 flex-shrink-0">
+                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-900">#{order.id.slice(-6).toUpperCase()}</p>
+                    <p className="text-xs text-gray-400">{new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                  </div>
+                  <div className="hidden sm:block">
+                    <p className="text-xs text-gray-500 mb-0.5">{order.items.length} item{order.items.length !== 1 ? 's' : ''}</p>
+                  </div>
+                  <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${statusColor[order.status] || 'bg-gray-100 text-gray-600'}`}>
+                    {statusLabels[order.status] || order.status}
+                  </span>
+                  <p className="text-sm font-bold text-gray-900 flex-shrink-0">{order.total.toLocaleString()} Br</p>
+                  <Link href={`/dashboard/orders/${order.id}`}>
+                    <button className="text-xs text-blue-600 font-medium hover:underline flex-shrink-0">Details</button>
+                  </Link>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900">Order #{order.id}</p>
-                  <p className="text-xs text-gray-500">{new Date(order.created_at).toLocaleDateString()}</p>
-                </div>
-                <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${statusColor[order.status] || 'bg-gray-100 text-gray-600'}`}>
-                  {statusLabels[order.status] || order.status}
-                </span>
-                <p className="text-sm font-bold text-gray-900">{order.total.toLocaleString()} Br</p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Right Column */}
         <div className="space-y-4">
           {/* Exclusive Deals Banner */}
-          <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl p-5 text-white relative overflow-hidden">
-            <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full" />
-            <div className="absolute -right-8 -top-4 w-20 h-20 bg-white/10 rounded-full" />
-            <h3 className="font-bold mb-1">Exclusive Deals<br />Just for You!</h3>
-            <p className="text-xs text-blue-200 mb-3">Get up to 30% off on selected items.</p>
-            <Link href="/products">
-              <button className="bg-white text-blue-700 hover:bg-blue-50 text-xs font-semibold px-4 py-1.5 rounded-lg transition-colors">
-                Shop Now
-              </button>
-            </Link>
-            <div className="mt-3 flex -space-x-2">
-              {recommended.slice(0, 2).map((p, i) => (
-                <div key={i} className="w-12 h-12 rounded-lg overflow-hidden border-2 border-white/30">
-                  <img src={p.images?.[0] || ''} alt={p.name} className="w-full h-full object-cover" />
-                </div>
-              ))}
+          <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 rounded-2xl p-5 text-white relative overflow-hidden">
+            <div className="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full" />
+            <div className="absolute -right-2 -bottom-6 w-32 h-32 bg-white/5 rounded-full" />
+            <div className="relative">
+              <span className="inline-block text-xs bg-white/20 text-white px-2 py-0.5 rounded-full mb-2 font-medium">Limited Time</span>
+              <h3 className="font-bold text-lg mb-1 leading-tight">Exclusive Deals<br />Just for You!</h3>
+              <p className="text-xs text-blue-200 mb-4">Get up to 30% off on selected items.</p>
+              <div className="flex -space-x-2 mb-4">
+                {recommended.slice(0, 3).map((p, i) => (
+                  <div key={i} className="w-11 h-11 rounded-lg overflow-hidden border-2 border-white/40 bg-white/10">
+                    <img src={p.images?.[0] || ''} alt={p.name} className="w-full h-full object-cover" />
+                  </div>
+                ))}
+              </div>
+              <Link href="/products">
+                <button className="flex items-center gap-1.5 bg-white text-blue-700 hover:bg-blue-50 text-xs font-bold px-4 py-2 rounded-xl transition-colors">
+                  Shop Now <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </Link>
             </div>
           </div>
 
           {/* Wishlist Summary */}
-          <div className="bg-white rounded-xl border border-gray-100 p-5">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Heart className="w-5 h-5 text-red-500 fill-red-500" />
-                <h3 className="font-bold text-gray-900 text-sm">Your Wishlist Summary</h3>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center">
+                <Heart className="w-4 h-4 text-red-500 fill-red-500" />
               </div>
+              <h3 className="font-bold text-gray-900 text-sm">Your Wishlist</h3>
             </div>
-            <p className="text-xs text-gray-500 mb-3">{wishlistTotal()} items in your wishlist</p>
+            <p className="text-xs text-gray-500 mb-4">
+              <span className="text-2xl font-bold text-gray-900 mr-1">{wishlistTotal()}</span>
+              saved items
+            </p>
             <Link href="/wishlist">
-              <button className="w-full py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
+              <button className="w-full py-2 border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50 hover:border-gray-300 transition-colors text-gray-700">
                 View Wishlist
               </button>
             </Link>
@@ -164,9 +228,9 @@ export default function DashboardPage() {
       </div>
 
       {/* Recommended */}
-      <div className="bg-white rounded-xl border border-gray-100">
-        <div className="flex items-center justify-between p-5 border-b border-gray-100">
-          <h2 className="font-bold text-gray-900">Recommended for You</h2>
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <h2 className="font-bold text-gray-900">Recommended For You</h2>
           <Link href="/products" className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
             View All <ChevronRight className="w-4 h-4" />
           </Link>
@@ -174,15 +238,21 @@ export default function DashboardPage() {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 p-5">
           {recommended.map((product) => (
             <Link key={product.id} href={`/products/${product.id}`}>
-              <div className="group">
-                <div className="aspect-square rounded-xl overflow-hidden bg-gray-50 mb-2">
-                  <img src={product.images?.[0] || ''} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
+              <div className="group rounded-xl overflow-hidden border border-gray-100 hover:border-blue-200 hover:shadow-md transition-all">
+                <div className="aspect-square overflow-hidden bg-gray-50">
+                  <img
+                    src={product.images?.[0] || ''}
+                    alt={product.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
                 </div>
-                <p className="text-xs font-medium text-gray-900 line-clamp-1">{product.name}</p>
-                <p className="text-xs font-bold text-blue-600 mt-0.5">{(product.final_price ?? 0).toLocaleString()} Br</p>
-                <div className="flex items-center gap-0.5 mt-0.5">
-                  <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-                  <span className="text-xs text-gray-500">{product.rating}</span>
+                <div className="p-3">
+                  <p className="text-xs font-medium text-gray-900 line-clamp-2 mb-1">{product.name}</p>
+                  <p className="text-sm font-bold text-blue-600">{(product.final_price ?? 0).toLocaleString()} Br</p>
+                  <div className="flex items-center gap-0.5 mt-1">
+                    <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+                    <span className="text-xs text-gray-500">{product.rating}</span>
+                  </div>
                 </div>
               </div>
             </Link>
