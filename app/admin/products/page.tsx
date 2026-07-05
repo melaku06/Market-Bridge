@@ -34,7 +34,11 @@ export default function AdminProducts() {
 
   const filtered = products.filter(p => {
     if (statusFilter !== 'all' && p.status !== statusFilter) return false;
-    if (searchQuery && !p.name.toLowerCase().includes(searchQuery.toLowerCase()) && !p.category_name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    const searchLower = searchQuery.toLowerCase();
+    const matchesName = p.name.toLowerCase().includes(searchLower);
+    const matchesCategory = (p as any).category?.name?.toLowerCase().includes(searchLower);
+    const matchesBrand = p.brand?.toLowerCase().includes(searchLower);
+    if (searchQuery && !matchesName && !matchesCategory && !matchesBrand) return false;
     return true;
   });
 
@@ -169,10 +173,10 @@ export default function AdminProducts() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-5 py-4 text-sm text-gray-700">{wh?.name || '—'}</td>
-                    <td className="px-5 py-4 text-sm text-gray-600">{product.category_name}</td>
+                    <td className="px-5 py-4 text-sm text-gray-700">{wh?.name || ((product as any).warehouse?.name) || '—'}</td>
+                    <td className="px-5 py-4 text-sm text-gray-600">{(product as any).category?.name || '—'}</td>
                     <td className="px-5 py-4">
-                      <p className="text-sm font-bold text-gray-900">{Number(product.final_price).toLocaleString()} Br</p>
+                      <p className="text-sm font-bold text-gray-900">{Math.round(Number(product.base_price) * (1 + Number(product.margin_percent) / 100)).toLocaleString()} Br</p>
                     </td>
                     <td className="px-5 py-4">
                       <span className={`text-xs font-semibold px-2.5 py-1 rounded-full capitalize ${statusBadge[product.status] || 'bg-gray-100 text-gray-600'}`}>
@@ -231,9 +235,9 @@ export default function AdminProducts() {
               <p className="text-sm text-gray-500 mt-1 line-clamp-3">{selectedProduct.description}</p>
               <div className="grid grid-cols-2 gap-3 mt-5">
                 {[
-                  { label: 'Warehouse', value: getWarehouse(selectedProduct.warehouse_id)?.name || '—' },
-                  { label: 'Category', value: selectedProduct.category_name },
-                  { label: 'Price', value: `${Number(selectedProduct.final_price).toLocaleString()} Br` },
+                  { label: 'Warehouse', value: getWarehouse(selectedProduct.warehouse_id)?.name || ((selectedProduct as any).warehouse?.name) || '—' },
+                  { label: 'Category', value: (selectedProduct as any).category?.name || '—' },
+                  { label: 'Price', value: `${Math.round(Number(selectedProduct.base_price) * (1 + Number(selectedProduct.margin_percent) / 100)).toLocaleString()} Br` },
                   { label: 'SKU', value: selectedProduct.sku || 'N/A' },
                   { label: 'Brand', value: selectedProduct.brand || 'N/A' },
                   { label: 'Rating', value: `${Number(selectedProduct.rating).toFixed(1)} ⭐ (${selectedProduct.review_count})` },

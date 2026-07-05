@@ -130,16 +130,16 @@ export default function OrderDetailPage() {
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <h2 className="font-bold text-gray-900 mb-4">Order Items</h2>
             <div className="space-y-3">
-              {(order.items || []).map((item, i) => (
+              {(order.items || []).map((item: any, i: number) => (
                 <div key={i} className="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50/60 transition-colors">
                   <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-50 flex-shrink-0 border border-gray-100">
-                    <img src={item.image || '/placeholder.jpg'} alt={item.name} className="w-full h-full object-cover" />
+                    <img src={item.product_image || '/placeholder.jpg'} alt={item.product_name} className="w-full h-full object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900">{item.name}</p>
-                    <p className="text-xs text-gray-500">Qty: {item.qty}</p>
+                    <p className="text-sm font-medium text-gray-900">{item.product_name}</p>
+                    <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
                   </div>
-                  <p className="text-sm font-bold text-gray-900">{item.price.toLocaleString()} Br</p>
+                  <p className="text-sm font-bold text-gray-900">{Number(item.unit_price).toLocaleString()} Br</p>
                 </div>
               ))}
             </div>

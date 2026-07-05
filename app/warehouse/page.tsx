@@ -98,7 +98,8 @@ export default function WarehouseDashboard() {
   const lowStockItems = inventory.filter(i => i.status === 'low_stock');
   const outOfStockItems = inventory.filter(i => i.status === 'out_of_stock');
   const todayOrders = analytics?.orders?.active || 0;
-  const totalRevenue = Number(warehouse.total_sales);
+  const wh = warehouse as any;
+  const totalRevenue = Number(wh.total_sales || 0);
   const weeklyRevenue: Array<{ date: string; revenue: number }> = analytics?.weekly_revenue || [];
   const maxRevenue = weeklyRevenue.length > 0 ? Math.max(...weeklyRevenue.map(r => r.revenue), 1) : 1;
 
@@ -135,7 +136,7 @@ export default function WarehouseDashboard() {
     },
     {
       label: 'Total Products',
-      value: Number(warehouse.total_products),
+      value: wh.total_products || 0,
       sub: '+6.2% vs last week',
       up: true,
       icon: Package,
@@ -300,24 +301,30 @@ export default function WarehouseDashboard() {
               <p className="text-xs text-gray-400 text-center py-4">No alerts — all stock levels are healthy</p>
             ) : (
               <div className="space-y-2">
-                {outOfStockItems.slice(0, 2).map(item => (
-                  <div key={item.id} className="flex items-start gap-2.5 p-3 bg-red-50 rounded-xl">
-                    <div className="w-1.5 h-1.5 rounded-full bg-red-500 mt-1.5 flex-shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold text-gray-800 truncate">{item.product_name}</p>
-                      <p className="text-[10px] text-red-600 font-medium">Out of Stock</p>
+                {outOfStockItems.slice(0, 2).map(item => {
+                  const invItem = item as any;
+                  return (
+                    <div key={item.id} className="flex items-start gap-2.5 p-3 bg-red-50 rounded-xl">
+                      <div className="w-1.5 h-1.5 rounded-full bg-red-500 mt-1.5 flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-gray-800 truncate">{invItem.product_name || 'Product'}</p>
+                        <p className="text-[10px] text-red-600 font-medium">Out of Stock</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
-                {lowStockItems.slice(0, 2).map(item => (
-                  <div key={item.id} className="flex items-start gap-2.5 p-3 bg-amber-50 rounded-xl">
-                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 flex-shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold text-gray-800 truncate">{item.product_name}</p>
-                      <p className="text-[10px] text-amber-600 font-medium">Stock: {item.available_stock} units</p>
+                  );
+                })}
+                {lowStockItems.slice(0, 2).map(item => {
+                  const invItem = item as any;
+                  return (
+                    <div key={item.id} className="flex items-start gap-2.5 p-3 bg-amber-50 rounded-xl">
+                      <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-gray-800 truncate">{invItem.product_name || 'Product'}</p>
+                        <p className="text-[10px] text-amber-600 font-medium">Stock: {(invItem.quantity - invItem.reserved_quantity) || 0} units</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

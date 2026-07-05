@@ -152,14 +152,14 @@ export default function WarehouseOrders() {
                   </td>
                   <td className="px-5 py-4">
                     <div className="flex -space-x-2">
-                      {order.items.slice(0, 3).map((item, i) => (
+                      {(order.items || []).slice(0, 3).map((item: any, i: number) => (
                         <div key={i} className="w-8 h-8 rounded-lg overflow-hidden border-2 border-white bg-gray-50 flex-shrink-0 shadow-sm">
-                          <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                          <img src={item.product_image || '/placeholder.jpg'} alt={item.product_name || 'Product'} className="w-full h-full object-cover" />
                         </div>
                       ))}
-                      {order.items.length > 3 && (
+                      {(order.items?.length || 0) > 3 && (
                         <div className="w-8 h-8 rounded-lg border-2 border-white bg-gray-100 flex items-center justify-center text-[9px] font-bold text-gray-500 shadow-sm">
-                          +{order.items.length - 3}
+                          +{(order.items?.length || 0) - 3}
                         </div>
                       )}
                     </div>

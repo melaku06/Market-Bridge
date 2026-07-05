@@ -87,7 +87,7 @@ export default function RecentlyViewedPage() {
                   <p className="text-[11px] text-blue-600 font-medium mb-0.5">{product.category_id || 'General'}</p>
                   <h3 className="text-[12px] font-medium text-gray-900 line-clamp-2 mb-1 leading-snug">{product.name}</h3>
                   <StarRating rating={product.rating || 0} count={product.review_count || 0} className="mb-1.5" size="sm" />
-                  <p className="text-[13px] font-bold text-gray-900 mb-2">{product.final_price.toLocaleString()} Br</p>
+                  <p className="text-[13px] font-bold text-gray-900 mb-2">{((product as any).final_price || (Number(product.base_price) * (1 + Number(product.margin_percent || 15) / 100))).toLocaleString()} Br</p>
                   <Link href={`/products/${product.id}`}>
                     <button className="w-full py-1.5 border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white rounded-lg text-[11px] font-medium transition-colors">
                       View Product
@@ -119,7 +119,7 @@ export default function RecentlyViewedPage() {
                   <h3 className="text-[13px] font-medium text-gray-900 line-clamp-1">{product.name}</h3>
                   <StarRating rating={product.rating || 0} count={product.review_count || 0} className="mt-0.5" size="sm" />
                 </div>
-                <p className="text-[13px] font-bold text-gray-900 flex-shrink-0">{product.final_price.toLocaleString()} Br</p>
+                <p className="text-[13px] font-bold text-gray-900 flex-shrink-0">{((product as any).final_price || (Number(product.base_price) * (1 + Number(product.margin_percent || 15) / 100))).toLocaleString()} Br</p>
                 <Link href={`/products/${product.id}`}>
                   <button className="text-[12px] text-blue-600 font-medium border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors flex-shrink-0">
                     View

@@ -75,7 +75,9 @@ export default function WarehouseAnalytics() {
   const topProducts: Array<{ name: string; revenue: number; units: number }> = analytics?.top_products || [];
   const maxRevenue = weeklyRevenue.length > 0 ? Math.max(...weeklyRevenue.map(r => r.revenue), 1) : 1;
 
-  const total = Number(warehouse.total_orders) || 1;
+  const warehouseTotalOrders = (warehouse as any).total_orders || 0;
+  const warehouseTotalSales = (warehouse as any).total_sales || 0;
+  const total = warehouseTotalOrders || 1;
   const pendingCount = Math.round(total * 0.30);
   const processingCount = Math.round(total * 0.17);
   const shippedCount = Math.round(total * 0.29);
@@ -97,10 +99,10 @@ export default function WarehouseAnalytics() {
   ];
 
   const stats = [
-    { name: 'Total Orders', value: Number(warehouse.total_orders).toLocaleString(), change: '+18.5%', icon: ShoppingCart, bg: 'bg-blue-50', color: 'text-blue-600', up: true },
-    { name: 'Total Revenue', value: `$${Number(warehouse.total_sales).toLocaleString()}`, change: '+22.7%', icon: DollarSign, bg: 'bg-emerald-50', color: 'text-emerald-600', up: true },
-    { name: 'Average Order Value', value: `$${Number(warehouse.total_orders) > 0 ? (Number(warehouse.total_sales) / Number(warehouse.total_orders)).toFixed(2) : '0'}`, change: '+4.2%', icon: TrendingUp, bg: 'bg-purple-50', color: 'text-purple-600', up: true },
-    { name: 'Total Customers', value: Math.round(Number(warehouse.total_orders) * 0.7).toLocaleString(), change: '+18.3%', icon: Users, bg: 'bg-amber-50', color: 'text-amber-600', up: true },
+    { name: 'Total Orders', value: warehouseTotalOrders.toLocaleString(), change: '+18.5%', icon: ShoppingCart, bg: 'bg-blue-50', color: 'text-blue-600', up: true },
+    { name: 'Total Revenue', value: `$${warehouseTotalSales.toLocaleString()}`, change: '+22.7%', icon: DollarSign, bg: 'bg-emerald-50', color: 'text-emerald-600', up: true },
+    { name: 'Average Order Value', value: `$${warehouseTotalOrders > 0 ? (warehouseTotalSales / warehouseTotalOrders).toFixed(2) : '0'}`, change: '+4.2%', icon: TrendingUp, bg: 'bg-purple-50', color: 'text-purple-600', up: true },
+    { name: 'Total Customers', value: Math.round(warehouseTotalOrders * 0.7).toLocaleString(), change: '+18.3%', icon: Users, bg: 'bg-amber-50', color: 'text-amber-600', up: true },
   ];
 
   return (

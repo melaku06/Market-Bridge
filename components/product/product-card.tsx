@@ -7,24 +7,19 @@ import StarRating from '@/components/ui/star-rating';
 import { cn } from '@/lib/utils';
 import { useWishlistStore } from '@/stores/wishlist/wishlist-store';
 import { useCartStore } from '@/stores/cart/cart-store';
+import { getFinalPrice } from '@/lib/price';
+import type { Product } from '@/lib/types';
 
 interface ProductCardProps {
-  product: {
-    id: string;
-    name: string;
+  product: Product & {
     final_price?: number;
     price?: number;
     original_price?: number;
     originalPrice?: number;
-    discount_percent?: number;
     discount?: number;
-    images?: string[];
     image?: string;
-    rating: number;
-    review_count?: number;
     reviews?: number;
-    category_name?: string;
-    category?: string;
+    category?: { id: string; name: string } | string | null;
   };
   className?: string;
 }
@@ -36,13 +31,13 @@ export default function ProductCard({ product, className }: ProductCardProps) {
   const isInWishlist = useWishlistStore((s) => s.isInWishlist);
   const addItem = useCartStore((s) => s.addItem);
 
-  // Normalize data from API or legacy format
-  const price = product.final_price ?? product.price ?? 0;
-  const originalPrice = product.original_price ?? product.originalPrice ?? price;
+  // Normalize data from API or Prisma format
+  const price = product.final_price ?? product.price ?? getFinalPrice(product);
+  const originalPrice = product.original_price ?? product.originalPrice ?? (typeof product.base_price === 'number' ? product.base_price * (1 + (product.margin_percent ?? 15) / 100) : price);
   const discount = product.discount_percent ?? product.discount ?? 0;
   const image = product.images?.[0] ?? product.image ?? '';
   const reviewCount = product.review_count ?? product.reviews ?? 0;
-  const category = product.category_name ?? product.category ?? '';
+  const category = typeof product.category === 'string' ? product.category : (product.category?.name || '');
 
   const wishlisted = isInWishlist(product.id);
 

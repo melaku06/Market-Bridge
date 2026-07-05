@@ -29,7 +29,7 @@ export default function AdminSystemSettings() {
     site_name: 'MarketBridge',
     site_tagline: 'Bridging Markets, Building Trust',
     site_email: 'support@marketbridge.com',
-    site_phone: '+1(850) 123-4567',
+    site_phone: '+1(850) 123-4567' as string | null,
     currency: 'USD - US Dollar',
     timezone: '(UTC -05:00) Eastern Time (US & Canada)',
     date_format: 'May 31, 2024',

@@ -45,8 +45,13 @@ export default function OrdersPage() {
 
   const filtered = orders.filter((o) => {
     if (!search) return true;
-    return o.id.toLowerCase().includes(search.toLowerCase()) ||
-      o.items.some((i) => i.name.toLowerCase().includes(search.toLowerCase()));
+    const searchLower = search.toLowerCase();
+    const matchesId = o.id.toLowerCase().includes(searchLower);
+    const matchesOrderNumber = o.order_number?.toLowerCase().includes(searchLower);
+    const matchesItems = (o.items || []).some((i: any) =>
+      (i.product_name || i.name || '').toLowerCase().includes(searchLower)
+    );
+    return matchesId || matchesOrderNumber || matchesItems;
   });
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -129,14 +134,14 @@ export default function OrdersPage() {
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-2">
                           <div className="flex -space-x-1.5">
-                            {order.items.slice(0, 3).map((item, i) => (
+                            {(order.items || []).slice(0, 3).map((item: any, i: number) => (
                               <div key={i} className="w-8 h-8 rounded-lg overflow-hidden border-2 border-white bg-gray-50 flex-shrink-0 shadow-sm">
-                                <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                                <img src={item.product_image || '/placeholder.jpg'} alt={item.product_name} className="w-full h-full object-cover" />
                               </div>
                             ))}
-                            {order.items.length > 3 && (
+                            {(order.items?.length || 0) > 3 && (
                               <div className="w-8 h-8 rounded-lg border-2 border-white bg-gray-100 flex items-center justify-center text-[9px] text-gray-500 font-bold shadow-sm">
-                                +{order.items.length - 3}
+                                +{(order.items?.length || 0) - 3}
                               </div>
                             )}
                           </div>

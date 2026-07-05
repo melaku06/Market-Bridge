@@ -122,9 +122,9 @@ export default function DashboardPage() {
               {recentOrders.map((order) => (
                 <div key={order.id} className="flex items-center gap-4 px-5 py-3 hover:bg-gray-50/50 transition-colors">
                   <div className="flex -space-x-2 flex-shrink-0">
-                    {order.items.slice(0, 2).map((item, i) => (
+                    {(order.items || []).slice(0, 2).map((item: any, i: number) => (
                       <div key={i} className="w-9 h-9 rounded-lg overflow-hidden border-2 border-white bg-gray-100 flex-shrink-0 shadow-sm">
-                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                        <img src={item.product_image || '/placeholder.jpg'} alt={item.product_name} className="w-full h-full object-cover" />
                       </div>
                     ))}
                   </div>
@@ -209,7 +209,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="p-3">
                   <p className="text-[12px] font-medium text-gray-900 line-clamp-2 mb-1 leading-snug">{product.name}</p>
-                  <p className="text-[13px] font-bold text-gray-900">${(product.final_price ?? 0).toFixed(2)}</p>
+                  <p className="text-[13px] font-bold text-gray-900">{((Number(product.base_price) * (1 + Number(product.margin_percent) / 100)) || 0).toLocaleString()} Br</p>
                   <div className="flex items-center gap-0.5 mt-1 mb-2">
                     <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
                     <span className="text-[11px] text-gray-500">{product.rating}</span>

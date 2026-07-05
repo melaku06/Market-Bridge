@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Plus, Edit, Trash2, Save, X, Search, Filter, FolderTree, LayoutGrid, Tag, AlertCircle } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, X, Search, Filter, FolderTree, LayoutGrid, Tag, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 import { useCategoriesStore } from '@/stores/categories/categories-store';
 import type { Category } from '@/lib/types';
 
@@ -11,14 +11,12 @@ const statusBadge: Record<string, string> = {
 };
 
 const fallback = [
-  { id: '1', name: 'Electronics', icon: '💻', slug: 'electronics', product_count: 2845, sub_count: 12, status: 'active', sort_order: 1 },
-  { id: '2', name: 'Fashion', icon: '👗', slug: 'fashion', product_count: 3421, sub_count: 8, status: 'active', sort_order: 2 },
-  { id: '3', name: 'Home & Kitchen', icon: '🏠', slug: 'home-kitchen', product_count: 1982, sub_count: 10, status: 'active', sort_order: 3 },
-  { id: '4', name: 'Beauty & Personal Care', icon: '💄', slug: 'beauty', product_count: 1458, sub_count: 6, status: 'active', sort_order: 4 },
-  { id: '5', name: 'Sports & Outdoors', icon: '⚽', slug: 'sports', product_count: 1128, sub_count: 7, status: 'active', sort_order: 5 },
-  { id: '6', name: 'Books & Media', icon: '📚', slug: 'books', product_count: 823, sub_count: 5, status: 'active', sort_order: 6 },
-  { id: '7', name: 'Automotive', icon: '🚗', slug: 'automotive', product_count: 642, sub_count: 6, status: 'inactive', sort_order: 7 },
-  { id: '8', name: 'Toys & Games', icon: '🎮', slug: 'toys', product_count: 431, sub_count: 4, status: 'active', sort_order: 8 },
+  { id: '1', name: 'Electronics', slug: 'electronics', description: 'Electronic devices and accessories', is_active: true },
+  { id: '2', name: 'Fashion', slug: 'fashion', description: 'Clothing and accessories', is_active: true },
+  { id: '3', name: 'Home & Kitchen', slug: 'home-kitchen', description: 'Home decor and kitchen supplies', is_active: true },
+  { id: '4', name: 'Beauty', slug: 'beauty', description: 'Beauty and personal care', is_active: true },
+  { id: '5', name: 'Sports', slug: 'sports', description: 'Sports equipment', is_active: true },
+  { id: '6', name: 'Toys', slug: 'toys', description: 'Toys and games', is_active: true },
 ];
 
 export default function AdminCategories() {
@@ -27,7 +25,7 @@ export default function AdminCategories() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [search, setSearch] = useState('');
-  const [newCategory, setNewCategory] = useState({ name: '', icon: '', description: '' });
+  const [newCategory, setNewCategory] = useState({ name: '', description: '' });
 
   useEffect(() => {
     fetchCategories();
@@ -46,13 +44,18 @@ export default function AdminCategories() {
   const handleAdd = async () => {
     if (!newCategory.name) return;
     try {
-      await createCategory({ name: newCategory.name, slug: newCategory.name.toLowerCase().replace(/\s+/g, '-'), description: newCategory.description, icon: newCategory.icon || '', status: 'active' });
-      setNewCategory({ name: '', icon: '', description: '' });
+      await createCategory({
+        name: newCategory.name,
+        slug: newCategory.name.toLowerCase().replace(/\s+/g, '-'),
+        description: newCategory.description,
+        is_active: true
+      });
+      setNewCategory({ name: '', description: '' });
       setShowAddForm(false);
     } catch (e) { console.error(e); }
   };
 
-  const updateCategory = (id: string, field: string, value: string) => {
+  const updateCategoryField = (id: string, field: string, value: string | boolean) => {
     setLocalCats(prev => prev.map(c => c.id === id ? { ...c, [field]: value } : c));
   };
 
@@ -60,7 +63,7 @@ export default function AdminCategories() {
     !search || c.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const activeCount = (localCats.length > 0 ? localCats : fallback as any[]).filter((c: any) => c.status === 'active').length;
+  const activeCount = (localCats.length > 0 ? localCats : fallback as any[]).filter((c: any) => c.is_active).length;
 
   if (isLoading) return <div className="flex items-center justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>;
 
@@ -78,10 +81,10 @@ export default function AdminCategories() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Categories', value: localCats.length || 56, sub: '4 this month', icon: FolderTree, iconBg: 'bg-blue-50', iconColor: 'text-blue-600' },
-          { label: 'Active Categories', value: activeCount || 48, sub: '85.7% of total', icon: LayoutGrid, iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600' },
-          { label: 'Sub Categories', value: 189, sub: 'Across all categories', icon: Tag, iconBg: 'bg-violet-50', iconColor: 'text-violet-600' },
-          { label: 'Unassigned Products', value: 23, sub: 'Need category', icon: AlertCircle, iconBg: 'bg-amber-50', iconColor: 'text-amber-600' },
+          { label: 'Total Categories', value: localCats.length || 6, sub: 'All categories', icon: FolderTree, iconBg: 'bg-blue-50', iconColor: 'text-blue-600' },
+          { label: 'Active Categories', value: activeCount || 5, sub: 'Visible to customers', icon: LayoutGrid, iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600' },
+          { label: 'Inactive Categories', value: (localCats.length - activeCount) || 1, sub: 'Hidden from catalog', icon: Tag, iconBg: 'bg-violet-50', iconColor: 'text-violet-600' },
+          { label: 'Parent Categories', value: localCats.filter(c => !c.parent_id).length || 4, sub: 'Top-level categories', icon: AlertCircle, iconBg: 'bg-amber-50', iconColor: 'text-amber-600' },
         ].map((s, i) => { const Icon = s.icon; return (
           <div key={i} className="bg-white rounded-xl border border-gray-100 p-4">
             <div className={`w-8 h-8 ${s.iconBg} rounded-lg flex items-center justify-center mb-2`}><Icon className={s.iconColor} style={{ width: 15, height: 15 }} /></div>
@@ -98,10 +101,9 @@ export default function AdminCategories() {
             <h2 className="text-sm font-bold text-gray-900">Add New Category</h2>
             <button onClick={() => setShowAddForm(false)} className="p-1 rounded-lg hover:bg-gray-100 text-gray-400"><X style={{ width: 15, height: 15 }} /></button>
           </div>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             {[
               { label: 'Name', key: 'name', placeholder: 'Category name' },
-              { label: 'Icon (emoji)', key: 'icon', placeholder: '' },
               { label: 'Description', key: 'description', placeholder: 'Brief description' },
             ].map(f => (
               <div key={f.key}>
@@ -126,7 +128,11 @@ export default function AdminCategories() {
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search categories..." className="pl-8 pr-3 py-1.5 border border-gray-200 rounded-lg text-[13px] focus:outline-none w-52 bg-gray-50" />
           </div>
           <div className="flex items-center gap-2">
-            <select className="px-3 py-1.5 border border-gray-200 rounded-lg text-[13px] text-gray-600 bg-gray-50 focus:outline-none"><option>All Status</option><option>Active</option><option>Inactive</option></select>
+            <select className="px-3 py-1.5 border border-gray-200 rounded-lg text-[13px] text-gray-600 bg-gray-50 focus:outline-none">
+              <option>All Status</option>
+              <option>Active</option>
+              <option>Inactive</option>
+            </select>
             <button className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 rounded-lg text-[13px] text-gray-600 hover:bg-gray-50"><Filter style={{ width: 13, height: 13 }} /> Filters</button>
           </div>
         </div>
@@ -134,7 +140,7 @@ export default function AdminCategories() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-50 bg-gray-50/40">
-                {['Category', 'Sub Categories', 'Products', 'Status', 'Sort Order', 'Actions'].map(h => (
+                {['Category', 'Slug', 'Description', 'Status', 'Actions'].map(h => (
                   <th key={h} className="text-left px-5 py-2.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">{h}</th>
                 ))}
               </tr>
@@ -142,22 +148,31 @@ export default function AdminCategories() {
             <tbody className="divide-y divide-gray-50">
               {display.map((cat: any) => {
                 const isEditing = editingId === cat.id;
+                const isActive = cat.is_active;
                 return (
                   <tr key={cat.id} className="hover:bg-gray-50/60 transition-colors">
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center text-base border border-gray-100">{cat.icon || '📦'}</div>
+                        <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center text-base border border-gray-100">
+                          {isActive ? <CheckCircle className="w-4 h-4 text-emerald-500" /> : <XCircle className="w-4 h-4 text-gray-400" />}
+                        </div>
                         {isEditing ? (
-                          <input type="text" value={cat.name} onChange={e => updateCategory(cat.id, 'name', e.target.value)} className="px-2 py-1 border border-gray-200 rounded-lg text-[13px] focus:outline-none" />
+                          <input type="text" value={cat.name} onChange={e => updateCategoryField(cat.id, 'name', e.target.value)} className="px-2 py-1 border border-gray-200 rounded-lg text-[13px] focus:outline-none" />
                         ) : (
                           <span className="text-[13px] font-semibold text-gray-900">{cat.name}</span>
                         )}
                       </div>
                     </td>
-                    <td className="px-5 py-3.5 text-[13px] text-gray-600">{cat.sub_count ?? cat.sub_categories ?? '—'}</td>
-                    <td className="px-5 py-3.5 text-[13px] font-medium text-gray-900">{(cat.product_count || 0).toLocaleString()}</td>
-                    <td className="px-5 py-3.5"><span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full capitalize ${statusBadge[cat.status] || statusBadge.inactive}`}>{cat.status}</span></td>
-                    <td className="px-5 py-3.5 text-[13px] text-gray-600">{cat.sort_order || '—'}</td>
+                    <td className="px-5 py-3.5 text-[13px] text-gray-500 font-mono">{cat.slug}</td>
+                    <td className="px-5 py-3.5 text-[13px] text-gray-600 max-w-xs truncate">{cat.description || '—'}</td>
+                    <td className="px-5 py-3.5">
+                      <button
+                        onClick={() => updateCategoryField(cat.id, 'is_active', !cat.is_active)}
+                        className={`text-[11px] font-semibold px-2.5 py-1 rounded-full capitalize ${isActive ? statusBadge.active : statusBadge.inactive}`}
+                      >
+                        {isActive ? 'Active' : 'Inactive'}
+                      </button>
+                    </td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-1">
                         {isEditing ? (
@@ -180,12 +195,7 @@ export default function AdminCategories() {
           </table>
         </div>
         <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100 bg-gray-50/30">
-          <p className="text-[12px] text-gray-500">Showing 1 to 8 of {localCats.length || 56} categories</p>
-          <div className="flex items-center gap-1">
-            {[1,2,3,4,5].map(p => <button key={p} className={`w-7 h-7 rounded-lg text-[12px] font-semibold ${p===1?'bg-blue-600 text-white':'border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>{p}</button>)}
-            <span className="text-gray-400 text-[12px] mx-1">...</span>
-            <button className="w-7 h-7 rounded-lg border border-gray-200 text-[12px] text-gray-600 hover:bg-gray-50">7</button>
-          </div>
+          <p className="text-[12px] text-gray-500">Showing {display.length} categories</p>
         </div>
       </div>
     </div>

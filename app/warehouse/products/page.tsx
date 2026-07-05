@@ -8,6 +8,7 @@ import { Plus, Search, Eye, Edit, Trash2, Package, ChevronRight, Download, Filte
 import { useAuth } from '@/components/auth/auth-provider';
 import { useProductsStore } from '@/stores/products/products-store';
 import { useInventoryStore } from '@/stores/inventory/inventory-store';
+import { getFinalPrice } from '@/lib/price';
 
 const statusBadge: Record<string, string> = {
   published: 'bg-emerald-100 text-emerald-700',
@@ -202,8 +203,8 @@ export default function WarehouseProducts() {
                       </div>
                     </td>
                     <td className="px-4 py-4 text-sm text-gray-500 font-mono">{product.sku || '—'}</td>
-                    <td className="px-4 py-4 text-sm text-gray-600">{product.category_name}</td>
-                    <td className="px-4 py-4 text-sm font-semibold text-gray-900">${product.final_price.toLocaleString()}</td>
+                    <td className="px-4 py-4 text-sm text-gray-600">{(product as any).category?.name || '—'}</td>
+                    <td className="px-4 py-4 text-sm font-semibold text-gray-900">{Math.round(getFinalPrice(product)).toLocaleString()} Br</td>
                     <td className="px-4 py-4">
                       <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${stockBadge[inv?.status || 'out_of_stock']}`}>
                         {stockLabel[inv?.status || 'out_of_stock']}

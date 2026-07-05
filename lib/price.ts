@@ -17,9 +17,9 @@ export function toNumber(value: unknown): number {
  * final = base * (1 + margin/100) * (1 - discount/100)
  */
 export function calculateFinalPrice(
-  basePrice: number | { toNumber(): number } | string,
-  marginPercent: number | { toNumber(): number } | string = 15,
-  discountPercent: number | { toNumber(): number } | string = 0,
+  basePrice: unknown,
+  marginPercent: unknown = 15,
+  discountPercent: unknown = 0,
 ): number {
   const base = toNumber(basePrice);
   const margin = toNumber(marginPercent);
@@ -32,12 +32,19 @@ export function calculateFinalPrice(
  * original = base * (1 + margin/100)
  */
 export function calculateOriginalPrice(
-  basePrice: number | { toNumber(): number } | string,
-  marginPercent: number | { toNumber(): number } | string = 15,
+  basePrice: unknown,
+  marginPercent: unknown = 15,
 ): number {
   const base = toNumber(basePrice);
   const margin = toNumber(marginPercent);
   return base * (1 + margin / 100);
+}
+
+/**
+ * Get the final price from a product object (handles both Prisma and API response formats).
+ */
+export function getFinalPrice(product: { base_price?: unknown; margin_percent?: unknown; discount_percent?: unknown }): number {
+  return calculateFinalPrice(product.base_price, product.margin_percent, product.discount_percent);
 }
 
 /**

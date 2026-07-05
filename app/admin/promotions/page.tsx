@@ -146,7 +146,7 @@ export default function AdminPromotions() {
                   </thead>
                   <tbody className="divide-y divide-gray-50">
                     {(promotions.length > 0
-                      ? promotions.slice(0, 4).map(p => ({ name: p.title, type: p.type, discount: '—', usage: p.impressions || 0, status: p.status, endDate: new Date(p.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }))
+                      ? promotions.slice(0, 4).map(p => ({ name: p.title, type: p.type, discount: '—', usage: p.impressions || 0, status: p.status, endDate: p.end_date ? new Date(p.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—' }))
                       : promoRows
                     ).map((p: any, i: number) => (
                       <tr key={i} className="hover:bg-gray-50/60">
@@ -190,7 +190,7 @@ export default function AdminPromotions() {
                       <td className="px-4 py-3 text-[13px] font-semibold text-blue-600">—</td>
                       <td className="px-4 py-3 text-[13px] text-gray-600">{(p.impressions || 0).toLocaleString()}</td>
                       <td className="px-4 py-3"><span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${statusBadge[p.status] || statusBadge.inactive}`}>{p.status}</span></td>
-                      <td className="px-4 py-3 text-[12px] text-gray-500">{new Date(p.end_date).toLocaleDateString()}</td>
+                      <td className="px-4 py-3 text-[12px] text-gray-500">{p.end_date ? new Date(p.end_date).toLocaleDateString() : '—'}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1">
                           <button onClick={() => toggleStatus(p.id)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">

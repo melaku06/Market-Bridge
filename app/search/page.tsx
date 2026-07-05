@@ -8,6 +8,7 @@ import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
 import ProductCard from '@/components/product/product-card';
 import { productsApi, categoriesApi } from '@/lib/api';
+import { getFinalPrice } from '@/lib/price';
 import type { Product, Category } from '@/lib/types';
 
 function SearchResults() {
@@ -21,6 +22,8 @@ function SearchResults() {
   const [priceRange, setPriceRange] = useState([0, 10000]);
   const [gridView, setGridView] = useState(true);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
+  const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -29,7 +32,6 @@ function SearchResults() {
           productsApi.list({ status: 'published' }),
           categoriesApi.list(),
         ]);
-        // Handle both { data: [...] } and direct array responses
         const productsData = Array.isArray(productsRes) ? productsRes : (productsRes as { data?: Product[] }).data || [];
         const categoriesData = Array.isArray(categoriesRes) ? categoriesRes : [];
         setProducts(productsData);
@@ -47,22 +49,22 @@ function SearchResults() {
     if (query) {
       const q = query.toLowerCase();
       const matchesQuery = p.name.toLowerCase().includes(q) ||
-        (p.category_name?.toLowerCase().includes(q)) ||
+        ((p as any).category?.name?.toLowerCase().includes(q)) ||
         (p.description?.toLowerCase().includes(q));
       if (!matchesQuery) return false;
     }
     if (selectedCategory !== 'All Categories') {
-      if (p.category_name !== selectedCategory) return false;
+      if ((p as any).category?.name !== selectedCategory) return false;
     }
     if (selectedBrands.length > 0) {
       if (!selectedBrands.some((brand) => p.brand?.toLowerCase().includes(brand.toLowerCase()))) return false;
     }
-    const price = p.final_price ?? 0;
+    const price = getFinalPrice(p);
     if (price < priceRange[0] || price > priceRange[1]) return false;
     return true;
   }).sort((a, b) => {
-    const priceA = a.final_price ?? 0;
-    const priceB = b.final_price ?? 0;
+    const priceA = getFinalPrice(a);
+    const priceB = getFinalPrice(b);
     if (sortBy === 'Price: Low to High') return priceA - priceB;
     if (sortBy === 'Price: High to Low') return priceB - priceA;
     if (sortBy === 'Top Rated') return b.rating - a.rating;
@@ -73,12 +75,10 @@ function SearchResults() {
   const brands = ['Apple', 'Samsung', 'Sony', 'JBL', 'Bose', 'Sennheiser', 'LG', 'Philips'];
   const subCategories = ['Smartphones', 'Laptops', 'Tablets', 'Headphones', 'Cameras', 'Smartwatches', 'Accessories'];
   const allCategories = ['All Categories', ...categories.map((c) => c.name)];
-  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
-  const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null);
 
   const getCategoryCount = (cat: string) => {
     if (cat === 'All Categories') return products.length;
-    return products.filter((p) => p.category_name === cat).length;
+    return products.filter((p) => (p as any).category?.name === cat).length;
   };
 
   const getBrandCount = (brand: string) => {

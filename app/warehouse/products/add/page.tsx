@@ -88,8 +88,8 @@ export default function AddProduct() {
       const created = await createProduct(newProduct);
       if (created) {
         await createInventory({
-          product_id: created.id, product_name: created.name, warehouse_id: user.warehouse_id,
-          sku: created.sku || '', total_stock: 0, reserved_stock: 0, available_stock: 0,
+          product_id: created.id, warehouse_id: user.warehouse_id!,
+          quantity: 0, reserved_quantity: 0,
           low_stock_threshold: 10, status: 'out_of_stock' as const,
         });
       }

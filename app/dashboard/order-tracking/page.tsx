@@ -253,7 +253,7 @@ export default function OrderTrackingPage() {
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
             <h3 className="font-bold text-gray-900 mb-4">Order Summary</h3>
             <div className="space-y-3 mb-4">
-              {trackedOrder.items.map((item, i) => (
+              {(trackedOrder.items || []).map((item: any, i: number) => (
                 <div key={i} className="flex items-center gap-4">
                   <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-50 border border-gray-100 flex-shrink-0">
                     {item.image

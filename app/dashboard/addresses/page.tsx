@@ -14,7 +14,7 @@ const labelIcon = (label: string) => {
 };
 
 const CUSTOMER_ID = 'usr-001';
-const EMPTY_FORM = { label: '', name: '', phone: '', address: '', city: '', country: 'Ethiopia' };
+const EMPTY_FORM = { label: '', recipient_name: '', phone: '', address: '', city: '', country: 'Ethiopia' };
 
 export default function AddressesPage() {
   const { addresses, isLoading, fetchAddresses, addAddress, updateAddress, deleteAddress, setDefaultAddress } = useAddressesStore();
@@ -37,8 +37,8 @@ export default function AddressesPage() {
     setEditingId(address.id);
     setForm({
       label: address.label,
-      name: address.name,
-      phone: address.phone,
+      recipient_name: address.recipient_name,
+      phone: address.phone || '',
       address: address.address,
       city: address.city,
       country: address.country,
@@ -47,7 +47,7 @@ export default function AddressesPage() {
   };
 
   const handleSave = async () => {
-    if (!form.name || !form.address) return;
+    if (!form.recipient_name || !form.address) return;
     setSaving(true);
     try {
       if (editingId) {
@@ -120,7 +120,7 @@ export default function AddressesPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {[
               { label: 'Label', placeholder: 'e.g. Home, Office, Work', key: 'label' },
-              { label: 'Full Name', placeholder: 'Enter full name', key: 'name' },
+              { label: 'Full Name', placeholder: 'Enter full name', key: 'recipient_name' },
               { label: 'Phone Number', placeholder: 'e.g. +251 91 234 5678', key: 'phone' },
               { label: 'Street Address', placeholder: 'Sub-city, woreda, house number', key: 'address' },
               { label: 'City', placeholder: 'e.g. Addis Ababa', key: 'city' },
@@ -208,7 +208,7 @@ export default function AddressesPage() {
                 </div>
 
                 <div className="space-y-0.5">
-                  <p className="text-[13px] font-semibold text-gray-900">{address.name}</p>
+                  <p className="text-[13px] font-semibold text-gray-900">{address.recipient_name}</p>
                   <p className="text-[12px] text-gray-600">{address.address}</p>
                   <p className="text-[12px] text-gray-600">{address.city}, {address.country}</p>
                   <p className="text-[12px] text-gray-500 mt-1">Phone: {address.phone}</p>

@@ -45,12 +45,13 @@ export default function WarehouseInventory() {
   const getProduct = (productId: string) => products.find(p => p.id === productId);
 
   const handleAdjust = async (item: Inventory, delta: number) => {
-    const newTotal = Math.max(0, item.total_stock + delta);
-    const available = newTotal - item.reserved_stock;
+    const invItem = item as any;
+    const newTotal = Math.max(0, invItem.quantity + delta);
+    const available = newTotal - invItem.reserved_quantity;
     let status: Inventory['status'] = 'in_stock';
     if (available === 0) status = 'out_of_stock';
-    else if (available <= item.low_stock_threshold) status = 'low_stock';
-    const updated = { ...item, total_stock: newTotal, available_stock: available, status };
+    else if (available <= invItem.low_stock_threshold) status = 'low_stock';
+    const updated = { ...item, quantity: newTotal, reserved_quantity: invItem.reserved_quantity, status };
     await updateInventory(item.id, updated);
   };
 
@@ -60,14 +61,15 @@ export default function WarehouseInventory() {
   };
 
   const filtered = inventory.filter(item => {
+    const invItem = item as any;
     if (activeTab !== 'All Inventory' && !tabMap[activeTab]?.includes(item.status)) return false;
-    if (search && !item.product_name.toLowerCase().includes(search.toLowerCase()) && !item.sku.toLowerCase().includes(search.toLowerCase())) return false;
+    if (search && !invItem.product_name?.toLowerCase().includes(search.toLowerCase()) && !invItem.sku?.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
 
   const lowStockCount = inventory.filter(i => i.status === 'low_stock').length;
   const outOfStockCount = inventory.filter(i => i.status === 'out_of_stock').length;
-  const totalUnits = inventory.reduce((s, i) => s + i.total_stock, 0);
+  const totalUnits = inventory.reduce((s, i) => s + ((i as any).quantity || 0), 0);
 
   const adjustingItem = inventory.find(i => i.id === adjustingId);
 
@@ -173,21 +175,23 @@ export default function WarehouseInventory() {
                   </tr>
                 ) : filtered.map(item => {
                   const product = getProduct(item.product_id);
+                  const invItem = item as any;
+                  const availableStock = invItem.quantity - invItem.reserved_quantity;
                   return (
                     <tr key={item.id} className="hover:bg-gray-50/40 transition-colors">
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-xl overflow-hidden bg-gray-50 border border-gray-100 flex-shrink-0">
-                            {product?.images?.[0] && <img src={product.images[0]} alt={item.product_name} className="w-full h-full object-cover" />}
+                            {product?.images?.[0] && <img src={product.images[0]} alt={invItem.product_name || 'Product'} className="w-full h-full object-cover" />}
                           </div>
-                          <p className="text-sm font-medium text-gray-900 max-w-[120px] truncate">{item.product_name}</p>
+                          <p className="text-sm font-medium text-gray-900 max-w-[120px] truncate">{invItem.product_name || product?.name || '—'}</p>
                         </div>
                       </td>
-                      <td className="px-4 py-4 text-sm text-gray-500 font-mono">{item.sku}</td>
-                      <td className="px-4 py-4 text-sm text-gray-600">{product?.category_name || '—'}</td>
-                      <td className="px-4 py-4 text-sm font-semibold text-gray-900">{item.total_stock}</td>
-                      <td className="px-4 py-4 text-sm text-gray-500">{item.reserved_stock}</td>
-                      <td className="px-4 py-4 text-sm font-semibold text-gray-900">{item.available_stock}</td>
+                      <td className="px-4 py-4 text-sm text-gray-500 font-mono">{invItem.sku || product?.sku || '—'}</td>
+                      <td className="px-4 py-4 text-sm text-gray-600">{(product as any)?.category?.name || '—'}</td>
+                      <td className="px-4 py-4 text-sm font-semibold text-gray-900">{invItem.quantity ?? '—'}</td>
+                      <td className="px-4 py-4 text-sm text-gray-500">{invItem.reserved_quantity ?? 0}</td>
+                      <td className="px-4 py-4 text-sm font-semibold text-gray-900">{availableStock}</td>
                       <td className="px-4 py-4">
                         <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${statusBadge[item.status]}`}>
                           {statusLabels[item.status]}
@@ -229,12 +233,12 @@ export default function WarehouseInventory() {
             {adjustingItem ? (
               <div className="space-y-3">
                 <div className="p-3 bg-gray-50 rounded-xl">
-                  <p className="text-xs font-semibold text-gray-800 truncate">{adjustingItem.product_name}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Current stock: <span className="font-bold text-gray-800">{adjustingItem.total_stock}</span></p>
+                  <p className="text-xs font-semibold text-gray-800 truncate">{(adjustingItem as any).product_name || 'Product'}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Current stock: <span className="font-bold text-gray-800">{(adjustingItem as any).quantity ?? 0}</span></p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button onClick={() => handleAdjust(adjustingItem, -1)} className="flex-1 py-2 border border-gray-200 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 transition-colors">−</button>
-                  <span className="w-10 text-center text-sm font-bold text-gray-900">{adjustingItem.total_stock}</span>
+                  <span className="w-10 text-center text-sm font-bold text-gray-900">{(adjustingItem as any).quantity ?? 0}</span>
                   <button onClick={() => handleAdjust(adjustingItem, 1)} className="flex-1 py-2 border border-gray-200 rounded-xl text-sm font-bold text-emerald-500 hover:bg-emerald-50 transition-colors">+</button>
                 </div>
                 <button
@@ -257,22 +261,26 @@ export default function WarehouseInventory() {
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <h3 className="font-semibold text-gray-900 text-sm mb-3">Recent Stock Movements</h3>
             <div className="space-y-3">
-              {inventory.slice(0, 4).map((item, i) => (
-                <div key={item.id} className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-100 flex-shrink-0 overflow-hidden">
-                    {products.find(p => p.id === item.product_id)?.images?.[0] && (
-                      <img src={products.find(p => p.id === item.product_id)!.images[0]} alt="" className="w-full h-full object-cover" />
-                    )}
+              {inventory.slice(0, 4).map((item, i) => {
+                const invItem = item as any;
+                const product = products.find(p => p.id === item.product_id);
+                return (
+                  <div key={item.id} className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-100 flex-shrink-0 overflow-hidden">
+                      {product?.images?.[0] && (
+                        <img src={product.images[0]} alt="" className="w-full h-full object-cover" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-gray-800 truncate">{invItem.product_name || product?.name || 'Product'}</p>
+                      <p className="text-[10px] text-gray-400">Updated recently</p>
+                    </div>
+                    <span className={`text-[10px] font-bold ${i % 2 === 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                      {i % 2 === 0 ? '+10' : '-5'} units
+                    </span>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-gray-800 truncate">{item.product_name}</p>
-                    <p className="text-[10px] text-gray-400">Updated recently</p>
-                  </div>
-                  <span className={`text-[10px] font-bold ${i % 2 === 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                    {i % 2 === 0 ? '+10' : '-5'} units
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
             {inventory.length > 4 && (
               <Link href="/warehouse/inventory">

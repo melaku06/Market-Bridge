@@ -71,7 +71,7 @@ export const useProductsStore = create<ProductsState>()((set, get) => ({
   fetchFeaturedProducts: async (limit = 8) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await productsApi.list({ limit, status: 'active' });
+      const response = await productsApi.list({ limit, status: 'published' });
       const productList = Array.isArray(response) ? response : response.data || [];
       set({ featuredProducts: productList, isLoading: false });
     } catch (error) {
@@ -82,7 +82,7 @@ export const useProductsStore = create<ProductsState>()((set, get) => ({
   fetchNewestProducts: async (limit = 8) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await productsApi.list({ limit, status: 'active' });
+      const response = await productsApi.list({ limit, status: 'published' });
       const productList = Array.isArray(response) ? response : response.data || [];
       set({ newestProducts: productList, isLoading: false });
     } catch (error) {
