@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
 import bcrypt from 'bcrypt';
+import { randomUUID } from 'crypto';
 
 const connectionString = process.env.DATABASE_URL || process.env.DIRECT_URL;
 const adapter = new PrismaPg(new pg.Pool({ connectionString }));
@@ -161,7 +162,7 @@ async function main() {
   const admin = await prisma.profile.upsert({
     where: { email: 'admin@marketbridge.et' },
     update: {},
-    create: { email: 'admin@marketbridge.et', name: 'Dawit Mekonnen', phone: '+251977700700', role: 'admin', status: 'active' },
+    create: { id: randomUUID(), email: 'admin@marketbridge.et', name: 'Dawit Mekonnen', phone: '+251977700700', role: 'admin', status: 'active' },
   });
   await prisma.userCredential.upsert({
     where: { user_id: admin.id },
@@ -170,11 +171,11 @@ async function main() {
   });
 
   const customers = [
-    { email: 'meseret.bekele@email.et', name: 'Meseret Bekele', phone: '+251988800800' },
-    { email: 'fikre.tolossa@email.et', name: 'Fikre Tolossa', phone: '+251988800801' },
-    { email: 'helina.girma@email.et', name: 'Helina Girma', phone: '+251988800802' },
-    { email: 'bezabih.lemma@email.et', name: 'Bezabih Lemma', phone: '+251988800803' },
-    { email: 'selam.asefa@email.et', name: 'Selam Asefa', phone: '+251988800804' },
+    { id: randomUUID(), email: 'meseret.bekele@email.et', name: 'Meseret Bekele', phone: '+251988800800' },
+    { id: randomUUID(), email: 'fikre.tolossa@email.et', name: 'Fikre Tolossa', phone: '+251988800801' },
+    { id: randomUUID(), email: 'helina.girma@email.et', name: 'Helina Girma', phone: '+251988800802' },
+    { id: randomUUID(), email: 'bezabih.lemma@email.et', name: 'Bezabih Lemma', phone: '+251988800803' },
+    { id: randomUUID(), email: 'selam.asefa@email.et', name: 'Selam Asefa', phone: '+251988800804' },
   ];
 
   const customerProfiles = [];
@@ -182,7 +183,7 @@ async function main() {
     const profile = await prisma.profile.upsert({
       where: { email: c.email },
       update: {},
-      create: { email: c.email, name: c.name, phone: c.phone, role: 'customer', status: 'active' },
+      create: { id: c.id, email: c.email, name: c.name, phone: c.phone, role: 'customer', status: 'active' },
     });
     customerProfiles.push(profile);
     await prisma.userCredential.upsert({
@@ -193,19 +194,19 @@ async function main() {
   }
 
   const warehouseUsers = [
-    { email: 'info@techhub.et', name: 'Abebe Kebede', phone: '+251911100100', warehouse_id: warehouses.techHub.id },
-    { email: 'sales@fashionhouse.et', name: 'Sara Tesfaye', phone: '+251922200200', warehouse_id: warehouses.fashionHouse.id },
-    { email: 'info@homeliving.et', name: 'Daniel Hailu', phone: '+251933300300', warehouse_id: warehouses.homeLiving.id },
-    { email: 'contact@glamour.et', name: 'Meron Alemayehu', phone: '+251944400400', warehouse_id: warehouses.beautyCenter.id },
-    { email: 'info@sportspro.et', name: 'Yohannes Tadesse', phone: '+251955500500', warehouse_id: warehouses.sportsPro.id },
-    { email: 'hello@kidsworld.et', name: 'Tigist Haile', phone: '+251966600600', warehouse_id: warehouses.kidsWorld.id },
+    { id: randomUUID(), email: 'info@techhub.et', name: 'Abebe Kebede', phone: '+251911100100', warehouse_id: warehouses.techHub.id },
+    { id: randomUUID(), email: 'sales@fashionhouse.et', name: 'Sara Tesfaye', phone: '+251922200200', warehouse_id: warehouses.fashionHouse.id },
+    { id: randomUUID(), email: 'info@homeliving.et', name: 'Daniel Hailu', phone: '+251933300300', warehouse_id: warehouses.homeLiving.id },
+    { id: randomUUID(), email: 'contact@glamour.et', name: 'Meron Alemayehu', phone: '+251944400400', warehouse_id: warehouses.beautyCenter.id },
+    { id: randomUUID(), email: 'info@sportspro.et', name: 'Yohannes Tadesse', phone: '+251955500500', warehouse_id: warehouses.sportsPro.id },
+    { id: randomUUID(), email: 'hello@kidsworld.et', name: 'Tigist Haile', phone: '+251966600600', warehouse_id: warehouses.kidsWorld.id },
   ];
 
   for (const w of warehouseUsers) {
     const profile = await prisma.profile.upsert({
       where: { email: w.email },
       update: { warehouse_id: w.warehouse_id },
-      create: { email: w.email, name: w.name, phone: w.phone, role: 'warehouse', status: 'active', warehouse_id: w.warehouse_id },
+      create: { id: w.id, email: w.email, name: w.name, phone: w.phone, role: 'warehouse', status: 'active', warehouse_id: w.warehouse_id },
     });
     await prisma.userCredential.upsert({
       where: { user_id: profile.id },
