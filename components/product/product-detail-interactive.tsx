@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Heart, ShoppingCart, Star, Minus, Plus, Truck, RotateCcw, Shield, Headphones, Store, Send, Share2, Check } from 'lucide-react';
 import StarRating from '@/components/ui/star-rating';
-import { formatPrice } from '@/lib/price';
+import { formatPrice, toNumber } from '@/lib/price';
 import { useCartStore } from '@/stores/cart/cart-store';
 import { useWishlistStore } from '@/stores/wishlist/wishlist-store';
 
@@ -48,10 +48,10 @@ export default function ProductDetailInteractive({ product, reviews }: ProductDe
   const toggleWishlist = useWishlistStore((s) => s.toggleWishlist);
   const isInWishlist = useWishlistStore((s) => s.isInWishlist(product.id));
 
-  const basePrice = typeof product.base_price === 'number' ? product.base_price : product.base_price.toNumber();
-  const margin = typeof product.margin_percent === 'number' ? (product.margin_percent || 15) : (product.margin_percent?.toNumber() ?? 15);
-  const discount = typeof product.discount_percent === 'number' ? product.discount_percent : (product.discount_percent?.toNumber() ?? 0);
-  const rating = typeof product.rating === 'number' ? product.rating : product.rating.toNumber();
+  const basePrice = toNumber(product.base_price);
+  const margin = toNumber(product.margin_percent) || 15;
+  const discount = toNumber(product.discount_percent);
+  const rating = toNumber(product.rating);
 
   const finalPrice = basePrice * (1 + margin / 100) * (1 - discount / 100);
   const originalPrice = basePrice * (1 + margin / 100);

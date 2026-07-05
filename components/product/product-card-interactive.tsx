@@ -5,7 +5,7 @@ import { Star, Heart, ShoppingCart, Check } from 'lucide-react';
 import { useState } from 'react';
 import { useCartStore } from '@/stores/cart/cart-store';
 import { useWishlistStore } from '@/stores/wishlist/wishlist-store';
-import { formatPrice } from '@/lib/price';
+import { formatPrice, toNumber } from '@/lib/price';
 import { cn } from '@/lib/utils';
 import type { ProductCardData } from './product-card-server';
 
@@ -16,10 +16,10 @@ export default function ProductCardInteractive({ product, className }: { product
   const toggleWishlist = useWishlistStore((s) => s.toggleWishlist);
   const isInWishlist = useWishlistStore((s) => s.isInWishlist(product.id));
 
-  const basePrice = typeof product.base_price === 'number' ? product.base_price : product.base_price.toNumber();
-  const margin = typeof product.margin_percent === 'number' ? (product.margin_percent || 15) : (product.margin_percent?.toNumber() ?? 15);
-  const discount = typeof product.discount_percent === 'number' ? product.discount_percent : (product.discount_percent?.toNumber() ?? 0);
-  const rating = typeof product.rating === 'number' ? product.rating : product.rating.toNumber();
+  const basePrice = toNumber(product.base_price);
+  const margin = toNumber(product.margin_percent) || 15;
+  const discount = toNumber(product.discount_percent);
+  const rating = toNumber(product.rating);
 
   const finalPrice = basePrice * (1 + margin / 100) * (1 - discount / 100);
   const originalPrice = basePrice * (1 + margin / 100);

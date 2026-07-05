@@ -1,15 +1,29 @@
 /**
+ * Safely convert a value to a number.
+ * Handles: number, string, null/undefined, Prisma Decimal objects, and objects with toNumber method.
+ */
+export function toNumber(value: unknown): number {
+  if (typeof value === 'number') return value;
+  if (value === null || value === undefined) return 0;
+  if (typeof value === 'string') return parseFloat(value) || 0;
+  if (typeof value === 'object' && 'toNumber' in value && typeof (value as { toNumber: unknown }).toNumber === 'function') {
+    return (value as { toNumber: () => number }).toNumber();
+  }
+  return 0;
+}
+
+/**
  * Calculate the final display price for a product.
  * final = base * (1 + margin/100) * (1 - discount/100)
  */
 export function calculateFinalPrice(
-  basePrice: number | { toNumber(): number },
-  marginPercent: number | { toNumber(): number } = 15,
-  discountPercent: number | { toNumber(): number } = 0,
+  basePrice: number | { toNumber(): number } | string,
+  marginPercent: number | { toNumber(): number } | string = 15,
+  discountPercent: number | { toNumber(): number } | string = 0,
 ): number {
-  const base = typeof basePrice === 'number' ? basePrice : basePrice.toNumber();
-  const margin = typeof marginPercent === 'number' ? marginPercent : marginPercent.toNumber();
-  const discount = typeof discountPercent === 'number' ? discountPercent : discountPercent.toNumber();
+  const base = toNumber(basePrice);
+  const margin = toNumber(marginPercent);
+  const discount = toNumber(discountPercent);
   return base * (1 + margin / 100) * (1 - discount / 100);
 }
 
@@ -18,11 +32,11 @@ export function calculateFinalPrice(
  * original = base * (1 + margin/100)
  */
 export function calculateOriginalPrice(
-  basePrice: number | { toNumber(): number },
-  marginPercent: number | { toNumber(): number } = 15,
+  basePrice: number | { toNumber(): number } | string,
+  marginPercent: number | { toNumber(): number } | string = 15,
 ): number {
-  const base = typeof basePrice === 'number' ? basePrice : basePrice.toNumber();
-  const margin = typeof marginPercent === 'number' ? marginPercent : marginPercent.toNumber();
+  const base = toNumber(basePrice);
+  const margin = toNumber(marginPercent);
   return base * (1 + margin / 100);
 }
 

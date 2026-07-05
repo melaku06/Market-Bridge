@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { ChevronRight, Grid2x2, List, SlidersHorizontal, X, Package } from 'lucide-react';
 import ProductCardInteractive from '@/components/product/product-card-interactive';
 import type { ProductCardData } from '@/components/product/product-card-server';
-import { formatPrice } from '@/lib/price';
+import { formatPrice, toNumber } from '@/lib/price';
 import { useSearchFilterStore } from '@/stores/search/search-filter-store';
 
 type SortOption = 'newest' | 'price_asc' | 'price_desc' | 'rating' | 'popular';
@@ -95,32 +95,23 @@ export default function ProductsBrowser({ products, categories, initialCategoryI
     }
 
     list = list.filter((p) => {
-      const basePrice = typeof p.base_price === 'number' ? p.base_price : p.base_price.toNumber();
-      const margin = typeof p.margin_percent === 'number' ? (p.margin_percent || 15) : (p.margin_percent?.toNumber() ?? 15);
-      const finalPrice = basePrice * (1 + margin / 100);
+      const finalPrice = toNumber(p.base_price) * (1 + (toNumber(p.margin_percent) || 15) / 100);
       return finalPrice <= priceMax;
     });
 
     if (ratingValue > 0) {
       list = list.filter((p) => {
-        const rating = typeof p.rating === 'number' ? p.rating : p.rating.toNumber();
-        return rating >= ratingValue;
+        return toNumber(p.rating) >= ratingValue;
       });
     }
 
     const getFinalPrice = (p: ProductCardData) => {
-      const base = typeof p.base_price === 'number' ? p.base_price : p.base_price.toNumber();
-      const margin = typeof p.margin_percent === 'number' ? (p.margin_percent || 15) : (p.margin_percent?.toNumber() ?? 15);
-      return base * (1 + margin / 100);
+      return toNumber(p.base_price) * (1 + (toNumber(p.margin_percent) || 15) / 100);
     };
 
     if (sortBy === 'price_asc') list.sort((a, b) => getFinalPrice(a) - getFinalPrice(b));
     else if (sortBy === 'price_desc') list.sort((a, b) => getFinalPrice(b) - getFinalPrice(a));
-    else if (sortBy === 'rating') list.sort((a, b) => {
-      const ra = typeof a.rating === 'number' ? a.rating : a.rating.toNumber();
-      const rb = typeof b.rating === 'number' ? b.rating : b.rating.toNumber();
-      return rb - ra;
-    });
+    else if (sortBy === 'rating') list.sort((a, b) => toNumber(b.rating) - toNumber(a.rating));
     else if (sortBy === 'popular') list.sort((a, b) => (b.review_count || 0) - (a.review_count || 0));
 
     return list;
