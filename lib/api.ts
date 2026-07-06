@@ -26,6 +26,7 @@ import type {
   TelegramPostTemplate,
   TelegramPost,
   TelegramActivityLog,
+  MediaAsset,
 } from '@/lib/types';
 
 const API_BASE = '/api';
@@ -380,5 +381,21 @@ export const adminApi = {
   telegramActivityLogs: {
     list: (params?: { bot_id?: string; post_id?: string; action?: string; status?: string; limit?: number; offset?: number }) =>
       request<{ data: TelegramActivityLog[] }>('/telegram/activity-logs', { searchParams: params as Record<string, string> }),
+  },
+
+  media: {
+    list: (params?: { uploaded_by?: string; type?: string; folder?: string; limit?: number; offset?: number }) =>
+      request<{ data: MediaAsset[] }>('/media', { searchParams: params as Record<string, string> }),
+
+    upload: (formData: FormData) =>
+      fetch('/api/upload', { method: 'POST', body: formData, credentials: 'include' }).then(res => res.json()),
+
+    delete: (public_id: string) =>
+      fetch('/api/upload', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ public_id }),
+        credentials: 'include',
+      }).then(res => res.json()),
   },
 };

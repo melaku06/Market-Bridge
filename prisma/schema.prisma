@@ -144,6 +144,19 @@ enum PasswordResetStatus {
   expired
 }
 
+/// Media asset categories
+enum MediaType {
+  product_image
+  warehouse_logo
+  profile_picture
+  promotional_banner
+  category_image
+  brand_logo
+  review_image
+  telegram_media
+  general
+}
+
 // ============================================================================
 // USER MANAGEMENT
 // ============================================================================
@@ -172,6 +185,7 @@ model Profile {
   requests        ProductRequest[]
   notifications   Notification[]
   password_resets PasswordResetToken[]
+  media_assets     MediaAsset[]
 
   created_at      DateTime   @default(now())
   updated_at      DateTime   @updatedAt
@@ -650,6 +664,37 @@ model SystemSettings {
   updated_at       DateTime @updatedAt
 
   @@map("system_settings")
+}
+
+// ============================================================================
+// MEDIA MANAGEMENT (Cloudinary)
+// ============================================================================
+
+/// Cloudinary media assets metadata
+model MediaAsset {
+  id              String    @id @default(uuid())
+  public_id       String    @unique
+  secure_url      String
+  url             String?
+  format          String?
+  width           Int?
+  height          Int?
+  bytes           Int?
+  resource_type   String    @default("image")
+  folder          String    @default("marketbridge")
+  type            MediaType @default(general)
+  uploaded_by     String?
+
+  uploader        Profile?  @relation(fields: [uploaded_by], references: [id], onDelete: SetNull)
+
+  created_at      DateTime  @default(now())
+
+  @@index([public_id])
+  @@index([uploaded_by])
+  @@index([type])
+  @@index([folder])
+  @@index([created_at])
+  @@map("media_assets")
 }
 
 // ============================================================================

@@ -28,6 +28,7 @@ export type PasswordResetStatus = 'pending' | 'used' | 'expired';
 // Legacy aliases for backwards compatibility
 export type Role = UserRole;
 export type BannerStatus = PromotionStatus;
+export type MediaType = 'product_image' | 'warehouse_logo' | 'profile_picture' | 'promotional_banner' | 'category_image' | 'brand_logo' | 'review_image' | 'telegram_media' | 'general';
 
 // ============================================================================
 // USER MANAGEMENT
@@ -345,6 +346,26 @@ export interface SystemSettings {
   maintenance_mode: boolean;
   site_language: string;
   updated_at: string;
+}
+
+// ============================================================================
+// MEDIA MANAGEMENT (Cloudinary)
+// ============================================================================
+
+export interface MediaAsset {
+  id: string;
+  public_id: string;
+  secure_url: string;
+  url?: string | null;
+  format?: string | null;
+  width?: number | null;
+  height?: number | null;
+  bytes?: number | null;
+  resource_type: string;
+  folder: string;
+  type: MediaType;
+  uploaded_by?: string | null;
+  created_at: string;
 }
 
 // ============================================================================

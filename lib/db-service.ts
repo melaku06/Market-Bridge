@@ -1243,3 +1243,43 @@ export async function getDashboardStats(user_id: string, role: string) {
     wishlistCount,
   };
 }
+
+// ============================================================================
+// MEDIA ASSETS (Cloudinary metadata)
+// ============================================================================
+
+export async function getMediaAssets(params?: {
+  uploaded_by?: string;
+  type?: string;
+  folder?: string;
+  limit?: number;
+  offset?: number;
+}) {
+  const where: Prisma.MediaAssetWhereInput = {};
+  if (params?.uploaded_by) where.uploaded_by = params.uploaded_by;
+  if (params?.type) where.type = params.type as any;
+  if (params?.folder) where.folder = params.folder;
+
+  return prisma.mediaAsset.findMany({
+    where,
+    orderBy: { created_at: 'desc' },
+    take: params?.limit || 50,
+    skip: params?.offset || 0,
+  });
+}
+
+export async function getMediaAssetByPublicId(public_id: string) {
+  return prisma.mediaAsset.findUnique({ where: { public_id } });
+}
+
+export async function createMediaAsset(data: Prisma.MediaAssetCreateInput) {
+  return prisma.mediaAsset.create({ data });
+}
+
+export async function deleteMediaAsset(public_id: string) {
+  return prisma.mediaAsset.delete({ where: { public_id } });
+}
+
+export async function deleteMediaAssetsByUploader(uploaded_by: string) {
+  return prisma.mediaAsset.deleteMany({ where: { uploaded_by } });
+}
