@@ -5,18 +5,16 @@ import { notificationCreateSchema } from '@/lib/validations/common';
 
 export async function GET(request: NextRequest) {
   try {
-    const { error } = await requireAuth(request);
+    const { user, error } = await requireAuth(request);
     if (error) return error;
 
     const { searchParams } = request.nextUrl;
-    const user_id = searchParams.get('user_id');
     const type = searchParams.get('type') || undefined;
     const is_read = searchParams.get('is_read') ? searchParams.get('is_read') === 'true' : undefined;
     const limit = parseInt(searchParams.get('limit') || '20');
 
-    if (!user_id) {
-      return NextResponse.json({ error: 'user_id is required' }, { status: 400 });
-    }
+    // Always use the authenticated user's ID — never trust client-provided user_id
+    const user_id = user!.id;
 
     const [notifications, unreadCount] = await Promise.all([
       getNotifications({
@@ -40,17 +38,25 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { error } = await requireAuth(request);
+    const { user, error } = await requireAuth(request);
     if (error) return error;
 
     const body = await request.json();
 
-    // Validate input
     const result = notificationCreateSchema.safeParse(body);
     if (!result.success) {
       return NextResponse.json(
         { error: 'Validation failed', details: result.error.flatten() },
         { status: 400 }
+      );
+    }
+
+    // Only admins can create notifications for other users;
+    // other roles can only create notifications for themselves
+    if (result.data.user_id !== user!.id && user!.role !== 'admin') {
+      return NextResponse.json(
+        { error: 'You can only create notifications for your own account' },
+        { status: 403 }
       );
     }
 

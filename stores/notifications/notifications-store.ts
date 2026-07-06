@@ -4,13 +4,14 @@ import { notificationsApi } from '@/lib/api';
 export interface NotificationItem {
   id: string;
   user_id: string;
-  type: 'order' | 'product' | 'system' | 'promotion' | 'account' | 'inventory';
+  type: 'order' | 'product' | 'system' | 'promotion' | 'account' | 'inventory' | 'telegram';
   priority: 'high' | 'medium' | 'low';
   title: string;
   message: string;
   data?: string | null;
   action_url?: string | null;
   is_read: boolean;
+  read_at?: string | null;
   created_at: string;
 }
 
@@ -68,7 +69,7 @@ export const useNotificationsStore = create<NotificationsState>()((set, get) => 
       await notificationsApi.update(id, { is_read: true } as unknown as Record<string, unknown>);
       set((state) => ({
         notifications: state.notifications.map((n) =>
-          n.id === id ? { ...n, is_read: true } : n
+          n.id === id ? { ...n, is_read: true, read_at: new Date().toISOString() } : n
         ),
         unreadCount: Math.max(0, state.unreadCount - 1),
       }));
@@ -90,7 +91,7 @@ export const useNotificationsStore = create<NotificationsState>()((set, get) => 
 
       set((state) => ({
         notifications: state.notifications.map((n) =>
-          n.user_id === userId ? { ...n, is_read: true } : n
+          n.user_id === userId ? { ...n, is_read: true, read_at: new Date().toISOString() } : n
         ),
         unreadCount: 0,
       }));

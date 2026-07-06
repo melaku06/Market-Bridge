@@ -6,7 +6,7 @@ import type { AuthUser, AuthResponse, LoginCredentials, RegisterData, UserRole }
 
 export async function registerUser(data: RegisterData): Promise<AuthResponse> {
   try {
-    const { email, password, name, role = 'customer', phone } = data;
+    const { email, password, name, role = 'customer', phone, telegram_username } = data;
 
     const existingUser = await prisma.profile.findUnique({
       where: { email: email.toLowerCase() },
@@ -28,6 +28,7 @@ export async function registerUser(data: RegisterData): Promise<AuthResponse> {
           name,
           role: role as any,
           phone,
+          telegram_username: telegram_username?.trim().replace(/^@/, '').toLowerCase() || null,
         },
       });
 
@@ -123,6 +124,7 @@ export async function getUserById(userId: string): Promise<AuthUser | null> {
       created_at: result.created_at.toISOString(),
       updated_at: result.updated_at.toISOString(),
       warehouse: result.warehouse,
+      telegram_username: result.telegram_username,
     };
 
     return user;

@@ -20,11 +20,14 @@ export async function PUT(request: NextRequest) {
     if (error) return error;
 
     const body = await request.json();
-    const updates: { name?: string; phone?: string; avatar_url?: string } = {};
+    const updates: { name?: string; phone?: string; avatar_url?: string; telegram_username?: string } = {};
 
     if (body.name) updates.name = body.name;
     if (body.phone !== undefined) updates.phone = body.phone;
     if (body.avatar_url !== undefined) updates.avatar_url = body.avatar_url;
+    if (body.telegram_username !== undefined) {
+      updates.telegram_username = body.telegram_username.trim().replace(/^@/, '').toLowerCase() || null;
+    }
 
     const updatedUser = await updateUserProfile(user!.id, updates);
 

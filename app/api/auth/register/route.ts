@@ -4,7 +4,7 @@ import { registerUser } from '@/lib/auth/db-service';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, password, name, phone } = body;
+    const { email, password, name, phone, telegram_username } = body;
 
     if (!email || !password || !name) {
       return NextResponse.json(
@@ -26,6 +26,7 @@ export async function POST(request: NextRequest) {
       name,
       role: 'customer',
       phone,
+      telegram_username: telegram_username?.trim().replace(/^@/, '').toLowerCase() || undefined,
     });
 
     if (!result.success) {

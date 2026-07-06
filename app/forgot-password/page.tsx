@@ -2,16 +2,18 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Mail, Phone, CheckCircle, ArrowLeft, Send, ShoppingBag } from 'lucide-react';
+import { Send, CheckCircle, ArrowLeft, ShoppingBag, MessageCircle, KeyRound } from 'lucide-react';
 
 export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState('');
+  const [telegramUsername, setTelegramUsername] = useState('');
+  const [resetCode, setResetCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
-
   const [error, setError] = useState('');
+  const [step, setStep] = useState<'request' | 'reset' | 'done'>('request');
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
@@ -19,15 +21,49 @@ export default function ForgotPasswordPage() {
       const res = await fetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ telegram_username: telegramUsername }),
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || 'Failed to send reset link');
+        throw new Error(data.error || 'Failed to send reset code');
       }
-      setSent(true);
+      setStep('reset');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to send reset link');
+      setError(err instanceof Error ? err.message : 'Failed to send reset code');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+    if (newPassword.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          telegram_username: telegramUsername,
+          reset_code: resetCode,
+          new_password: newPassword,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to reset password');
+      }
+      setStep('done');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to reset password');
     } finally {
       setLoading(false);
     }
@@ -51,61 +87,67 @@ export default function ForgotPasswordPage() {
 
         <div className="flex-1 flex items-center justify-center px-8 py-12">
           <div className="w-full max-w-sm">
-            {sent ? (
+            {step === 'done' ? (
               <div className="text-center">
                 <div className="w-20 h-20 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-5 ring-4 ring-emerald-100">
                   <CheckCircle className="w-10 h-10 text-emerald-600" />
                 </div>
-                <h1 className="text-2xl font-bold text-gray-900 mb-2">Email Sent!</h1>
-                <p className="text-gray-500 text-sm mb-2">
-                  We&apos;ve sent a password reset link to
+                <h1 className="text-2xl font-bold text-gray-900 mb-2">Password Reset!</h1>
+                <p className="text-gray-500 text-sm mb-8">
+                  Your password has been reset successfully. You can now log in with your new password.
                 </p>
-                <p className="font-semibold text-gray-900 text-sm mb-8">{email}</p>
-
-                <div className="bg-gray-50 rounded-xl p-4 mb-6 text-left">
-                  <p className="text-xs font-semibold text-gray-700 mb-2">What to do next:</p>
-                  <ol className="text-xs text-gray-500 space-y-1.5">
-                    <li>1. Check your email inbox (and spam folder)</li>
-                    <li>2. Click the reset link in the email</li>
-                    <li>3. Create a new strong password</li>
-                  </ol>
-                </div>
-
                 <Link href="/login">
                   <button className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-sm transition-colors shadow-sm">
                     Back to Login
                   </button>
                 </Link>
-                <button
-                  onClick={() => setSent(false)}
-                  className="w-full py-2.5 mt-2 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors"
-                >
-                  Try a different email
-                </button>
               </div>
-            ) : (
+            ) : step === 'reset' ? (
               <>
                 <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-6">
-                  <Mail className="w-8 h-8 text-blue-600" />
+                  <KeyRound className="w-8 h-8 text-blue-600" />
                 </div>
-                <h1 className="text-2xl font-bold text-gray-900 mb-1">Forgot Your Password?</h1>
+                <h1 className="text-2xl font-bold text-gray-900 mb-1">Enter Reset Code</h1>
                 <p className="text-gray-500 text-sm mb-8 leading-relaxed">
-                  No worries! Enter your email address and we&apos;ll send you a link to reset your password.
+                  We&apos;ve sent a 6-digit reset code to your Telegram account <span className="font-semibold text-gray-700">@{telegramUsername}</span>. Enter it below along with your new password.
                 </p>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleReset} className="space-y-4">
                   {error && (
                     <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
                       {error}
                     </div>
                   )}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Reset Code</label>
                     <input
-                      type="email"
-                      placeholder="Enter your email address"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      type="text"
+                      placeholder="Enter 6-digit code"
+                      value={resetCode}
+                      onChange={(e) => setResetCode(e.target.value)}
+                      maxLength={6}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all bg-gray-50 focus:bg-white tracking-widest text-center font-mono"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">New Password</label>
+                    <input
+                      type="password"
+                      placeholder="Enter new password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all bg-gray-50 focus:bg-white"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Confirm Password</label>
+                    <input
+                      type="password"
+                      placeholder="Confirm new password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
                       className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all bg-gray-50 focus:bg-white"
                       required
                     />
@@ -117,23 +159,63 @@ export default function ForgotPasswordPage() {
                     className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-xl font-semibold text-sm transition-colors flex items-center justify-center gap-2 shadow-sm"
                   >
                     {loading ? (
-                      <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Sending...</>
+                      <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Resetting...</>
                     ) : (
-                      <><Send className="w-4 h-4" /> Send Reset Link</>
+                      <><KeyRound className="w-4 h-4" /> Reset Password</>
                     )}
                   </button>
 
-                  <div className="relative my-1">
-                    <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-100" /></div>
-                    <div className="relative flex justify-center"><span className="bg-white px-3 text-xs text-gray-400">or</span></div>
+                  <button
+                    type="button"
+                    onClick={() => setStep('request')}
+                    className="w-full py-2.5 mt-2 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    Back
+                  </button>
+                </form>
+              </>
+            ) : (
+              <>
+                <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-6">
+                  <MessageCircle className="w-8 h-8 text-blue-600" />
+                </div>
+                <h1 className="text-2xl font-bold text-gray-900 mb-1">Forgot Your Password?</h1>
+                <p className="text-gray-500 text-sm mb-8 leading-relaxed">
+                  Enter your registered Telegram username and we&apos;ll send a reset code directly to your Telegram account.
+                </p>
+
+                <form onSubmit={handleRequest} className="space-y-4">
+                  {error && (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+                      {error}
+                    </div>
+                  )}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Telegram Username</label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span>
+                      <input
+                        type="text"
+                        placeholder="your_telegram_username"
+                        value={telegramUsername}
+                        onChange={(e) => setTelegramUsername(e.target.value.replace(/^@/, ''))}
+                        className="w-full pl-8 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all bg-gray-50 focus:bg-white"
+                        required
+                      />
+                    </div>
                   </div>
 
                   <button
-                    type="button"
-                    className="w-full py-3 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center justify-center gap-2 transition-colors"
+                    type="submit"
+                    disabled={loading}
+                    className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-xl font-semibold text-sm transition-colors flex items-center justify-center gap-2 shadow-sm"
                   >
-                    <Phone className="w-4 h-4" />
-                    Reset via Phone
+                    {loading ? (
+                      <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Sending...</>
+                    ) : (
+                      <><Send className="w-4 h-4" /> Send Reset Code</>
+                    )}
                   </button>
 
                   <Link href="/login" className="flex items-center justify-center gap-1.5 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors">
@@ -142,11 +224,13 @@ export default function ForgotPasswordPage() {
                   </Link>
                 </form>
 
-                <div className="mt-8 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                  <p className="text-xs font-semibold text-gray-700 mb-2">Need help?</p>
-                  <p className="text-xs text-gray-500 mb-2">Contact our support team at</p>
-                  <a href="mailto:support@marketbridge.com" className="text-xs text-blue-600 hover:underline block">support@marketbridge.com</a>
-                  <a href="tel:+15551234567" className="text-xs text-blue-600 hover:underline block mt-1">or call +1 (555) 123-4567</a>
+                <div className="mt-8 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                  <p className="text-xs font-semibold text-blue-700 mb-1.5">How it works</p>
+                  <ol className="text-xs text-blue-600 space-y-1">
+                    <li>1. Enter your registered Telegram username</li>
+                    <li>2. We send a 6-digit code to your Telegram</li>
+                    <li>3. Enter the code and set a new password</li>
+                  </ol>
                 </div>
               </>
             )}
@@ -163,44 +247,27 @@ export default function ForgotPasswordPage() {
         </div>
 
         <div className="relative z-10 text-center max-w-sm">
-          {/* Mailbox illustration */}
+          {/* Telegram illustration */}
           <div className="relative w-48 h-48 mx-auto mb-8">
             <div className="w-full h-full rounded-3xl bg-blue-100 flex items-center justify-center">
               <svg viewBox="0 0 200 200" className="w-40 h-40">
-                {/* Mailbox body */}
-                <rect x="30" y="90" width="140" height="80" rx="8" fill="#3B82F6" />
-                <rect x="30" y="90" width="140" height="40" rx="8" fill="#2563EB" />
-                {/* Flag */}
-                <rect x="145" y="70" width="6" height="50" fill="#6B7280" rx="2"/>
-                <rect x="145" y="70" width="20" height="14" fill="#EF4444" rx="2"/>
-                {/* Slot */}
-                <rect x="55" y="105" width="70" height="8" rx="4" fill="#1D4ED8" />
-                {/* Post */}
-                <rect x="85" y="170" width="30" height="20" rx="4" fill="#6B7280" />
-                {/* Envelope peaking out */}
-                <path d="M60 82 L100 105 L140 82 Z" fill="#FEF3C7" />
-                <rect x="60" y="65" width="80" height="40" rx="4" fill="#FFFBEB" />
-                <path d="M60 65 L100 90 L140 65" stroke="#F59E0B" strokeWidth="2" fill="none"/>
+                <circle cx="100" cy="100" r="70" fill="#3B82F6" />
+                <path d="M70 105 L140 75 L125 140 L105 125 L90 140 Z" fill="white" />
+                <path d="M70 105 L125 140 L105 125 Z" fill="#E0E7FF" />
               </svg>
             </div>
           </div>
 
-          <h2 className="text-2xl font-bold text-gray-900 mb-3">Forgot Your Password?</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-3">Reset via Telegram</h2>
           <p className="text-gray-500 text-sm leading-relaxed mb-6">
-            No worries! Enter your email address and we&apos;ll send you a link to reset your password.
+            Password recovery is handled through Telegram. Make sure your account is linked to your Telegram username in your profile settings.
           </p>
 
           <div className="bg-white rounded-2xl p-5 text-left shadow-sm border border-blue-100">
-            <p className="text-sm font-semibold text-gray-900 mb-3">Need help?</p>
-            <p className="text-xs text-gray-500 mb-3">Contact our support team at</p>
-            <a href="mailto:support@marketbridge.com" className="flex items-center gap-2 text-sm text-blue-600 hover:underline mb-2">
-              <Mail className="w-4 h-4" />
-              support@marketbridge.com
-            </a>
-            <a href="tel:+15551234567" className="flex items-center gap-2 text-sm text-blue-600 hover:underline">
-              <Phone className="w-4 h-4" />
-              or call +1 (555) 123-4567
-            </a>
+            <p className="text-sm font-semibold text-gray-900 mb-2">Don&apos;t have Telegram linked?</p>
+            <p className="text-xs text-gray-500">
+              Contact your administrator to link your Telegram account to your MarketBridge profile for password recovery.
+            </p>
           </div>
         </div>
       </div>

@@ -39,6 +39,11 @@ export const registerSchema = z.object({
     .optional()
     .or(z.literal('')),
   role: z.enum(['customer', 'warehouse']).default('customer'),
+  telegram_username: z.string()
+    .max(50, 'Telegram username is too long')
+    .optional()
+    .or(z.literal(''))
+    .transform(v => v ? v.replace(/^@/, '').toLowerCase() : undefined),
 });
 
 // Password change

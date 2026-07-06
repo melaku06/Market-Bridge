@@ -1,6 +1,7 @@
 // MarketBridge Database Schema
 // Enterprise-grade multi-vendor marketplace platform
 // PostgreSQL with Prisma ORM
+// Single source of truth for the entire application
 
 generator client {
   provider = "prisma-client-js"
@@ -87,6 +88,7 @@ enum NotificationType {
   promotion
   account
   inventory
+  telegram
 }
 
 /// Notification urgency
@@ -114,9 +116,32 @@ enum PromotionStatus {
 /// Telegram post states
 enum PostStatus {
   queued
+  sending
   sent
   failed
   retrying
+  cancelled
+}
+
+/// Telegram target types
+enum TelegramTargetType {
+  channel
+  group
+  user
+}
+
+/// Telegram bot connection state
+enum TelegramBotStatus {
+  connected
+  disconnected
+  error
+}
+
+/// Password reset token state
+enum PasswordResetStatus {
+  pending
+  used
+  expired
 }
 
 // ============================================================================
@@ -125,30 +150,38 @@ enum PostStatus {
 
 /// User profiles
 model Profile {
-  id            String       @id
-  email         String       @unique
-  name          String
-  phone         String?
-  avatar_url    String?
-  role          UserRole     @default(customer)
-  status        UserStatus   @default(active)
-  warehouse_id  String?
+  id              String   @id
+  email           String   @unique
+  name            String
+  phone           String?
+  avatar_url      String?
+  role            UserRole @default(customer)
+  status          UserStatus @default(active)
+  warehouse_id    String?
 
-  credentials   UserCredential?
-  warehouse     Warehouse?        @relation(fields: [warehouse_id], references: [id], onDelete: SetNull)
-  addresses     Address[]
-  orders        Order[]
-  reviews       Review[]
-  wishlist      WishlistItem[]
-  requests      ProductRequest[]
-  notifications Notification[]
+  // Telegram integration for password recovery
+  telegram_username String?
+  telegram_id      String?  @unique
 
-  created_at    DateTime     @default(now())
-  updated_at    DateTime     @updatedAt
+  credentials     UserCredential?
+  warehouse       Warehouse?     @relation(fields: [warehouse_id], references: [id], onDelete: SetNull)
+  addresses       Address[]
+  orders          Order[]
+  reviews         Review[]
+  wishlist        WishlistItem[]
+  requests        ProductRequest[]
+  notifications   Notification[]
+  password_resets PasswordResetToken[]
+
+  created_at      DateTime   @default(now())
+  updated_at      DateTime   @updatedAt
+  deleted_at      DateTime?
 
   @@index([email])
   @@index([role])
   @@index([warehouse_id])
+  @@index([telegram_username])
+  @@index([status])
   @@map("profiles")
 }
 
@@ -164,37 +197,59 @@ model UserCredential {
   @@map("user_credentials")
 }
 
+/// Password reset tokens (Telegram-based recovery)
+model PasswordResetToken {
+  id          String             @id @default(uuid())
+  user_id     String
+  token_hash  String             @unique
+  status      PasswordResetStatus @default(pending)
+  expires_at  DateTime
+  used_at     DateTime?
+
+  user        Profile            @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  created_at  DateTime           @default(now())
+
+  @@index([user_id])
+  @@index([token_hash])
+  @@index([status])
+  @@index([expires_at])
+  @@map("password_reset_tokens")
+}
+
 // ============================================================================
 // WAREHOUSE / SELLER
 // ============================================================================
 
 /// Warehouse/Seller accounts
 model Warehouse {
-  id                String           @id @default(uuid())
-  name              String
-  owner_name        String
-  email             String           @unique
-  phone             String
-  address           String
-  city              String
-  country           String           @default("Ethiopia")
-  business_type     String?
-  bank_name         String?
-  bank_account      String?
-  tax_id            String?
-  status            WarehouseStatus  @default(pending_approval)
-  member_since      DateTime         @default(now())
+  id              String           @id @default(uuid())
+  name            String
+  owner_name      String
+  email           String           @unique
+  phone           String
+  address         String
+  city            String
+  country         String           @default("Ethiopia")
+  business_type   String?
+  bank_name       String?
+  bank_account    String?
+  tax_id          String?
+  status          WarehouseStatus  @default(pending_approval)
+  member_since    DateTime         @default(now())
 
-  profiles          Profile[]
-  products          Product[]
-  inventory         Inventory[]
-  orders            Order[]
+  profiles        Profile[]
+  products        Product[]
+  inventory       Inventory[]
+  orders          Order[]
 
-  created_at        DateTime         @default(now())
-  updated_at        DateTime         @updatedAt
+  created_at      DateTime         @default(now())
+  updated_at      DateTime         @updatedAt
+  deleted_at      DateTime?
 
   @@index([email])
   @@index([status])
+  @@index([city])
   @@map("warehouses")
 }
 
@@ -204,24 +259,27 @@ model Warehouse {
 
 /// Product categories with hierarchy
 model Category {
-  id              String    @id @default(uuid())
-  name            String    @unique
-  slug            String    @unique
-  description    String?
-  image_url      String?
-  parent_id      String?
-  is_active      Boolean   @default(true)
+  id            String      @id @default(uuid())
+  name          String       @unique
+  slug          String       @unique
+  description   String?
+  image_url     String?
+  parent_id     String?
+  is_active     Boolean      @default(true)
+  sort_order    Int          @default(0)
 
-  parent         Category?  @relation("CategoryHierarchy", fields: [parent_id], references: [id], onDelete: SetNull)
-  children       Category[] @relation("CategoryHierarchy")
-  products       Product[]
-  margin_rules   MarginRule[]
+  parent        Category?    @relation("CategoryHierarchy", fields: [parent_id], references: [id], onDelete: SetNull)
+  children      Category[]   @relation("CategoryHierarchy")
+  products      Product[]
+  margin_rules  MarginRule[]
 
-  created_at     DateTime   @default(now())
+  created_at    DateTime     @default(now())
+  updated_at    DateTime     @updatedAt
 
   @@index([slug])
   @@index([parent_id])
   @@index([is_active])
+  @@index([sort_order])
   @@map("categories")
 }
 
@@ -247,40 +305,45 @@ model Product {
   sku               String?       @unique
   weight            String?
   colors            String[]      @default([])
+  sizes             String[]      @default([])
 
   warehouse         Warehouse     @relation(fields: [warehouse_id], references: [id], onDelete: Cascade)
   category          Category?     @relation(fields: [category_id], references: [id], onDelete: SetNull)
   inventory         Inventory[]
   reviews           Review[]
   wishlist          WishlistItem[]
+  order_items       OrderItem[]
   telegram_posts    TelegramPost[]
 
   created_at        DateTime      @default(now())
   updated_at        DateTime      @updatedAt
+  deleted_at        DateTime?
 
   @@index([slug])
   @@index([warehouse_id])
   @@index([category_id])
   @@index([status])
   @@index([sku])
+  @@index([brand])
+  @@index([created_at])
   @@map("products")
 }
 
 /// Stock tracking per warehouse
 model Inventory {
-  id                  String     @id @default(uuid())
-  warehouse_id        String
-  product_id          String
-  quantity            Int        @default(0)
-  reserved_quantity   Int        @default(0)
-  low_stock_threshold Int       @default(10)
-  status              StockStatus @default(in_stock)
+  id                   String      @id @default(uuid())
+  warehouse_id         String
+  product_id           String
+  quantity             Int         @default(0)
+  reserved_quantity    Int         @default(0)
+  low_stock_threshold  Int         @default(10)
+  status               StockStatus @default(in_stock)
 
-  warehouse          Warehouse  @relation(fields: [warehouse_id], references: [id], onDelete: Cascade)
-  product            Product    @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  warehouse            Warehouse   @relation(fields: [warehouse_id], references: [id], onDelete: Cascade)
+  product              Product     @relation(fields: [product_id], references: [id], onDelete: Cascade)
 
-  created_at          DateTime   @default(now())
-  updated_at          DateTime   @updatedAt
+  created_at           DateTime    @default(now())
+  updated_at           DateTime    @updatedAt
 
   @@unique([warehouse_id, product_id])
   @@index([warehouse_id])
@@ -295,8 +358,8 @@ model Inventory {
 
 /// Customer orders
 model Order {
-  id               String           @id @default(cuid())
-  order_number     String           @unique
+  id               String        @id @default(cuid())
+  order_number     String        @unique
   customer_id      String
   warehouse_id     String
 
@@ -304,29 +367,30 @@ model Order {
   customer_email   String
   customer_phone   String?
 
-  subtotal         Decimal          @db.Decimal(15, 2)
-  shipping_fee     Decimal          @default(0) @db.Decimal(15, 2)
-  discount         Decimal          @default(0) @db.Decimal(15, 2)
-  tax              Decimal          @default(0) @db.Decimal(15, 2)
-  total            Decimal          @db.Decimal(15, 2)
+  subtotal         Decimal       @db.Decimal(15, 2)
+  shipping_fee     Decimal       @default(0) @db.Decimal(15, 2)
+  discount         Decimal       @default(0) @db.Decimal(15, 2)
+  tax              Decimal       @default(0) @db.Decimal(15, 2)
+  total            Decimal       @db.Decimal(15, 2)
 
   shipping_address String
   shipping_city    String
   shipping_method  String
 
   payment_method   String
-  payment_status   PaymentStatus    @default(pending)
-  status           OrderStatus      @default(pending)
+  payment_status   PaymentStatus @default(pending)
+  status           OrderStatus   @default(pending)
 
   tracking_number  String?
   notes            String?
 
-  customer         Profile          @relation(fields: [customer_id], references: [id], onDelete: Cascade)
-  warehouse        Warehouse        @relation(fields: [warehouse_id], references: [id], onDelete: Cascade)
+  customer         Profile       @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+  warehouse        Warehouse     @relation(fields: [warehouse_id], references: [id], onDelete: Cascade)
   items            OrderItem[]
+  status_history   OrderStatusHistory[]
 
-  created_at       DateTime         @default(now())
-  updated_at       DateTime         @updatedAt
+  created_at       DateTime      @default(now())
+  updated_at       DateTime      @updatedAt
 
   @@index([order_number])
   @@index([customer_id])
@@ -339,39 +403,61 @@ model Order {
 
 /// Order line items
 model OrderItem {
-  id           String   @id @default(uuid())
-  order_id     String
-  product_id   String
-  product_name String
+  id            String   @id @default(uuid())
+  order_id      String
+  product_id    String
+  product_name  String
   product_image String?
-  quantity     Int
-  unit_price   Decimal  @db.Decimal(15, 2)
-  total_price  Decimal  @db.Decimal(15, 2)
-  color        String?
-  size         String?
+  quantity      Int
+  unit_price    Decimal  @db.Decimal(15, 2)
+  total_price   Decimal  @db.Decimal(15, 2)
+  color         String?
+  size          String?
 
-  order        Order    @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  order         Order    @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  product       Product  @relation(fields: [product_id], references: [id], onDelete: Restrict)
 
   @@index([order_id])
   @@index([product_id])
   @@map("order_items")
 }
 
+/// Order status change history (audit trail for order lifecycle)
+model OrderStatusHistory {
+  id          String      @id @default(uuid())
+  order_id    String
+  from_status OrderStatus?
+  to_status   OrderStatus
+  changed_by  String
+  changed_by_name String
+  notes       String?
+
+  order       Order       @relation(fields: [order_id], references: [id], onDelete: Cascade)
+
+  created_at  DateTime    @default(now())
+
+  @@index([order_id])
+  @@index([to_status])
+  @@index([created_at])
+  @@map("order_status_history")
+}
+
 /// Customer shipping addresses
 model Address {
-  id           String   @id @default(uuid())
-  customer_id  String
-  label        String   @default("Home")
-  recipient_name String
-  phone        String?
-  address      String
-  city         String
-  country      String   @default("Ethiopia")
-  is_default   Boolean  @default(false)
+  id              String   @id @default(uuid())
+  customer_id     String
+  label           String   @default("Home")
+  recipient_name  String
+  phone           String?
+  address         String
+  city            String
+  country         String   @default("Ethiopia")
+  is_default      Boolean  @default(false)
 
-  customer     Profile  @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+  customer        Profile  @relation(fields: [customer_id], references: [id], onDelete: Cascade)
 
-  created_at   DateTime @default(now())
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
 
   @@index([customer_id])
   @@map("addresses")
@@ -392,10 +478,11 @@ model Review {
   comment       String?
   product_image String?
 
-  customer      Profile  @relation(fields: [customer_id], references: [id], onDelete: Cascade)
-  product       Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  customer      Profile   @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+  product       Product   @relation(fields: [product_id], references: [id], onDelete: Cascade)
 
-  created_at    DateTime @default(now())
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
 
   @@index([customer_id])
   @@index([product_id])
@@ -421,23 +508,25 @@ model WishlistItem {
 
 /// Product requests from customers
 model ProductRequest {
-  id             String         @id @default(uuid())
-  customer_id    String
-  customer_email String
-  product_name   String
-  description   String
-  category      String?
-  brand          String?
-  image_url      String?
-  status         RequestStatus  @default(pending)
-  admin_notes    String?
+  id              String         @id @default(uuid())
+  customer_id     String
+  customer_email  String
+  product_name    String
+  description     String
+  category        String?
+  brand           String?
+  image_url       String?
+  status          RequestStatus  @default(pending)
+  admin_notes     String?
 
-  customer       Profile        @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+  customer        Profile         @relation(fields: [customer_id], references: [id], onDelete: Cascade)
 
-  created_at     DateTime       @default(now())
+  created_at      DateTime        @default(now())
+  updated_at      DateTime        @updatedAt
 
   @@index([customer_id])
   @@index([status])
+  @@index([created_at])
   @@map("product_requests")
 }
 
@@ -445,9 +534,9 @@ model ProductRequest {
 // NOTIFICATIONS
 // ============================================================================
 
-/// System notifications
+/// System notifications (in-app notification center)
 model Notification {
-  id           String             @id @default(uuid())
+  id           String               @id @default(uuid())
   user_id      String
   type         NotificationType
   priority     NotificationPriority @default(medium)
@@ -455,15 +544,17 @@ model Notification {
   message      String
   data         String?
   action_url   String?
-  is_read      Boolean            @default(false)
+  is_read      Boolean              @default(false)
+  read_at      DateTime?
 
-  user         Profile            @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user         Profile              @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
-  created_at   DateTime           @default(now())
+  created_at   DateTime             @default(now())
 
   @@index([user_id])
   @@index([is_read])
   @@index([type])
+  @@index([created_at])
   @@map("notifications")
 }
 
@@ -479,36 +570,38 @@ model Promotion {
   image_url       String?
   target_url      String?
   location        String?
-  target_audience String         @default("All Users")
-  status          PromotionStatus @default(inactive)
+  target_audience String          @default("All Users")
+  status          PromotionStatus  @default(inactive)
   start_date      DateTime?
   end_date        DateTime?
-  impressions     Int            @default(0)
-  clicks          Int            @default(0)
+  impressions     Int             @default(0)
+  clicks          Int             @default(0)
 
-  created_at      DateTime       @default(now())
-  updated_at      DateTime       @updatedAt
+  created_at      DateTime         @default(now())
+  updated_at      DateTime         @updatedAt
 
   @@index([type])
   @@index([status])
+  @@index([start_date])
+  @@index([end_date])
   @@map("promotions")
 }
 
 /// Category/Product margin rules
 model MarginRule {
-  id              String    @id @default(uuid())
-  category_id     String?
-  product_id      String?   @unique
-  category_name   String?
-  warehouse_margin Decimal  @db.Decimal(5, 2)
-  platform_margin Decimal  @db.Decimal(5, 2)
-  total_margin    Decimal  @db.Decimal(5, 2)
-  is_active       Boolean  @default(true)
+  id               String    @id @default(uuid())
+  category_id      String?
+  product_id       String?   @unique
+  category_name    String?
+  warehouse_margin Decimal   @db.Decimal(5, 2)
+  platform_margin  Decimal   @db.Decimal(5, 2)
+  total_margin     Decimal   @db.Decimal(5, 2)
+  is_active        Boolean   @default(true)
 
-  category        Category? @relation(fields: [category_id], references: [id], onDelete: SetNull)
+  category         Category? @relation(fields: [category_id], references: [id], onDelete: SetNull)
 
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
 
   @@index([category_id])
   @@index([is_active])
@@ -518,18 +611,18 @@ model MarginRule {
 /// Audit logging
 model AuditLog {
   id           String   @id @default(uuid())
-  actor_id      String
-  actor_name    String
-  actor_role    String
-  action        String
-  entity_type   String
-  entity_id     String
-  description   String?
-  before_state  String?
-  after_state   String?
-  ip_address    String?
+  actor_id     String
+  actor_name   String
+  actor_role   String
+  action       String
+  entity_type  String
+  entity_id    String
+  description  String?
+  before_state String?
+  after_state  String?
+  ip_address   String?
 
-  created_at    DateTime @default(now())
+  created_at   DateTime @default(now())
 
   @@index([actor_id])
   @@index([entity_type])
@@ -537,26 +630,6 @@ model AuditLog {
   @@index([action])
   @@index([created_at])
   @@map("audit_logs")
-}
-
-/// Telegram marketing posts
-model TelegramPost {
-  id           String     @id @default(uuid())
-  product_id   String
-  product_name String
-  channel      String
-  message      String
-  status       PostStatus @default(queued)
-  error        String?
-  sent_at      DateTime?
-
-  product      Product    @relation(fields: [product_id], references: [id], onDelete: Cascade)
-
-  created_at   DateTime   @default(now())
-
-  @@index([product_id])
-  @@index([status])
-  @@map("telegram_posts")
 }
 
 /// Platform configuration (singleton)
@@ -577,4 +650,160 @@ model SystemSettings {
   updated_at       DateTime @updatedAt
 
   @@map("system_settings")
+}
+
+// ============================================================================
+// TELEGRAM INTEGRATION
+// ============================================================================
+
+/// Telegram Bot configuration (singleton)
+model TelegramBot {
+  id              String             @id @default(cuid())
+  bot_token       String
+  bot_username    String?
+  bot_name        String?
+  status          TelegramBotStatus  @default(disconnected)
+  webhook_url     String?
+  last_sync_at    DateTime?
+  last_error      String?
+
+  channels        TelegramChannel[]
+  groups          TelegramGroup[]
+  posts           TelegramPost[]
+  templates       TelegramPostTemplate[]
+  activity_logs   TelegramActivityLog[]
+
+  created_at      DateTime           @default(now())
+  updated_at      DateTime           @updatedAt
+
+  @@map("telegram_bots")
+}
+
+/// Telegram channels for posting
+model TelegramChannel {
+  id              String   @id @default(uuid())
+  bot_id          String
+  channel_id      String   @unique
+  channel_name    String
+  channel_username String?
+  member_count    Int      @default(0)
+  is_active       Boolean  @default(true)
+
+  bot             TelegramBot @relation(fields: [bot_id], references: [id], onDelete: Cascade)
+  posts           TelegramPost[]
+
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  @@index([bot_id])
+  @@index([is_active])
+  @@index([channel_username])
+  @@map("telegram_channels")
+}
+
+/// Telegram groups for posting
+model TelegramGroup {
+  id              String   @id @default(uuid())
+  bot_id          String
+  group_id        String   @unique
+  group_name      String
+  group_username  String?
+  member_count    Int      @default(0)
+  is_active       Boolean  @default(true)
+
+  bot             TelegramBot @relation(fields: [bot_id], references: [id], onDelete: Cascade)
+  posts           TelegramPost[]
+
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  @@index([bot_id])
+  @@index([is_active])
+  @@map("telegram_groups")
+}
+
+/// Reusable post templates
+model TelegramPostTemplate {
+  id              String   @id @default(uuid())
+  bot_id          String
+  name            String
+  template        String
+  variables       String[] @default([])
+  is_active       Boolean  @default(true)
+
+  bot             TelegramBot @relation(fields: [bot_id], references: [id], onDelete: Cascade)
+  posts           TelegramPost[]
+
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  @@index([bot_id])
+  @@index([is_active])
+  @@map("telegram_post_templates")
+}
+
+/// Telegram marketing posts (queue, scheduled, published, failed)
+model TelegramPost {
+  id              String        @id @default(uuid())
+  bot_id          String
+  product_id      String
+  product_name    String
+  template_id     String?
+
+  target_type     TelegramTargetType @default(channel)
+  channel_id      String?
+  group_id        String?
+
+  message         String
+  image_urls      String[]      @default([])
+  status          PostStatus    @default(queued)
+  error           String?
+  retry_count     Int           @default(0)
+  max_retries     Int           @default(3)
+  next_retry_at   DateTime?
+
+  scheduled_at    DateTime?
+  sent_at         DateTime?
+
+  bot             TelegramBot          @relation(fields: [bot_id], references: [id], onDelete: Cascade)
+  channel         TelegramChannel?    @relation(fields: [channel_id], references: [id], onDelete: SetNull)
+  group           TelegramGroup?       @relation(fields: [group_id], references: [id], onDelete: SetNull)
+  template        TelegramPostTemplate? @relation(fields: [template_id], references: [id], onDelete: SetNull)
+  product         Product              @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  activity_logs   TelegramActivityLog[]
+
+  created_at      DateTime     @default(now())
+  updated_at      DateTime     @updatedAt
+
+  @@index([bot_id])
+  @@index([product_id])
+  @@index([status])
+  @@index([scheduled_at])
+  @@index([next_retry_at])
+  @@index([channel_id])
+  @@index([group_id])
+  @@map("telegram_posts")
+}
+
+/// Telegram activity logs (audit trail for all bot actions)
+model TelegramActivityLog {
+  id          String   @id @default(uuid())
+  bot_id      String
+  post_id     String?
+  action      String
+  status      String
+  message     String?
+  error       String?
+
+  bot         TelegramBot    @relation(fields: [bot_id], references: [id], onDelete: Cascade)
+  post        TelegramPost?  @relation(fields: [post_id], references: [id], onDelete: SetNull)
+
+  created_at  DateTime       @default(now())
+
+  @@index([bot_id])
+  @@index([post_id])
+  @@index([action])
+  @@index([status])
+  @@index([created_at])
+  @@map("telegram_activity_logs")
 }

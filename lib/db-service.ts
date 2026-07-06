@@ -787,15 +787,163 @@ export async function updateSystemSettings(data: Record<string, any>) {
 // TELEGRAM POSTS
 // ============================================================================
 
-export async function getTelegramPosts(params?: { product_id?: string; status?: string }) {
+// ============================================================================
+// TELEGRAM BOT CONFIGURATION
+// ============================================================================
+
+export async function getTelegramBot() {
+  return prisma.telegramBot.findFirst();
+}
+
+export async function createTelegramBot(data: Prisma.TelegramBotCreateInput) {
+  return prisma.telegramBot.create({ data });
+}
+
+export async function updateTelegramBot(id: string, data: Prisma.TelegramBotUpdateInput) {
+  return prisma.telegramBot.update({ where: { id }, data });
+}
+
+export async function deleteTelegramBot(id: string) {
+  return prisma.telegramBot.delete({ where: { id } });
+}
+
+// ============================================================================
+// TELEGRAM CHANNELS
+// ============================================================================
+
+export async function getTelegramChannels(params?: { bot_id?: string; is_active?: boolean }) {
+  const where: Prisma.TelegramChannelWhereInput = {};
+  if (params?.bot_id) where.bot_id = params.bot_id;
+  if (params?.is_active !== undefined) where.is_active = params.is_active;
+
+  return prisma.telegramChannel.findMany({
+    where,
+    orderBy: { created_at: 'desc' },
+  });
+}
+
+export async function getTelegramChannelById(id: string) {
+  return prisma.telegramChannel.findUnique({ where: { id } });
+}
+
+export async function createTelegramChannel(data: Prisma.TelegramChannelCreateInput) {
+  return prisma.telegramChannel.create({ data });
+}
+
+export async function updateTelegramChannel(id: string, data: Prisma.TelegramChannelUpdateInput) {
+  return prisma.telegramChannel.update({ where: { id }, data });
+}
+
+export async function deleteTelegramChannel(id: string) {
+  return prisma.telegramChannel.delete({ where: { id } });
+}
+
+// ============================================================================
+// TELEGRAM GROUPS
+// ============================================================================
+
+export async function getTelegramGroups(params?: { bot_id?: string; is_active?: boolean }) {
+  const where: Prisma.TelegramGroupWhereInput = {};
+  if (params?.bot_id) where.bot_id = params.bot_id;
+  if (params?.is_active !== undefined) where.is_active = params.is_active;
+
+  return prisma.telegramGroup.findMany({
+    where,
+    orderBy: { created_at: 'desc' },
+  });
+}
+
+export async function getTelegramGroupById(id: string) {
+  return prisma.telegramGroup.findUnique({ where: { id } });
+}
+
+export async function createTelegramGroup(data: Prisma.TelegramGroupCreateInput) {
+  return prisma.telegramGroup.create({ data });
+}
+
+export async function updateTelegramGroup(id: string, data: Prisma.TelegramGroupUpdateInput) {
+  return prisma.telegramGroup.update({ where: { id }, data });
+}
+
+export async function deleteTelegramGroup(id: string) {
+  return prisma.telegramGroup.delete({ where: { id } });
+}
+
+// ============================================================================
+// TELEGRAM POST TEMPLATES
+// ============================================================================
+
+export async function getTelegramTemplates(params?: { bot_id?: string; is_active?: boolean }) {
+  const where: Prisma.TelegramPostTemplateWhereInput = {};
+  if (params?.bot_id) where.bot_id = params.bot_id;
+  if (params?.is_active !== undefined) where.is_active = params.is_active;
+
+  return prisma.telegramPostTemplate.findMany({
+    where,
+    orderBy: { created_at: 'desc' },
+  });
+}
+
+export async function getTelegramTemplateById(id: string) {
+  return prisma.telegramPostTemplate.findUnique({ where: { id } });
+}
+
+export async function createTelegramTemplate(data: Prisma.TelegramPostTemplateCreateInput) {
+  return prisma.telegramPostTemplate.create({ data });
+}
+
+export async function updateTelegramTemplate(id: string, data: Prisma.TelegramPostTemplateUpdateInput) {
+  return prisma.telegramPostTemplate.update({ where: { id }, data });
+}
+
+export async function deleteTelegramTemplate(id: string) {
+  return prisma.telegramPostTemplate.delete({ where: { id } });
+}
+
+// ============================================================================
+// TELEGRAM POSTS (Queue, Scheduled, Published, Failed)
+// ============================================================================
+
+export async function getTelegramPosts(params?: {
+  product_id?: string;
+  status?: string;
+  bot_id?: string;
+  channel_id?: string;
+  group_id?: string;
+  limit?: number;
+  offset?: number;
+}) {
   const where: Prisma.TelegramPostWhereInput = {};
   if (params?.product_id) where.product_id = params.product_id;
   if (params?.status) where.status = params.status as any;
+  if (params?.bot_id) where.bot_id = params.bot_id;
+  if (params?.channel_id) where.channel_id = params.channel_id;
+  if (params?.group_id) where.group_id = params.group_id;
 
   return prisma.telegramPost.findMany({
     where,
-    include: { product: true },
+    include: {
+      product: { select: { id: true, name: true, images: true, base_price: true } },
+      channel: { select: { id: true, channel_name: true } },
+      group: { select: { id: true, group_name: true } },
+      template: { select: { id: true, name: true } },
+    },
     orderBy: { created_at: 'desc' },
+    take: params?.limit || 50,
+    skip: params?.offset || 0,
+  });
+}
+
+export async function getTelegramPostById(id: string) {
+  return prisma.telegramPost.findUnique({
+    where: { id },
+    include: {
+      product: true,
+      channel: true,
+      group: true,
+      template: true,
+      activity_logs: { orderBy: { created_at: 'desc' }, take: 20 },
+    },
   });
 }
 
@@ -805,6 +953,128 @@ export async function createTelegramPost(data: Prisma.TelegramPostCreateInput) {
 
 export async function updateTelegramPost(id: string, data: Prisma.TelegramPostUpdateInput) {
   return prisma.telegramPost.update({ where: { id }, data });
+}
+
+export async function deleteTelegramPost(id: string) {
+  return prisma.telegramPost.delete({ where: { id } });
+}
+
+export async function getScheduledTelegramPosts() {
+  return prisma.telegramPost.findMany({
+    where: {
+      status: 'queued',
+      scheduled_at: { lte: new Date() },
+    },
+    include: {
+      product: { select: { id: true, name: true, images: true, base_price: true } },
+      channel: true,
+      group: true,
+    },
+  });
+}
+
+export async function getRetryQueue() {
+  return prisma.telegramPost.findMany({
+    where: {
+      status: 'retrying',
+      next_retry_at: { lte: new Date() },
+      retry_count: { lt: 3 },
+    },
+    include: {
+      product: { select: { id: true, name: true, images: true } },
+      channel: true,
+      group: true,
+    },
+  });
+}
+
+// ============================================================================
+// TELEGRAM ACTIVITY LOGS
+// ============================================================================
+
+export async function getTelegramActivityLogs(params?: {
+  bot_id?: string;
+  post_id?: string;
+  action?: string;
+  status?: string;
+  limit?: number;
+  offset?: number;
+}) {
+  const where: Prisma.TelegramActivityLogWhereInput = {};
+  if (params?.bot_id) where.bot_id = params.bot_id;
+  if (params?.post_id) where.post_id = params.post_id;
+  if (params?.action) where.action = { contains: params.action, mode: 'insensitive' };
+  if (params?.status) where.status = params.status;
+
+  return prisma.telegramActivityLog.findMany({
+    where,
+    include: {
+      post: { select: { id: true, product_name: true } },
+    },
+    orderBy: { created_at: 'desc' },
+    take: params?.limit || 50,
+    skip: params?.offset || 0,
+  });
+}
+
+export async function createTelegramActivityLog(data: Prisma.TelegramActivityLogCreateInput) {
+  return prisma.telegramActivityLog.create({ data });
+}
+
+// ============================================================================
+// PASSWORD RESET TOKENS (Telegram-based recovery)
+// ============================================================================
+
+export async function createPasswordResetToken(userId: string, tokenHash: string, expiresAt: Date) {
+  return prisma.passwordResetToken.create({
+    data: {
+      user_id: userId,
+      token_hash: tokenHash,
+      expires_at: expiresAt,
+    },
+  });
+}
+
+export async function getPasswordResetToken(tokenHash: string) {
+  return prisma.passwordResetToken.findUnique({
+    where: { token_hash: tokenHash },
+    include: { user: true },
+  });
+}
+
+export async function markPasswordResetTokenUsed(id: string) {
+  return prisma.passwordResetToken.update({
+    where: { id },
+    data: {
+      status: 'used',
+      used_at: new Date(),
+    },
+  });
+}
+
+export async function expirePasswordResetTokens(userId: string) {
+  return prisma.passwordResetToken.updateMany({
+    where: {
+      user_id: userId,
+      status: 'pending',
+    },
+    data: { status: 'expired' },
+  });
+}
+
+// ============================================================================
+// ORDER STATUS HISTORY
+// ============================================================================
+
+export async function getOrderStatusHistory(orderId: string) {
+  return prisma.orderStatusHistory.findMany({
+    where: { order_id: orderId },
+    orderBy: { created_at: 'asc' },
+  });
+}
+
+export async function createOrderStatusHistory(data: Prisma.OrderStatusHistoryCreateInput) {
+  return prisma.orderStatusHistory.create({ data });
 }
 
 // ============================================================================

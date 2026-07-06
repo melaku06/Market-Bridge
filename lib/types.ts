@@ -16,11 +16,14 @@ export type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'shipped' | '
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded' | 'cod';
 export type StockStatus = 'in_stock' | 'low_stock' | 'out_of_stock';
 export type RequestStatus = 'pending' | 'in_review' | 'found' | 'not_available';
-export type NotificationType = 'order' | 'product' | 'system' | 'promotion' | 'account' | 'inventory';
+export type NotificationType = 'order' | 'product' | 'system' | 'promotion' | 'account' | 'inventory' | 'telegram';
 export type NotificationPriority = 'high' | 'medium' | 'low';
 export type PromotionType = 'banner' | 'promotion' | 'flash_deal' | 'coupon';
 export type PromotionStatus = 'active' | 'inactive' | 'paused';
-export type PostStatus = 'queued' | 'sent' | 'failed' | 'retrying';
+export type PostStatus = 'queued' | 'sending' | 'sent' | 'failed' | 'retrying' | 'cancelled';
+export type TelegramTargetType = 'channel' | 'group' | 'user';
+export type TelegramBotStatus = 'connected' | 'disconnected' | 'error';
+export type PasswordResetStatus = 'pending' | 'used' | 'expired';
 
 // Legacy aliases for backwards compatibility
 export type Role = UserRole;
@@ -39,8 +42,11 @@ export interface Profile {
   role: UserRole;
   status: UserStatus;
   warehouse_id?: string | null;
+  telegram_username?: string | null;
+  telegram_id?: string | null;
   created_at: string;
   updated_at: string;
+  deleted_at?: string | null;
 }
 
 export interface UserCredential {
@@ -48,6 +54,16 @@ export interface UserCredential {
   password_hash: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface PasswordResetToken {
+  id: string;
+  user_id: string;
+  token_hash: string;
+  status: PasswordResetStatus;
+  expires_at: string;
+  used_at?: string | null;
+  created_at: string;
 }
 
 // Legacy alias
@@ -74,6 +90,7 @@ export interface Warehouse {
   member_since: string;
   created_at: string;
   updated_at: string;
+  deleted_at?: string | null;
 }
 
 // ============================================================================
@@ -88,7 +105,9 @@ export interface Category {
   image_url?: string | null;
   parent_id?: string | null;
   is_active: boolean;
+  sort_order: number;
   created_at: string;
+  updated_at: string;
 }
 
 export interface Product {
@@ -112,8 +131,10 @@ export interface Product {
   sku?: string | null;
   weight?: string | null;
   colors: string[];
+  sizes: string[];
   created_at: string;
   updated_at: string;
+  deleted_at?: string | null;
   category?: { id: string; name: string; slug?: string } | null;
   warehouse?: { id: string; name: string; owner_name?: string } | null;
   inventory?: { quantity: number; status: StockStatus }[] | null;
@@ -159,6 +180,7 @@ export interface Order {
   created_at: string;
   updated_at: string;
   items?: OrderItem[];
+  status_history?: OrderStatusHistory[];
 }
 
 export interface OrderItem {
@@ -172,6 +194,17 @@ export interface OrderItem {
   total_price: number;
   color?: string | null;
   size?: string | null;
+}
+
+export interface OrderStatusHistory {
+  id: string;
+  order_id: string;
+  from_status: OrderStatus | null;
+  to_status: OrderStatus;
+  changed_by: string;
+  changed_by_name: string;
+  notes?: string | null;
+  created_at: string;
 }
 
 // ============================================================================
@@ -189,6 +222,7 @@ export interface Address {
   country: string;
   is_default: boolean;
   created_at: string;
+  updated_at: string;
 }
 
 // ============================================================================
@@ -205,6 +239,7 @@ export interface Review {
   comment?: string | null;
   product_image?: string | null;
   created_at: string;
+  updated_at: string;
 }
 
 export interface WishlistItem {
@@ -226,6 +261,7 @@ export interface ProductRequest {
   status: RequestStatus;
   admin_notes?: string | null;
   created_at: string;
+  updated_at: string;
 }
 
 // ============================================================================
@@ -242,6 +278,7 @@ export interface Notification {
   data?: string | null;
   action_url?: string | null;
   is_read: boolean;
+  read_at?: string | null;
   created_at: string;
 }
 
@@ -294,18 +331,6 @@ export interface AuditLog {
   created_at: string;
 }
 
-export interface TelegramPost {
-  id: string;
-  product_id: string;
-  product_name: string;
-  channel: string;
-  message: string;
-  status: PostStatus;
-  error?: string | null;
-  sent_at?: string | null;
-  created_at: string;
-}
-
 export interface SystemSettings {
   id: string;
   site_name: string;
@@ -320,4 +345,89 @@ export interface SystemSettings {
   maintenance_mode: boolean;
   site_language: string;
   updated_at: string;
+}
+
+// ============================================================================
+// TELEGRAM INTEGRATION
+// ============================================================================
+
+export interface TelegramBot {
+  id: string;
+  bot_token: string;
+  bot_username?: string | null;
+  bot_name?: string | null;
+  status: TelegramBotStatus;
+  webhook_url?: string | null;
+  last_sync_at?: string | null;
+  last_error?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TelegramChannel {
+  id: string;
+  bot_id: string;
+  channel_id: string;
+  channel_name: string;
+  channel_username?: string | null;
+  member_count: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TelegramGroup {
+  id: string;
+  bot_id: string;
+  group_id: string;
+  group_name: string;
+  group_username?: string | null;
+  member_count: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TelegramPostTemplate {
+  id: string;
+  bot_id: string;
+  name: string;
+  template: string;
+  variables: string[];
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TelegramPost {
+  id: string;
+  bot_id: string;
+  product_id: string;
+  product_name: string;
+  template_id?: string | null;
+  target_type: TelegramTargetType;
+  channel_id?: string | null;
+  group_id?: string | null;
+  message: string;
+  image_urls: string[];
+  status: PostStatus;
+  error?: string | null;
+  retry_count: number;
+  max_retries: number;
+  next_retry_at?: string | null;
+  scheduled_at?: string | null;
+  sent_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TelegramActivityLog {
+  id: string;
+  bot_id: string;
+  post_id?: string | null;
+  action: string;
+  status: string;
+  message?: string | null;
+  error?: string | null;
+  created_at: string;
 }

@@ -20,6 +20,12 @@ import type {
   Promotion,
   AuditLog,
   SystemSettings,
+  TelegramBot,
+  TelegramChannel,
+  TelegramGroup,
+  TelegramPostTemplate,
+  TelegramPost,
+  TelegramActivityLog,
 } from '@/lib/types';
 
 const API_BASE = '/api';
@@ -299,5 +305,80 @@ export const adminApi = {
 
     update: (data: Partial<SystemSettings>) =>
       request<SystemSettings>('/admin/system-settings', { method: 'PUT', body: data as Record<string, unknown> }),
+  },
+
+  telegramBot: {
+    get: () =>
+      request<{ data: TelegramBot | null }>('/telegram/bot'),
+
+    save: (data: Partial<TelegramBot>) =>
+      request<{ data: TelegramBot }>('/telegram/bot', { method: 'POST', body: data as Record<string, unknown> }),
+
+    update: (data: Partial<TelegramBot>) =>
+      request<{ data: TelegramBot }>('/telegram/bot', { method: 'PUT', body: data as Record<string, unknown> }),
+  },
+
+  telegramChannels: {
+    list: (params?: { is_active?: boolean }) =>
+      request<{ data: TelegramChannel[] }>('/telegram/channels', { searchParams: params as Record<string, string> }),
+
+    create: (data: Partial<TelegramChannel>) =>
+      request<{ data: TelegramChannel }>('/telegram/channels', { method: 'POST', body: data as Record<string, unknown> }),
+
+    update: (id: string, data: Partial<TelegramChannel>) =>
+      request<{ data: TelegramChannel }>(`/telegram/channels/${id}`, { method: 'PUT', body: data as Record<string, unknown> }),
+
+    delete: (id: string) =>
+      request<{ success: boolean }>(`/telegram/channels/${id}`, { method: 'DELETE' }),
+  },
+
+  telegramGroups: {
+    list: (params?: { is_active?: boolean }) =>
+      request<{ data: TelegramGroup[] }>('/telegram/groups', { searchParams: params as Record<string, string> }),
+
+    create: (data: Partial<TelegramGroup>) =>
+      request<{ data: TelegramGroup }>('/telegram/groups', { method: 'POST', body: data as Record<string, unknown> }),
+
+    update: (id: string, data: Partial<TelegramGroup>) =>
+      request<{ data: TelegramGroup }>(`/telegram/groups/${id}`, { method: 'PUT', body: data as Record<string, unknown> }),
+
+    delete: (id: string) =>
+      request<{ success: boolean }>(`/telegram/groups/${id}`, { method: 'DELETE' }),
+  },
+
+  telegramTemplates: {
+    list: (params?: { is_active?: boolean }) =>
+      request<{ data: TelegramPostTemplate[] }>('/telegram/templates', { searchParams: params as Record<string, string> }),
+
+    create: (data: Partial<TelegramPostTemplate>) =>
+      request<{ data: TelegramPostTemplate }>('/telegram/templates', { method: 'POST', body: data as Record<string, unknown> }),
+
+    update: (id: string, data: Partial<TelegramPostTemplate>) =>
+      request<{ data: TelegramPostTemplate }>(`/telegram/templates/${id}`, { method: 'PUT', body: data as Record<string, unknown> }),
+
+    delete: (id: string) =>
+      request<{ success: boolean }>(`/telegram/templates/${id}`, { method: 'DELETE' }),
+  },
+
+  telegramPosts: {
+    list: (params?: { status?: string; product_id?: string; limit?: number; offset?: number }) =>
+      request<{ data: TelegramPost[] }>('/telegram/posts', { searchParams: params as Record<string, string> }),
+
+    get: (id: string) =>
+      request<{ data: TelegramPost }>(`/telegram/posts/${id}`),
+
+    create: (data: Record<string, unknown>) =>
+      request<{ data: TelegramPost }>('/telegram/posts', { method: 'POST', body: data }),
+
+    update: (id: string, data: Partial<TelegramPost>) =>
+      request<{ data: TelegramPost }>(`/telegram/posts/${id}`, { method: 'PUT', body: data as Record<string, unknown> }),
+
+    delete: (id: string) =>
+      request<{ success: boolean }>(`/telegram/posts/${id}`, { method: 'DELETE' }),
+  },
+
+  telegramActivityLogs: {
+    list: (params?: { bot_id?: string; post_id?: string; action?: string; status?: string; limit?: number; offset?: number }) =>
+      request<{ data: TelegramActivityLog[] }>('/telegram/activity-logs', { searchParams: params as Record<string, string> }),
   },
 };

@@ -16,6 +16,7 @@ export const profileSchema = z.object({
   role: userRoleSchema,
   status: userStatusSchema,
   warehouse_id: z.string().uuid().optional().nullable(),
+  telegram_username: z.string().optional().nullable(),
   created_at: z.coerce.date(),
   updated_at: z.coerce.date(),
 });
@@ -33,6 +34,11 @@ export const profileUpdateSchema = z.object({
     .optional()
     .nullable(),
   avatar_url: z.string().url('Invalid avatar URL').optional().nullable(),
+  telegram_username: z.string()
+    .max(50, 'Telegram username is too long')
+    .optional()
+    .nullable()
+    .transform(v => v ? v.replace(/^@/, '').toLowerCase() : v),
 });
 
 // Admin updating user status

@@ -11,6 +11,7 @@ export interface User {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  telegram_username?: string | null;
 }
 
 export interface AuthUser extends User {
@@ -33,6 +34,7 @@ export interface RegisterData {
   name: string;
   role?: UserRole;
   phone?: string;
+  telegram_username?: string;
 }
 
 export interface AuthResponse {

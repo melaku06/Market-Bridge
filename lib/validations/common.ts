@@ -92,7 +92,8 @@ export const notificationTypeSchema = z.enum([
   'system',
   'promotion',
   'account',
-  'inventory'
+  'inventory',
+  'telegram'
 ]);
 
 export const notificationPrioritySchema = z.enum(['high', 'medium', 'low']);
