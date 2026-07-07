@@ -115,12 +115,6 @@ export default function Header() {
 
             {/* Right Actions */}
             <div className="flex items-center gap-1 flex-shrink-0">
-              {/* Language */}
-              <button className="hidden md:flex items-center gap-1 text-sm text-gray-600 px-2 py-1.5 rounded-lg hover:bg-gray-50 transition-colors">
-                <span className="text-xs font-medium">EN</span>
-                <ChevronDown className="w-3 h-3 text-gray-400" />
-              </button>
-
               {/* User */}
               {isLoading ? (
                 <div className="w-8 h-8 rounded-full bg-gray-100 animate-pulse" />

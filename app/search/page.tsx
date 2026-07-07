@@ -72,8 +72,11 @@ function SearchResults() {
     return 0;
   });
 
-  const brands = ['Apple', 'Samsung', 'Sony', 'JBL', 'Bose', 'Sennheiser', 'LG', 'Philips'];
-  const subCategories = ['Smartphones', 'Laptops', 'Tablets', 'Headphones', 'Cameras', 'Smartwatches', 'Accessories'];
+  // Derive brands dynamically from products
+  const brands = Array.from(new Set(products.map((p) => p.brand).filter(Boolean))) as string[];
+
+  // Category names act as subcategory filters
+  const subCategories = categories.map((c) => c.name);
   const allCategories = ['All Categories', ...categories.map((c) => c.name)];
 
   const getCategoryCount = (cat: string) => {

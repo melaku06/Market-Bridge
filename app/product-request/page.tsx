@@ -5,10 +5,10 @@ import Link from 'next/link';
 import { ChevronRight, Upload, CheckCircle, Eye, Trash2, Search, Bell } from 'lucide-react';
 import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
-import { productRequestsApi } from '@/lib/api';
+import { productRequestsApi, categoriesApi } from '@/lib/api';
+import { useAuthStore } from '@/stores/auth/auth-store';
 import type { ProductRequest } from '@/lib/types';
-
-const CATEGORIES = ['Electronics', 'Fashion', 'Home & Living', 'Beauty', 'Sports', 'Toys & Baby', 'Automotive', 'Books', 'Other'];
+import type { Category } from '@/lib/types';
 
 const STATUS_COLORS: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-700',
@@ -25,6 +25,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export default function ProductRequestPage() {
+  const [categories, setCategories] = useState<Category[]>([]);
   const [form, setForm] = useState({
     product_name: '',
     category: '',
@@ -39,14 +40,28 @@ export default function ProductRequestPage() {
   const [loading, setLoading] = useState(false);
   const [fetchingRequests, setFetchingRequests] = useState(true);
 
+  const user = useAuthStore((s) => s.user);
+
   useEffect(() => {
+    fetchCategories();
     fetchRequests();
-  }, []);
+  }, [user]);
+
+  async function fetchCategories() {
+    try {
+      const res = await categoriesApi.list();
+      const data = Array.isArray(res) ? res : [];
+      setCategories(data);
+    } catch (error) {
+      console.error('Failed to fetch categories:', error);
+    }
+  }
 
   async function fetchRequests() {
     setFetchingRequests(true);
     try {
-      const res = await productRequestsApi.list({ customer_id: 'usr-001' });
+      const customerId = user?.id || 'guest';
+      const res = await productRequestsApi.list({ customer_id: customerId });
       const data = Array.isArray(res) ? res : (res as { data?: ProductRequest[] }).data || [];
       setRequests(data);
     } catch (error) {
@@ -60,9 +75,11 @@ export default function ProductRequestPage() {
     e.preventDefault();
     setLoading(true);
     try {
+      const customerId = user?.id || 'guest';
+      const customerEmail = user?.email || 'guest@marketbridge.com';
       await productRequestsApi.create({
-        customer_id: 'usr-001',
-        customer_email: 'customer@demo.com',
+        customer_id: customerId,
+        customer_email: customerEmail,
         product_name: form.product_name,
         category: form.category,
         description: form.description,
@@ -173,7 +190,7 @@ export default function ProductRequestPage() {
                           required
                         >
                           <option value="">Select a category</option>
-                          {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+                          {categories.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
                         </select>
                       </div>
                     </div>
@@ -202,7 +219,7 @@ export default function ProductRequestPage() {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">Preferred Price Range (USD)</label>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">Preferred Price Range (ETB)</label>
                       <div className="grid grid-cols-2 gap-3">
                         <input
                           type="number"
@@ -293,11 +310,11 @@ export default function ProductRequestPage() {
               <div className="bg-white rounded-xl border border-gray-100 p-5">
                 <h3 className="font-semibold text-gray-900 mb-2">Need Help?</h3>
                 <p className="text-sm text-gray-500 mb-3">Contact our support team</p>
-                <a href="mailto:support@marketbridge.com" className="text-sm text-blue-600 hover:underline block">
-                  support@marketbridge.com
+                <a href="mailto:support@marketbridge.et" className="text-sm text-blue-600 hover:underline block">
+                  support@marketbridge.et
                 </a>
-                <a href="tel:+15551234567" className="text-sm text-blue-600 hover:underline block mt-1">
-                  +1 (555) 123-4567
+                <a href="tel:+251911234567" className="text-sm text-blue-600 hover:underline block mt-1">
+                  +251 91 123 4567
                 </a>
               </div>
             </div>

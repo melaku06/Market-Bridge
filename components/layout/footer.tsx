@@ -9,7 +9,7 @@ export default function Footer() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
-              { icon: '🚚', title: 'Free Shipping', desc: 'On orders over $50' },
+              { icon: '🚚', title: 'Free Shipping', desc: 'On orders over 500 Br' },
               { icon: '↩️', title: '30-Day Returns', desc: 'Easy returns' },
               { icon: '🛡️', title: 'Secure Payments', desc: '100% secure' },
               { icon: '🎧', title: '24/7 Support', desc: 'Dedicated support' },
@@ -96,15 +96,15 @@ export default function Footer() {
             <ul className="space-y-3">
               <li className="flex items-start gap-2 text-sm text-gray-400">
                 <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0 text-blue-400" />
-                <span>500 Business Center Drive, New York, NY 10001</span>
+                <span>Bole Sub-City, Woreda 03<br />Addis Ababa, Ethiopia</span>
               </li>
               <li className="flex items-center gap-2 text-sm text-gray-400">
                 <Phone className="w-4 h-4 flex-shrink-0 text-blue-400" />
-                <span>+1 (555) 123-4567</span>
+                <span>+251 91 123 4567</span>
               </li>
               <li className="flex items-center gap-2 text-sm text-gray-400">
                 <Mail className="w-4 h-4 flex-shrink-0 text-blue-400" />
-                <span>support@marketbridge.com</span>
+                <span>support@marketbridge.et</span>
               </li>
             </ul>
           </div>
@@ -114,9 +114,12 @@ export default function Footer() {
       <div className="border-t border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <p className="text-xs text-gray-500">© 2024 MarketBridge. All rights reserved.</p>
-          <div className="flex gap-4">
-            <a href="#" className="text-xs text-gray-500 hover:text-gray-300">Privacy Policy</a>
-            <a href="#" className="text-xs text-gray-500 hover:text-gray-300">Terms of Service</a>
+          <div className="flex gap-4 flex-wrap justify-center">
+            <Link href="/about" className="text-xs text-gray-500 hover:text-gray-300">About</Link>
+            <Link href="/contact" className="text-xs text-gray-500 hover:text-gray-300">Contact</Link>
+            <Link href="/faq" className="text-xs text-gray-500 hover:text-gray-300">FAQ</Link>
+            <Link href="/privacy" className="text-xs text-gray-500 hover:text-gray-300">Privacy Policy</Link>
+            <Link href="/terms" className="text-xs text-gray-500 hover:text-gray-300">Terms of Service</Link>
           </div>
         </div>
       </div>
