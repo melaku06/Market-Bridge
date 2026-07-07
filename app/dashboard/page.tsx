@@ -76,7 +76,7 @@ export default function DashboardPage() {
           { label: 'Total Orders', value: orders.length, sub: 'View all orders', href: '/dashboard/orders', icon: Package, iconColor: 'text-blue-600', iconBg: 'bg-blue-50' },
           { label: 'Pending Orders', value: pendingCount, sub: 'Track now', href: '/dashboard/order-tracking', icon: Clock, iconColor: 'text-orange-600', iconBg: 'bg-orange-50' },
           { label: 'Delivered Orders', value: deliveredCount, sub: 'View history', href: '/dashboard/orders', icon: CheckCircle, iconColor: 'text-emerald-600', iconBg: 'bg-emerald-50' },
-          { label: 'Total Spent', value: `$${totalSpent.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, sub: 'This year', href: '#', icon: DollarSign, iconColor: 'text-emerald-600', iconBg: 'bg-emerald-50' },
+          { label: 'Total Spent', value: `${totalSpent.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} Br`, sub: 'This year', href: '#', icon: DollarSign, iconColor: 'text-emerald-600', iconBg: 'bg-emerald-50' },
         ].map((stat) => {
           const Icon = stat.icon;
           return (
@@ -135,7 +135,7 @@ export default function DashboardPage() {
                   <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-md ${statusColor[order.status] || 'bg-gray-100 text-gray-600'}`}>
                     {statusLabel[order.status] || order.status}
                   </span>
-                  <p className="text-[13px] font-bold text-gray-900 flex-shrink-0">${order.total.toFixed(2)}</p>
+                  <p className="text-[13px] font-bold text-gray-900 flex-shrink-0">{order.total.toLocaleString()} Br</p>
                 </div>
               ))}
             </div>

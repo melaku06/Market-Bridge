@@ -139,7 +139,7 @@ export default function AdminCustomers() {
                   <td className="px-5 py-3.5 text-[13px] text-gray-600">{customer.email}</td>
                   <td className="px-5 py-3.5 text-[13px] text-gray-600 whitespace-nowrap">{customer.phone || '—'}</td>
                   <td className="px-5 py-3.5 text-[13px] font-medium text-gray-900">{customer.orders || customer.order_count || 0}</td>
-                  <td className="px-5 py-3.5 text-[13px] font-semibold text-gray-900">${(customer.total_spent || 0).toLocaleString()}</td>
+                  <td className="px-5 py-3.5 text-[13px] font-semibold text-gray-900">{(customer.total_spent || 0).toLocaleString()} Br</td>
                   <td className="px-5 py-3.5"><span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full capitalize ${groupBadge[customer.group || 'regular'] || groupBadge.regular}`}>{customer.group || 'Regular'}</span></td>
                   <td className="px-5 py-3.5"><span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full capitalize ${statusBadge[customer.status] || statusBadge.active}`}>{customer.status}</span></td>
                   <td className="px-5 py-3.5 text-[12px] text-gray-500 whitespace-nowrap">{new Date(customer.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>

@@ -133,7 +133,7 @@ export default function AdminOrders() {
                       </div>
                     </td>
                     <td className="px-5 py-3.5 text-[13px] text-gray-600">{wh?.name || order.warehouse || '—'}</td>
-                    <td className="px-5 py-3.5 text-[13px] font-semibold text-gray-900">${(order.amount || order.total || 0).toLocaleString()}</td>
+                    <td className="px-5 py-3.5 text-[13px] font-semibold text-gray-900">{(order.amount || order.total || 0).toLocaleString()} Br</td>
                     <td className="px-5 py-3.5">
                       <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${order.payment === 'Paid' ? 'bg-emerald-50 text-emerald-700' : order.payment === 'COD' ? 'bg-gray-100 text-gray-600' : 'bg-amber-50 text-amber-700'}`}>
                         {order.payment || 'Paid'}

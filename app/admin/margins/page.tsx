@@ -75,7 +75,7 @@ export default function AdminMargins() {
           { label: 'Average Margin', value: `${avgMargin}%`, sub: 'Active margin rules', icon: Percent, iconBg: 'bg-blue-50', iconColor: 'text-blue-600' },
           { label: 'Total Categories', value: localRules.length || 56, sub: 'Across all categories', icon: TrendingUp, iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600' },
           { label: 'Products Affected', value: '12,458', sub: 'Active margin rules', icon: TrendingUp, iconBg: 'bg-violet-50', iconColor: 'text-violet-600' },
-          { label: 'Revenue Impact', value: '+$24,580', sub: 'Est. this month', icon: TrendingUp, iconBg: 'bg-amber-50', iconColor: 'text-amber-600' },
+          { label: 'Revenue Impact', value: '+24,580 Br', sub: 'Est. this month', icon: TrendingUp, iconBg: 'bg-amber-50', iconColor: 'text-amber-600' },
         ].map((s, i) => { const Icon = s.icon; return (
           <div key={i} className="bg-white rounded-xl border border-gray-100 p-4">
             <div className={`w-8 h-8 ${s.iconBg} rounded-lg flex items-center justify-center mb-2`}>

@@ -35,7 +35,7 @@ export default function AdminAnalytics() {
   if (loading) return <div className="flex items-center justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>;
 
   const stats = [
-    { label: 'Total Revenue', value: `$${((analytics?.total_revenue || 254780) / 1000).toFixed(0)}K`, sub: '+12.4% vs Apr', isUp: true, icon: DollarSign, iconBg: 'bg-blue-50', iconColor: 'text-blue-600' },
+    { label: 'Total Revenue', value: `${((analytics?.total_revenue || 254780) / 1000).toFixed(0)}K Br`, sub: '+12.4% vs Apr', isUp: true, icon: DollarSign, iconBg: 'bg-blue-50', iconColor: 'text-blue-600' },
     { label: 'Total Orders', value: (analytics?.orders?.total || 2450).toLocaleString(), sub: '+14.8% vs Apr', isUp: true, icon: ShoppingCart, iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600' },
     { label: 'Total Customers', value: (analytics?.customers?.total || 5632).toLocaleString(), sub: '-8.3% vs Apr', isUp: false, icon: Users, iconBg: 'bg-violet-50', iconColor: 'text-violet-600' },
     { label: 'Conversion Rate', value: `${analytics?.conversion_rate || '3.75'}%`, sub: '+8.3% vs Apr', isUp: true, icon: TrendingUp, iconBg: 'bg-amber-50', iconColor: 'text-amber-600' },
@@ -177,7 +177,7 @@ export default function AdminAnalytics() {
                     <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${cat.percent || cat.bar || 50}%` }} />
                   </div>
                 </div>
-                <span className="text-[12px] font-semibold text-gray-700 w-20 text-right">${(cat.revenue || 0).toLocaleString()}</span>
+                <span className="text-[12px] font-semibold text-gray-700 w-20 text-right">{(cat.revenue || 0).toLocaleString()} Br</span>
               </div>
             ))}
           </div>
@@ -204,7 +204,7 @@ export default function AdminAnalytics() {
                 <tr key={i} className="hover:bg-gray-50/60 transition-colors">
                   <td className="px-5 py-3 text-[13px] font-bold text-gray-900">{order.id?.startsWith('#') ? order.id : `#MB${order.id?.slice(-5).toUpperCase() || i}`}</td>
                   <td className="px-5 py-3 text-[13px] text-gray-700">{order.customer || order.customer_name}</td>
-                  <td className="px-5 py-3 text-[13px] font-semibold text-gray-900">${(order.amount || order.total || 0).toLocaleString()}</td>
+                  <td className="px-5 py-3 text-[13px] font-semibold text-gray-900">{(order.amount || order.total || 0).toLocaleString()} Br</td>
                   <td className="px-5 py-3"><span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full capitalize ${statusColors[order.status] || 'bg-gray-100 text-gray-600'}`}>{order.status}</span></td>
                   <td className="px-5 py-3 text-[12px] text-gray-500">{order.date || new Date(order.created_at).toLocaleDateString()}</td>
                 </tr>

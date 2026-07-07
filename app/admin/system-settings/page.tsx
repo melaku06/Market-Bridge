@@ -29,13 +29,10 @@ export default function AdminSystemSettings() {
     site_name: 'MarketBridge',
     site_tagline: 'Bridging Markets, Building Trust',
     site_email: 'support@marketbridge.com',
-    site_phone: '+1(850) 123-4567' as string | null,
-    currency: 'USD - US Dollar',
-    timezone: '(UTC -05:00) Eastern Time (US & Canada)',
-    date_format: 'May 31, 2024',
-    time_format: '12 Hour (AM/PM)',
+    site_phone: '+251 911 123456' as string | null,
+    timezone: '(UTC +03:00) East Africa Time',
+    date_format: 'DD/MM/YYYY',
     items_per_page: 10,
-    site_language: 'English',
     site_status: 'active' as 'active' | 'maintenance',
     maintenance_mode: false,
   });
@@ -100,9 +97,8 @@ export default function AdminSystemSettings() {
                         {[
                           { label: 'Site Name', key: 'site_name' },
                           { label: 'Site Tagline', key: 'site_tagline' },
-                          { label: 'Default Currency', key: 'currency', isSelect: true, options: ['USD - US Dollar', 'EUR - Euro', 'GBP - British Pound', 'ETB - Ethiopian Birr'] },
-                          { label: 'Timezone', key: 'timezone', isSelect: true, options: ['(UTC -05:00) Eastern Time (US & Canada)', '(UTC +00:00) UTC', '(UTC +03:00) East Africa Time'] },
-                          { label: 'Date Format', key: 'date_format', isSelect: true, options: ['May 31, 2024', '31/05/2024', '05/31/2024'] },
+                          { label: 'Timezone', key: 'timezone', isSelect: true, options: ['(UTC +03:00) East Africa Time', '(UTC +00:00) UTC', '(UTC -05:00) Eastern Time (US & Canada)'] },
+                          { label: 'Date Format', key: 'date_format', isSelect: true, options: ['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD'] },
                           { label: 'Items Per Page', key: 'items_per_page' },
                         ].map(field => (
                           <div key={field.key}>
@@ -137,20 +133,22 @@ export default function AdminSystemSettings() {
                       {[
                         { label: 'Site Email', key: 'site_email' },
                         { label: 'Site Phone', key: 'site_phone' },
-                        { label: 'Time Format', key: 'time_format', isSelect: true, options: ['12 Hour (AM/PM)', '24 Hour'] },
-                        { label: 'Site Language', key: 'site_language', isSelect: true, options: ['English', 'Amharic', 'French', 'Spanish'] },
                       ].map(field => (
                         <div key={field.key}>
                           <label className="block text-[11px] font-semibold text-gray-500 mb-1">{field.label}</label>
-                          {field.isSelect ? (
-                            <select value={(settings as any)[field.key]} onChange={e => setSettings({ ...settings, [field.key]: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] focus:outline-none focus:border-blue-400 bg-white">
-                              {field.options?.map(o => <option key={o}>{o}</option>)}
-                            </select>
-                          ) : (
-                            <input type="text" value={(settings as any)[field.key]} onChange={e => setSettings({ ...settings, [field.key]: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] focus:outline-none focus:border-blue-400" />
-                          )}
+                          <input type="text" value={(settings as any)[field.key] || ''} onChange={e => setSettings({ ...settings, [field.key]: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] focus:outline-none focus:border-blue-400" />
                         </div>
                       ))}
+                      <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
+                        <p className="text-[11px] font-semibold text-blue-700 mb-1">Currency</p>
+                        <p className="text-[13px] font-bold text-blue-900">Ethiopian Birr (ETB)</p>
+                        <p className="text-[10px] text-blue-500 mt-0.5">Fixed for Ethiopian market</p>
+                      </div>
+                      <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <p className="text-[11px] font-semibold text-gray-700 mb-1">Language</p>
+                        <p className="text-[13px] font-bold text-gray-900">English</p>
+                        <p className="text-[10px] text-gray-500 mt-0.5">Application language</p>
+                      </div>
                       <div>
                         <label className="block text-[11px] font-semibold text-gray-500 mb-1">Site Status</label>
                         <div className="flex items-center gap-2">
@@ -203,12 +201,12 @@ export default function AdminSystemSettings() {
               <h2 className="text-sm font-bold text-gray-900 mb-4">Shipping Settings</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-[12px] font-semibold text-gray-700 mb-1">Free Shipping Threshold ($)</label>
-                  <input type="number" defaultValue={50} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] focus:outline-none focus:border-blue-400" />
+                  <label className="block text-[12px] font-semibold text-gray-700 mb-1">Free Shipping Threshold (Br)</label>
+                  <input type="number" defaultValue={500} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] focus:outline-none focus:border-blue-400" />
                 </div>
                 <div>
-                  <label className="block text-[12px] font-semibold text-gray-700 mb-1">Standard Shipping Fee ($)</label>
-                  <input type="number" defaultValue={4.99} step="0.01" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] focus:outline-none focus:border-blue-400" />
+                  <label className="block text-[12px] font-semibold text-gray-700 mb-1">Standard Shipping Fee (Br)</label>
+                  <input type="number" defaultValue={50} step="1" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] focus:outline-none focus:border-blue-400" />
                 </div>
                 <button onClick={handleSave} className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[13px] font-semibold transition-colors">
                   <Save style={{ width: 14, height: 14 }} /> Save Changes

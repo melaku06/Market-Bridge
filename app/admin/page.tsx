@@ -82,7 +82,7 @@ export default function AdminDashboard() {
   const stats = [
     {
       label: 'Total Revenue',
-      value: totalRevenue > 0 ? `$${(totalRevenue / 1000).toFixed(1)}K` : '$0',
+      value: totalRevenue > 0 ? `${(totalRevenue / 1000).toFixed(1)}K Br` : '0 Br',
       sub: 'This month',
       isUp: true,
       icon: DollarSign,

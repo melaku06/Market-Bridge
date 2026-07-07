@@ -164,7 +164,7 @@ export default function WarehouseOrders() {
                       )}
                     </div>
                   </td>
-                  <td className="px-5 py-4 text-sm font-bold text-gray-900">${order.total.toLocaleString()}</td>
+                  <td className="px-5 py-4 text-sm font-bold text-gray-900">{order.total.toLocaleString()} Br</td>
                   <td className="px-5 py-4">
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                       order.payment_status === 'paid' ? 'bg-emerald-100 text-emerald-700' :

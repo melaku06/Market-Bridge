@@ -28,7 +28,7 @@ const bannerRows = [
 
 const promoRows = [
   { name: 'Summer Special', type: 'Percentage', discount: '20% OFF', usage: 1149, status: 'active', endDate: 'May 31, 2024' },
-  { name: 'Weekend Deal', type: 'Flat Amount', discount: '$15 OFF', usage: 982, status: 'active', endDate: 'May 19, 2024' },
+  { name: 'Weekend Deal', type: 'Flat Amount', discount: '15 Br OFF', usage: 982, status: 'active', endDate: 'May 19, 2024' },
   { name: 'First Order', type: 'Percentage', discount: '10% OFF', usage: 892, status: 'active', endDate: 'Jun 30, 2024' },
   { name: 'Mega Sale', type: 'Percentage', discount: '30% OFF', usage: 3156, status: 'scheduled', endDate: 'Jun 1, 2024' },
 ];

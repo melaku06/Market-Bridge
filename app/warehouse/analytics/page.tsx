@@ -92,16 +92,16 @@ export default function WarehouseAnalytics() {
   ];
 
   const categorySales = [
-    { label: 'Electronics', value: '$22,640.00', pct: 49 },
-    { label: 'Fashion', value: '$17,685.50', pct: 27 },
-    { label: 'Footwear', value: '$8,345.20', pct: 13 },
-    { label: 'Home & Kitchen', value: '$4,299.80', pct: 9 },
+    { label: 'Electronics', value: '22,640.00 Br', pct: 49 },
+    { label: 'Fashion', value: '17,685.50 Br', pct: 27 },
+    { label: 'Footwear', value: '8,345.20 Br', pct: 13 },
+    { label: 'Home & Kitchen', value: '4,299.80 Br', pct: 9 },
   ];
 
   const stats = [
     { name: 'Total Orders', value: warehouseTotalOrders.toLocaleString(), change: '+18.5%', icon: ShoppingCart, bg: 'bg-blue-50', color: 'text-blue-600', up: true },
-    { name: 'Total Revenue', value: `$${warehouseTotalSales.toLocaleString()}`, change: '+22.7%', icon: DollarSign, bg: 'bg-emerald-50', color: 'text-emerald-600', up: true },
-    { name: 'Average Order Value', value: `$${warehouseTotalOrders > 0 ? (warehouseTotalSales / warehouseTotalOrders).toFixed(2) : '0'}`, change: '+4.2%', icon: TrendingUp, bg: 'bg-purple-50', color: 'text-purple-600', up: true },
+    { name: 'Total Revenue', value: `${warehouseTotalSales.toLocaleString()} Br`, change: '+22.7%', icon: DollarSign, bg: 'bg-emerald-50', color: 'text-emerald-600', up: true },
+    { name: 'Average Order Value', value: `${warehouseTotalOrders > 0 ? (warehouseTotalSales / warehouseTotalOrders).toFixed(2) : '0'} Br`, change: '+4.2%', icon: TrendingUp, bg: 'bg-purple-50', color: 'text-purple-600', up: true },
     { name: 'Total Customers', value: Math.round(warehouseTotalOrders * 0.7).toLocaleString(), change: '+18.3%', icon: Users, bg: 'bg-amber-50', color: 'text-amber-600', up: true },
   ];
 
