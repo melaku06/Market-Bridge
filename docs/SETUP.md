@@ -5,7 +5,7 @@ This guide explains how to configure and run MarketBridge with PostgreSQL, Prism
 ## Prerequisites
 
 - Node.js 18+ installed
-- PostgreSQL database (Supabase or local)
+- PostgreSQL database (local or hosted)
 - npm or yarn
 - Cloudinary account (for image uploads)
 
@@ -43,9 +43,9 @@ Use these accounts to test the application:
 The `.env` file contains all configuration:
 
 ```env
-# PostgreSQL Database (Supabase)
-DATABASE_URL="postgresql://postgres.[project-ref]:[password]@aws-0-eu-west-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
-DIRECT_URL="postgresql://postgres.[project-ref]:[password]@aws-0-eu-west-1.pooler.supabase.com:5432/postgres"
+# PostgreSQL Database
+DATABASE_URL="postgresql://user:password@host:5432/database"
+DIRECT_URL="postgresql://user:password@host:5432/database"
 
 # JWT Configuration
 JWT_SECRET=marketbridge-super-secret-jwt-key-2024-production

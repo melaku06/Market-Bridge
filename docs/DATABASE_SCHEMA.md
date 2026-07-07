@@ -28,7 +28,7 @@ MarketBridge uses **PostgreSQL** as its primary database with **Prisma** as the 
 
 ### Key Features
 
-- **Row Level Security (RLS)** ready for Supabase
+- **Custom JWT authentication** with role-based access control
 - **Normalized design** with proper relationships
 - **Comprehensive indexes** for performance
 - **Audit logging** for compliance
@@ -936,31 +936,29 @@ export async function POST(request: Request) {
    NODE_ENV=production
    ```
 
-### Supabase RLS Policies
+### Application-Level Authorization
 
-For Supabase deployments, enable Row Level Security:
+MarketBridge uses custom JWT-based authentication handled at the API layer (Next.js API Routes). Authorization is enforced through the `requireAuth` middleware function that validates tokens and checks role permissions before database queries.
 
-```sql
--- Enable RLS on all tables
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE products ENABLE ROW LEVEL SECURITY;
--- ... repeat for all tables
+```typescript
+// Example: API route authorization
+import { requireAuth } from '@/lib/auth/require-auth';
 
--- Example: Users can only read their own data
-CREATE POLICY "users_read_own" ON profiles
-  FOR SELECT TO authenticated
-  USING (auth.uid() = id);
-
--- Example: Products visible when published or owner
-CREATE POLICY "products_read" ON products
-  FOR SELECT TO authenticated
-  USING (
-    status = 'published' OR
-    warehouse_id IN (
-      SELECT warehouse_id FROM profiles WHERE id = auth.uid()
-    )
-  );
+export async function GET(request: NextRequest) {
+  const { user, error } = await requireAuth(request, ['admin', 'warehouse']);
+  if (error) return error;
+  
+  // User is authenticated with required role
+  const data = await prisma.product.findMany(...);
+  return NextResponse.json(data);
+}
 ```
+
+Row-level security at the database level is not required because:
+1. All database queries flow through authenticated API routes
+2. The `requireAuth` middleware validates JWT tokens and enforces role checks
+3. API routes filter data by user ID and role before returning results
+4. Direct database connections from untrusted sources are blocked
 
 ---
 

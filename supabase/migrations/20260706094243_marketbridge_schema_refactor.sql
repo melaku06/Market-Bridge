@@ -78,11 +78,8 @@ CREATE TABLE IF NOT EXISTS password_reset_tokens (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
-ALTER TABLE password_reset_tokens ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "select_own_password_resets" ON password_reset_tokens;
-CREATE POLICY "select_own_password_resets" ON password_reset_tokens
-  FOR SELECT TO authenticated USING (auth.uid() = user_id);
+-- RLS disabled: Authorization handled at API layer via JWT middleware
+-- ALTER TABLE password_reset_tokens ENABLE ROW LEVEL SECURITY;
 
 CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_user_id ON password_reset_tokens(user_id);
 CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_token_hash ON password_reset_tokens(token_hash);
@@ -105,24 +102,8 @@ CREATE TABLE IF NOT EXISTS order_status_history (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
-ALTER TABLE order_status_history ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "select_order_status_history" ON order_status_history;
-CREATE POLICY "select_order_status_history" ON order_status_history
-  FOR SELECT TO authenticated USING (
-    EXISTS (
-      SELECT 1 FROM orders
-      WHERE orders.id = order_status_history.order_id
-      AND (
-        orders.customer_id = auth.uid()
-        OR orders.warehouse_id IN (
-          SELECT warehouses.id FROM warehouses
-          JOIN profiles ON profiles.warehouse_id = warehouses.id
-          WHERE profiles.id = auth.uid()
-        )
-      )
-    )
-  );
+-- RLS disabled: Authorization handled at API layer via JWT middleware
+-- ALTER TABLE order_status_history ENABLE ROW LEVEL SECURITY;
 
 CREATE INDEX IF NOT EXISTS idx_order_status_history_order_id ON order_status_history(order_id);
 CREATE INDEX IF NOT EXISTS idx_order_status_history_to_status ON order_status_history(to_status);
@@ -146,33 +127,8 @@ CREATE TABLE IF NOT EXISTS telegram_bots (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
-ALTER TABLE telegram_bots ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "admin_select_telegram_bots" ON telegram_bots;
-CREATE POLICY "admin_select_telegram_bots" ON telegram_bots
-  FOR SELECT TO authenticated USING (
-    EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
-  );
-
-DROP POLICY IF EXISTS "admin_insert_telegram_bots" ON telegram_bots;
-CREATE POLICY "admin_insert_telegram_bots" ON telegram_bots
-  FOR INSERT TO authenticated WITH CHECK (
-    EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
-  );
-
-DROP POLICY IF EXISTS "admin_update_telegram_bots" ON telegram_bots;
-CREATE POLICY "admin_update_telegram_bots" ON telegram_bots
-  FOR UPDATE TO authenticated USING (
-    EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
-  ) WITH CHECK (
-    EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
-  );
-
-DROP POLICY IF EXISTS "admin_delete_telegram_bots" ON telegram_bots;
-CREATE POLICY "admin_delete_telegram_bots" ON telegram_bots
-  FOR DELETE TO authenticated USING (
-    EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
-  );
+-- RLS disabled: Authorization handled at API layer via JWT middleware
+-- ALTER TABLE telegram_bots ENABLE ROW LEVEL SECURITY;
 
 -- ============================================================================
 -- 7. TELEGRAM CHANNELS
@@ -190,33 +146,8 @@ CREATE TABLE IF NOT EXISTS telegram_channels (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
-ALTER TABLE telegram_channels ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "admin_select_telegram_channels" ON telegram_channels;
-CREATE POLICY "admin_select_telegram_channels" ON telegram_channels
-  FOR SELECT TO authenticated USING (
-    EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
-  );
-
-DROP POLICY IF EXISTS "admin_insert_telegram_channels" ON telegram_channels;
-CREATE POLICY "admin_insert_telegram_channels" ON telegram_channels
-  FOR INSERT TO authenticated WITH CHECK (
-    EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
-  );
-
-DROP POLICY IF EXISTS "admin_update_telegram_channels" ON telegram_channels;
-CREATE POLICY "admin_update_telegram_channels" ON telegram_channels
-  FOR UPDATE TO authenticated USING (
-    EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
-  ) WITH CHECK (
-    EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
-  );
-
-DROP POLICY IF EXISTS "admin_delete_telegram_channels" ON telegram_channels;
-CREATE POLICY "admin_delete_telegram_channels" ON telegram_channels
-  FOR DELETE TO authenticated USING (
-    EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
-  );
+-- RLS disabled: Authorization handled at API layer via JWT middleware
+-- ALTER TABLE telegram_channels ENABLE ROW LEVEL SECURITY;
 
 CREATE INDEX IF NOT EXISTS idx_telegram_channels_bot_id ON telegram_channels(bot_id);
 CREATE INDEX IF NOT EXISTS idx_telegram_channels_is_active ON telegram_channels(is_active);
@@ -238,33 +169,8 @@ CREATE TABLE IF NOT EXISTS telegram_groups (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
-ALTER TABLE telegram_groups ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "admin_select_telegram_groups" ON telegram_groups;
-CREATE POLICY "admin_select_telegram_groups" ON telegram_groups
-  FOR SELECT TO authenticated USING (
-    EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
-  );
-
-DROP POLICY IF EXISTS "admin_insert_telegram_groups" ON telegram_groups;
-CREATE POLICY "admin_insert_telegram_groups" ON telegram_groups
-  FOR INSERT TO authenticated WITH CHECK (
-    EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
-  );
-
-DROP POLICY IF EXISTS "admin_update_telegram_groups" ON telegram_groups;
-CREATE POLICY "admin_update_telegram_groups" ON telegram_groups
-  FOR UPDATE TO authenticated USING (
-    EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
-  ) WITH CHECK (
-    EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
-  );
-
-DROP POLICY IF EXISTS "admin_delete_telegram_groups" ON telegram_groups;
-CREATE POLICY "admin_delete_telegram_groups" ON telegram_groups
-  FOR DELETE TO authenticated USING (
-    EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
-  );
+-- RLS disabled: Authorization handled at API layer via JWT middleware
+-- ALTER TABLE telegram_groups ENABLE ROW LEVEL SECURITY;
 
 CREATE INDEX IF NOT EXISTS idx_telegram_groups_bot_id ON telegram_groups(bot_id);
 CREATE INDEX IF NOT EXISTS idx_telegram_groups_is_active ON telegram_groups(is_active);
@@ -284,33 +190,8 @@ CREATE TABLE IF NOT EXISTS telegram_post_templates (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
-ALTER TABLE telegram_post_templates ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "admin_select_telegram_templates" ON telegram_post_templates;
-CREATE POLICY "admin_select_telegram_templates" ON telegram_post_templates
-  FOR SELECT TO authenticated USING (
-    EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
-  );
-
-DROP POLICY IF EXISTS "admin_insert_telegram_templates" ON telegram_post_templates;
-CREATE POLICY "admin_insert_telegram_templates" ON telegram_post_templates
-  FOR INSERT TO authenticated WITH CHECK (
-    EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
-  );
-
-DROP POLICY IF EXISTS "admin_update_telegram_templates" ON telegram_post_templates;
-CREATE POLICY "admin_update_telegram_templates" ON telegram_post_templates
-  FOR UPDATE TO authenticated USING (
-    EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
-  ) WITH CHECK (
-    EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
-  );
-
-DROP POLICY IF EXISTS "admin_delete_telegram_templates" ON telegram_post_templates;
-CREATE POLICY "admin_delete_telegram_templates" ON telegram_post_templates
-  FOR DELETE TO authenticated USING (
-    EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
-  );
+-- RLS disabled: Authorization handled at API layer via JWT middleware
+-- ALTER TABLE telegram_post_templates ENABLE ROW LEVEL SECURITY;
 
 CREATE INDEX IF NOT EXISTS idx_telegram_templates_bot_id ON telegram_post_templates(bot_id);
 CREATE INDEX IF NOT EXISTS idx_telegram_templates_is_active ON telegram_post_templates(is_active);
@@ -361,13 +242,8 @@ CREATE TABLE IF NOT EXISTS telegram_activity_logs (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
-ALTER TABLE telegram_activity_logs ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "admin_select_telegram_activity_logs" ON telegram_activity_logs;
-CREATE POLICY "admin_select_telegram_activity_logs" ON telegram_activity_logs
-  FOR SELECT TO authenticated USING (
-    EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
-  );
+-- RLS disabled: Authorization handled at API layer via JWT middleware
+-- ALTER TABLE telegram_activity_logs ENABLE ROW LEVEL SECURITY;
 
 CREATE INDEX IF NOT EXISTS idx_telegram_activity_logs_bot_id ON telegram_activity_logs(bot_id);
 CREATE INDEX IF NOT EXISTS idx_telegram_activity_logs_post_id ON telegram_activity_logs(post_id);

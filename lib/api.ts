@@ -1,7 +1,7 @@
 /**
  * API Client
  * Centralized API client for all data fetching.
- * All data is persisted in Supabase PostgreSQL via API routes.
+ * All data is persisted in PostgreSQL via API routes using Prisma ORM.
  */
 
 import type {
