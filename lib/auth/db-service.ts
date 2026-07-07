@@ -1,7 +1,7 @@
 import 'server-only';
 import prisma from '@/lib/prisma';
 import { hashPassword, comparePassword } from '@/lib/auth/password';
-import { signToken, verifyToken, JwtPayload } from '@/lib/jwt';
+import { signTokenAsync, verifyToken, JwtPayload } from '@/lib/jwt';
 import type { AuthUser, AuthResponse, LoginCredentials, RegisterData, UserRole } from '@/lib/auth/types';
 
 export async function registerUser(data: RegisterData): Promise<AuthResponse> {
@@ -47,7 +47,7 @@ export async function registerUser(data: RegisterData): Promise<AuthResponse> {
       return { success: false, error: 'Failed to create user' };
     }
 
-    const token = signToken({ userId: user.id, email: user.email, role: user.role });
+    const token = await signTokenAsync({ userId: user.id, email: user.email, role: user.role });
 
     return { success: true, user, token };
   } catch (error) {
@@ -85,7 +85,7 @@ export async function loginUser(credentials: LoginCredentials): Promise<AuthResp
       return { success: false, error: 'Failed to fetch user' };
     }
 
-    const token = signToken({ userId: user.id, email: user.email, role: user.role });
+    const token = await signTokenAsync({ userId: user.id, email: user.email, role: user.role });
 
     return { success: true, user, token };
   } catch (error) {

@@ -16,14 +16,14 @@ function getRequiredRole(pathname: string): string | null {
   return null;
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (isPublicPath(pathname)) {
     if (pathname === '/login' || pathname === '/register') {
       const token = request.cookies.get('auth_token')?.value;
       if (token) {
-        const payload = verifyToken(token);
+        const payload = await verifyToken(token);
         if (payload) {
           const dashboard = payload.role === 'admin' ? '/admin' : payload.role === 'warehouse' ? '/warehouse' : '/dashboard';
           return NextResponse.redirect(new URL(dashboard, request.url));
@@ -46,7 +46,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  const payload = verifyToken(token);
+  const payload = await verifyToken(token);
   if (!payload) {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('from', pathname);

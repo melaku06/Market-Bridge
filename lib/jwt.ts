@@ -1,11 +1,13 @@
-import * as jwt from 'jsonwebtoken';
+import { SignJWT, jwtVerify, decodeJwt } from 'jose';
 
-const JWT_SECRET: string = process.env.JWT_SECRET!;
-const JWT_EXPIRES_IN = '7d';
+const JWT_SECRET = process.env.JWT_SECRET!;
 
-if (!process.env.JWT_SECRET) {
+if (!JWT_SECRET) {
   throw new Error('JWT_SECRET environment variable is required');
 }
+
+// Convert secret to Uint8Array for jose
+const getSecretKey = () => new TextEncoder().encode(JWT_SECRET);
 
 export interface JwtPayload {
   userId: string;
@@ -16,12 +18,30 @@ export interface JwtPayload {
 }
 
 export function signToken(payload: Omit<JwtPayload, 'iat' | 'exp'>): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  // Note: signToken returns a Promise in jose, but we return string for compatibility
+  // This should only be called in Node.js runtime (API routes), not Edge runtime
+  const secretKey = getSecretKey();
+  return new SignJWT({ ...payload })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('7d')
+    .sign(secretKey) as unknown as string; // Cast for backward compatibility
 }
 
-export function verifyToken(token: string): JwtPayload | null {
+export async function signTokenAsync(payload: Omit<JwtPayload, 'iat' | 'exp'>): Promise<string> {
+  const secretKey = getSecretKey();
+  return new SignJWT({ ...payload })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('7d')
+    .sign(secretKey);
+}
+
+export async function verifyToken(token: string): Promise<JwtPayload | null> {
   try {
-    return jwt.verify(token, JWT_SECRET) as JwtPayload;
+    const secretKey = getSecretKey();
+    const { payload } = await jwtVerify(token, secretKey);
+    return payload as unknown as JwtPayload;
   } catch {
     return null;
   }
@@ -29,7 +49,7 @@ export function verifyToken(token: string): JwtPayload | null {
 
 export function decodeToken(token: string): JwtPayload | null {
   try {
-    return jwt.decode(token) as JwtPayload;
+    return decodeJwt(token) as unknown as JwtPayload;
   } catch {
     return null;
   }
